@@ -12,6 +12,15 @@ defmodule Deep do
       :world
 
   """
+  def foo (x) do
+    x+1
+  end
+
+  def gradient(f,x) do
+    f.(x)
+  end
+
+
   #65
   def test1() do
     network = init_network()
@@ -21,37 +30,39 @@ defmodule Deep do
 
 
   def sigmoid(x) do
-    [Enum.map(hd(x),fn(y) -> 1 / (1+:math.exp(-y)) end)]
+    Enum.map(x,fn(y) -> 1 / (1+:math.exp(-y)) end )
   end
 
   def step(x) do
-    [Enum.map(hd(x),fn(y) -> if y > 0 do 1 else 0 end end)]
+    [Enum.map(x,fn(y) -> if y > 0 do 1 else 0 end end)]
   end
 
   def relu(x) do
-    [Enum.map(hd(x),fn(y) -> min(0,y) end)]
+    [Enum.map(x,fn(y) -> min(0,y) end)]
+  end
+
+  def ident(x) do
+     Enum.map(x,fn(y) -> y end)
   end
 
   def init_network() do
-    [{:w1,[[0.1,0.3,0.5],[0.2,0.4,0.6]]},
-     {:b1,[[0.1,0.2,0.3]]},
-     {:w2,[[0.1,0.4],[0.2,0.5],[0.3,0.6]]},
-     {:b2,[[0.1,0.2]]},
-     {:w3,[[0.1,0.3],[0.2,0.4]]},
-     {:b3,[[0.1,0.2]]}]
+    [[[0.1,0.3,0.5],[0.2,0.4,0.6]],
+     [[0.1,0.2,0.3]],
+     fn(x) -> sigmoid(x) end,
+     [[0.1,0.4],[0.2,0.5],[0.3,0.6]],
+     [[0.1,0.2]],
+     fn(x) -> sigmoid(x) end,
+     [[0.1,0.3],[0.2,0.4]],
+     [[0.1,0.2]],
+     fn(x) -> ident(x) end]
   end
 
-  def forward(network,x) do
-    w1 = network[:w1]
-    w2 = network[:w2]
-    w3 = network[:w3]
-    b1 = network[:b1]
-    b2 = network[:b2]
-    b3 = network[:b3]
-    Matrix.mult(x,w1)|> Matrix.add(b1) |> sigmoid
-    |> Matrix.mult(w2) |> Matrix.add(b2) |> sigmoid
-    |> Matrix.mult(w3) |> Matrix.add(b3)
+  def forward([],x) do x end
+  def forward([w,b,f|rest],x) do
+    x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
+    forward(rest,x1)
   end
+
 end
 
 defmodule MNIST do
