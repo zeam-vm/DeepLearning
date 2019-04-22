@@ -30,60 +30,83 @@ defmodule Deep do
   end
 
   def step(x) do
-    [Enum.map(x,fn(y) -> if y > 0 do 1 else 0 end end)]
+    Enum.map(x,fn(y) -> if y > 0 do 1 else 0 end end)
   end
 
   def relu(x) do
-    [Enum.map(x,fn(y) -> min(0,y) end)]
+    Enum.map(x,fn(y) -> min(0,y) end)
   end
 
   def ident(x) do
-     Enum.map(x,fn(y) -> y end)
+    Enum.map(x,fn(y) -> y end)
+  end
+
+  def softmax(x) do
+    sum = Enum.reduce(x, fn(y, acc) -> :math.exp(y) + acc end)
+    Enum.map(x, fn(y) -> :math.exp(y)/sum end)
+  end
+
+  def square(x) do
+    x*x
   end
 
   #error function
-  def cross_entropy([],[]) do 0 end
-  def cross_entropy([y|ys],[t|ts]) do
+  def cross_entropy([x],[y]) do
+    cross_entropy1(x,y)
+  end
+  def cross_entropy1([],[]) do 0 end
+  def cross_entropy1([y|ys],[t|ts]) do
     delta = 1.0e-7
-    -(t * :math.log(y+delta)) + cross_entropy(ys,ts)
+    -(t * :math.log(y+delta)) + cross_entropy1(ys,ts)
   end
 
   def init_network() do
     [[[0.1,0.3,0.5],[0.2,0.4,0.6]],
      [[0.1,0.2,0.3]],
      fn(x) -> sigmoid(x) end,
+     fn(x) -> (1-x)*x end,
      [[0.1,0.4],[0.2,0.5],[0.3,0.6]],
      [[0.1,0.2]],
      fn(x) -> sigmoid(x) end,
+     fn(x) -> (1-x)*x end,
      [[0.1,0.3],[0.2,0.4]],
      [[0.1,0.2]],
-     fn(x) -> ident(x) end]
+     fn(x) -> ident(x) end,
+     fn(x) -> x end]
+  end
+
+  def test_network() do
+    [[[0.47355232,0.9977393,0.846680094],
+      [0.85557411,0.03560366,0.69422093]],
+     [[0.0,0.0,0.0]],
+     fn(x) -> softmax(x) end,
+     fn(x) -> x end]
   end
 
   def forward([],x) do x end
-  def forward([w,b,f|rest],x) do
+  def forward([w,b,f,_|rest],x) do
     x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward(rest,x1)
   end
 
   def forward_w([],x,_,_,_,_) do x end
-  def forward_w([w,b,f|rest],x,0,r,c,d) do
+  def forward_w([w,b,f,_|rest],x,0,r,c,d) do
     w1 = Dmatrix.diff(w,r,c,d)
     x1 = Matrix.mult(x,w1)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward_w(rest,x1,-1,r,c,d)
   end
-  def forward_w([w,b,f|rest],x,n,r,c,d) do
+  def forward_w([w,b,f,_|rest],x,n,r,c,d) do
     x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward_w(rest,x1,n-1,r,c,d)
   end
 
   def forward_b([],x,_,_,_) do x end
-  def forward_b([w,b,f|rest],x,0,c,d) do
+  def forward_b([w,b,f,_|rest],x,0,c,d) do
     b1 = Dmatrix.diff(b,0,c,d)
     x1 = Matrix.mult(x,w)|> Matrix.add(b1) |> Enum.map(fn(x) -> f.(x) end)
     forward_b(rest,x1,-1,c,d)
   end
-  def forward_b([w,b,f|rest],x,n,c,d) do
+  def forward_b([w,b,f,_|rest],x,n,c,d) do
     x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward_b(rest,x1,n-1,c,d)
   end
@@ -92,9 +115,10 @@ defmodule Deep do
     gradient1(network,x,t,0,network)
   end
 
-  def gradient1([w,b,f|rest],x,t,n,network) do
-    [gradient_w(w,x,n,network,t),gradient_b(b,x,n,network,t),f|
-     gradient1(rest,x,t,n-1,network)]
+  def gradient1([],_,_,_,_) do [] end
+  def gradient1([w,b,f,g|rest],x,t,n,network) do
+    [gradient_w(w,x,n,network,t),gradient_b(b,x,n,network,t),f,g|
+     gradient1(rest,x,t,n+1,network)]
   end
 
   def gradient_w(w,x,n,network,t) do
@@ -105,23 +129,83 @@ defmodule Deep do
   end
 
   def gradient_w1(x,r,c,n,network,t) do
-    y = forward_w(network,x,n,r,c,0.0001)
-    cross_entropy(y,t)
+    h = 0.0001
+    y0 = forward(network,x)
+    y1 = forward_w(network,x,n,r,c,h)
+    #:io.write(y0)
+    #:io.write(y1)
+    (cross_entropy(y1,t) - cross_entropy(y0,t)) / h
   end
 
   def gradient_b(b,x,n,network,t) do
     {_,c} = Matrix.size(b)
-    Enum.map(0..c-1,fn(y1) -> gradient_b1(x,y1,n,network,t) end)
+    [Enum.map(0..c-1,fn(y1) -> gradient_b1(x,y1,n,network,t) end)]
   end
 
   def gradient_b1(x,c,n,network,t) do
-    y = forward_b(network,x,n,c,0.0001)
-    cross_entropy(y,t)
+    h = 0.0001
+    y0 = forward(network,x)
+    y1 = forward_b(network,x,n,c,h)
+    #:io.write(y0)
+    #:io.write(y1)
+    (cross_entropy(y1,t) - cross_entropy(y0,t)) / h
+  end
+
+  def back(network,l) do
+    back1(Enum.reverse(network),l,[])
+  end
+
+  def back1([],_,res) do Enum.reverse(res) end
+  def back1([g,f,_,w|rest],l,res) do
+    l1 = Enum.map(l,fn(x) -> g.(x) end)
+    w1 = Matrix.transpose(w)
+    l2 = Matrix.mult(l1,w1)
+    w2 = Matrix.mult(Matrix.transpose(l2),l1)
+    back1(rest,l2,[g,f,l1,w2|res])
+  end
+
+  def learning([],_) do [] end
+  def learning([w,b,f,g|rest],[w1,b1,_,_|gradrest]) do
+    [Dmatrix.element_mult(w,w1),Dmatrix.element_mult(b,b1),f,g|
+     learning(rest,gradrest)]
+  end
+
+  def sdg() do
+    x = [[0.6,0.9]]
+    t = [[1,1]]
+    sdg1(init_network(),x,t,1)
+  end
+
+  def sdg1(network,x,t,n) do
+    x1 = forward(network,x)
+    error = cross_entropy(x1,t)
+    #:io.write(x1)
+    if n == 0 do
+      network
+    else
+      network1 = gradient(network,x,t)
+      #:io.write(network1)
+      #IO.puts("\n")
+      network2 = learning(network,network1)
+      #:io.write(network2)
+      #IO.puts("\n")
+      sdg1(network2,x,t,n-1)
+    end
   end
 
 end
 
 defmodule Dmatrix do
+  def element_mult([],[]) do [] end
+  def element_mult([x|xs],[y|ys]) do
+    [element_mult1(x,y)|element_mult(xs,ys)]
+  end
+
+  def element_mult1([],[]) do [] end
+  def element_mult1([x|xs],[y|ys]) do
+    [x*y*0.001|element_mult1(xs,ys)]
+  end
+
   def diff([],_,_,_) do [] end
   def diff([m|ms],0,c,d) do
     [diff1(m,0,c,d)|diff(ms,-1,c,d)]
