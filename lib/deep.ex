@@ -193,7 +193,7 @@ defmodule Deep do
     network3 = sgd1(network2,x1,t1)
     network4 = sgd1(network3,x,t)
     network5 = sgd1(network4,x1,t1)
-    :io.write(forward(network,x))
+    :io.write(forward(network5,x))
     :io.write(forward(network5,x1))
   end
 
