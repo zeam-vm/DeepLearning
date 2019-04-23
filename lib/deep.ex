@@ -60,53 +60,59 @@ defmodule Deep do
     -(t * :math.log(y+delta)) + cross_entropy1(ys,ts)
   end
 
-  def init_network() do
-    [[[0.1,0.3,0.5],[0.2,0.4,0.6]],
-     [[0.1,0.2,0.3]],
-     fn(x) -> sigmoid(x) end,
-     fn(x) -> (1-x)*x end,
-     [[0.1,0.4],[0.2,0.5],[0.3,0.6]],
-     [[0.1,0.2]],
-     fn(x) -> sigmoid(x) end,
-     fn(x) -> (1-x)*x end,
-     [[0.1,0.3],[0.2,0.4]],
-     [[0.1,0.2]],
-     fn(x) -> ident(x) end,
-     fn(x) -> x end]
+  def mean_square([x],[t]) do
+    mean_square1(x,t) / 2
   end
 
-  def test_network() do
-    [[[0.47355232,0.9977393,0.846680094],
-      [0.85557411,0.03560366,0.69422093]],
-     [[0.0,0.0,0.0]],
-     fn(x) -> softmax(x) end,
-     fn(x) -> x end]
+  def mean_square1([],[]) do 0 end
+  def mean_square1([x|xs],[t|ts]) do
+    square(x-t) + mean_square1(xs,ts)
   end
+
+
+  def init_network() do
+    [[[0.1,0.1,0.1],[0.1,0.1,0.1]],
+     [[0.1,0.1,0.1]],
+     fn(x) -> sigmoid(x) end,
+     fn(x) -> (1-x)*x end,
+     0.9,
+     [[0.1,0.1],[0.1,0.1],[0.1,0.1]],
+     [[0.1,0.1]],
+     fn(x) -> sigmoid(x) end,
+     fn(x) -> (1-x)*x end,
+     0.05,
+     [[0.1,0.1],[0.1,0.1]],
+     [[0.1,0.1]],
+     fn(x) -> sigmoid(x) end,
+     fn(x) -> (1-x)*x end,
+     0.01]
+  end
+
 
   def forward([],x) do x end
-  def forward([w,b,f,_|rest],x) do
+  def forward([w,b,f,_,_|rest],x) do
     x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward(rest,x1)
   end
 
   def forward_w([],x,_,_,_,_) do x end
-  def forward_w([w,b,f,_|rest],x,0,r,c,d) do
+  def forward_w([w,b,f,_,_|rest],x,0,r,c,d) do
     w1 = Dmatrix.diff(w,r,c,d)
     x1 = Matrix.mult(x,w1)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward_w(rest,x1,-1,r,c,d)
   end
-  def forward_w([w,b,f,_|rest],x,n,r,c,d) do
+  def forward_w([w,b,f,_,_|rest],x,n,r,c,d) do
     x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward_w(rest,x1,n-1,r,c,d)
   end
 
   def forward_b([],x,_,_,_) do x end
-  def forward_b([w,b,f,_|rest],x,0,c,d) do
+  def forward_b([w,b,f,_,_|rest],x,0,c,d) do
     b1 = Dmatrix.diff(b,0,c,d)
     x1 = Matrix.mult(x,w)|> Matrix.add(b1) |> Enum.map(fn(x) -> f.(x) end)
     forward_b(rest,x1,-1,c,d)
   end
-  def forward_b([w,b,f,_|rest],x,n,c,d) do
+  def forward_b([w,b,f,_,_|rest],x,n,c,d) do
     x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward_b(rest,x1,n-1,c,d)
   end
@@ -116,8 +122,8 @@ defmodule Deep do
   end
 
   def gradient1([],_,_,_,_) do [] end
-  def gradient1([w,b,f,g|rest],x,t,n,network) do
-    [gradient_w(w,x,n,network,t),gradient_b(b,x,n,network,t),f,g|
+  def gradient1([w,b,f,g,r|rest],x,t,n,network) do
+    [gradient_w(w,x,n,network,t),gradient_b(b,x,n,network,t),f,g,r|
      gradient1(rest,x,t,n+1,network)]
   end
 
@@ -132,9 +138,10 @@ defmodule Deep do
     h = 0.0001
     y0 = forward(network,x)
     y1 = forward_w(network,x,n,r,c,h)
-    #:io.write(y0)
-    #:io.write(y1)
-    (cross_entropy(y1,t) - cross_entropy(y0,t)) / h
+    if is_minus(y0) do
+      :io.write(y0)
+    end
+    (mean_square(y1,t) - mean_square(y0,t)) / h
   end
 
   def gradient_b(b,x,n,network,t) do
@@ -146,9 +153,14 @@ defmodule Deep do
     h = 0.0001
     y0 = forward(network,x)
     y1 = forward_b(network,x,n,c,h)
-    #:io.write(y0)
-    #:io.write(y1)
-    (cross_entropy(y1,t) - cross_entropy(y0,t)) / h
+    if is_minus(y0) do
+      :io.write(y0)
+    end
+    (mean_square(y1,t) - mean_square(y0,t)) / h
+  end
+
+  def is_minus(x) do
+    Enum.any?(x,fn(x) -> x < 0 end)
   end
 
   def back(network,l) do
@@ -165,45 +177,50 @@ defmodule Deep do
   end
 
   def learning([],_) do [] end
-  def learning([w,b,f,g|rest],[w1,b1,_,_|gradrest]) do
-    [Dmatrix.element_mult(w,w1),Dmatrix.element_mult(b,b1),f,g|
+  def learning([w,b,f,g,r|rest],[w1,b1,_,_,_|gradrest]) do
+    [Dmatrix.element_mult(w,w1,r),Dmatrix.element_mult(b,b1,r),f,g,r|
      learning(rest,gradrest)]
   end
 
-  def sdg() do
-    x = [[0.6,0.9]]
-    t = [[1,1]]
-    sdg1(init_network(),x,t,1)
+  def sgd() do
+    x = [[0.5,1]]
+    t = [[0.8,0.5]]
+    #x1 = [[1,0.5]]
+    #t1 = [[0.5,0.8]]
+    network = sgd1(init_network(),x,t)
+    #network1 = sgd1(network,x1,t1)
+    #network2 = sgd1(network1,x,t)
+    #network3 = sgd1(network2,x1,t1)
+    #network4 = sgd1(network3,x,t)
+    #network5 = sgd1(network4,x1,t1)
+    :io.write(forward(network,x))
+    #:io.write(forward(network5,x1))
   end
 
-  def sdg1(network,x,t,n) do
+  def sgd1(network,x,t) do
     x1 = forward(network,x)
-    error = cross_entropy(x1,t)
-    #:io.write(x1)
-    if n == 0 do
+    error = mean_square(x1,t)
+    IO.puts(error)
+    if error < 0.001 do
       network
     else
       network1 = gradient(network,x,t)
-      #:io.write(network1)
-      #IO.puts("\n")
       network2 = learning(network,network1)
-      #:io.write(network2)
-      #IO.puts("\n")
-      sdg1(network2,x,t,n-1)
+      sgd1(network2,x,t)
     end
   end
 
 end
 
 defmodule Dmatrix do
-  def element_mult([],[]) do [] end
-  def element_mult([x|xs],[y|ys]) do
-    [element_mult1(x,y)|element_mult(xs,ys)]
+  def element_mult([],[],_) do [] end
+  def element_mult([x|xs],[y|ys],r) do
+    [element_mult1(x,y,r)|element_mult(xs,ys,r)]
   end
 
-  def element_mult1([],[]) do [] end
-  def element_mult1([x|xs],[y|ys]) do
-    [x*y*0.001|element_mult1(xs,ys)]
+  def element_mult1([],[],_) do [] end
+  def element_mult1([x|xs],[y|ys],r) do
+    [x-x*y*r|element_mult1(xs,ys,r)]
   end
 
   def diff([],_,_,_) do [] end
@@ -220,72 +237,6 @@ defmodule Dmatrix do
   end
   def diff1([v|vs],0,c,d) do
     [v|diff1(vs,0,c-1,d)]
-  end
-
-
-  def mult(x,y,r,c,d) do
-    mult1(x,Matrix.transpose(y),c,r,d)
-  end
-
-  def mult1([],_,_,_,_) do [] end
-  def mult1([x|xs],[y|ys],r,c,d) do
-    [mult2(x,[y|ys],r,c,d)|mult1(xs,[y|ys],r,c,d)]
-  end
-
-  def mult2(_,[],_,_,_) do [] end
-  def mult2(x,[y|ys],0,c,d) do
-    [inner_product_diff(x,y,c,d)|mult2(x,ys,-1,c,d)]
-  end
-  def mult2(x,[y|ys],r,c,d) do
-    [inner_product(x,y)|mult2(x,ys,r-1,c,d)]
-  end
-
-
-  def inner_product([],[]) do 0 end
-  def inner_product([x|xs],[y|ys]) do
-    x*y + inner_product(xs,ys)
-  end
-
-  def inner_product_diff([],[],_,_) do 0 end
-  def inner_product_diff([x|xs],[y|ys],0,d) do
-    x*(y+d) + inner_product_diff(xs,ys,-1,d)
-  end
-  def inner_product_diff([x|xs],[y|ys],n,d) do
-    x*y + inner_product_diff(xs,ys,n-1,d)
-  end
-
-  def add([],[],_,_,_) do [] end
-  def add([x|xs],[y|ys],r,c,d) do
-    [add1(x,y,r,c,d)|add(xs,ys,r-1,c,d)]
-  end
-
-  def add1([],[],_,_,_) do [] end
-  def add1([x|xs],[y|ys],0,0,d) do
-    [x+(y+d)|add1(xs,ys,0,-1,d)]
-  end
-  def add1([x|xs],[y|ys],0,c,d) do
-    [x+y|add1(xs,ys,0,c-1,d)]
-  end
-  def add1([x|xs],[y|ys],r,c,d) do
-    [x+y|add1(xs,ys,r,c,d)]
-  end
-
-
-
-  def is_matrix(x) do
-    if is_list(x) and is_list(hd(x)) and length(x) >= 2 do
-      true
-    else
-      false
-    end
-  end
-
-  def is_vector(x) do
-    if is_list(x) and is_list(hd(x)) and length(x) == 1 do
-      true
-    else
-      false
-    end
   end
 
 end
