@@ -71,18 +71,18 @@ defmodule Deep do
 
 
   def init_network() do
-    [[[0.1,0.1,0.1],[0.1,0.1,0.1]],
-     [[0.1,0.1,0.1]],
+    [[[0.5,0.5,0.5],[0.5,0.5,0.5]],
+     [[0.5,0.5,0.5]],
      fn(x) -> sigmoid(x) end,
      fn(x) -> (1-x)*x end,
      0.9,
-     [[0.1,0.1],[0.1,0.1],[0.1,0.1]],
-     [[0.1,0.1]],
+     [[0.5,0.5],[0.5,0.5],[0.5,0.5]],
+     [[0.5,0.5]],
      fn(x) -> sigmoid(x) end,
      fn(x) -> (1-x)*x end,
      0.05,
-     [[0.1,0.1],[0.1,0.1]],
-     [[0.1,0.1]],
+     [[0.5,0.5],[0.5,0.5]],
+     [[0.5,0.5]],
      fn(x) -> sigmoid(x) end,
      fn(x) -> (1-x)*x end,
      0.01]
@@ -185,16 +185,16 @@ defmodule Deep do
   def sgd() do
     x = [[0.5,1]]
     t = [[0.8,0.5]]
-    #x1 = [[1,0.5]]
-    #t1 = [[0.5,0.8]]
+    x1 = [[1,0.5]]
+    t1 = [[0.5,0.8]]
     network = sgd1(init_network(),x,t)
-    #network1 = sgd1(network,x1,t1)
-    #network2 = sgd1(network1,x,t)
-    #network3 = sgd1(network2,x1,t1)
-    #network4 = sgd1(network3,x,t)
-    #network5 = sgd1(network4,x1,t1)
+    network1 = sgd1(network,x1,t1)
+    network2 = sgd1(network1,x,t)
+    network3 = sgd1(network2,x1,t1)
+    network4 = sgd1(network3,x,t)
+    network5 = sgd1(network4,x1,t1)
     :io.write(forward(network,x))
-    #:io.write(forward(network5,x1))
+    :io.write(forward(network5,x1))
   end
 
   def sgd1(network,x,t) do
