@@ -20,7 +20,7 @@ defmodule Deep do
   #65
   def test1() do
     network = init_network()
-    x = [[1.0,0.5]]
+    x = [[1.0,0.5,1.0,0.4]]
     forward(network,x)
   end
 
@@ -71,21 +71,21 @@ defmodule Deep do
 
 
   def init_network() do
-    [[[0.5,0.5,0.5],[0.5,0.5,0.5]],
-     [[0.5,0.5,0.5]],
+    [[[0.4,0.5,0.3],[0.3,1.0,0.45],[0.43,0.45,0.55],[0.45,0.45,0.77]],
+     [[0,0,0]],
      fn(x) -> sigmoid(x) end,
      fn(x) -> (1-x)*x end,
-     0.9,
+     0.1,
      [[0.5,0.5],[0.5,0.5],[0.5,0.5]],
-     [[0.5,0.5]],
+     [[0,0]],
      fn(x) -> sigmoid(x) end,
      fn(x) -> (1-x)*x end,
      0.05,
-     [[0.5,0.5],[0.5,0.5]],
-     [[0.5,0.5]],
-     fn(x) -> sigmoid(x) end,
+     [[0.4,0.59],[0.51,0.41]],
+     [[0,0]],
+     fn(x) -> softmax(x) end,
      fn(x) -> (1-x)*x end,
-     0.01]
+     1]
   end
 
 
@@ -138,9 +138,6 @@ defmodule Deep do
     h = 0.0001
     y0 = forward(network,x)
     y1 = forward_w(network,x,n,r,c,h)
-    if is_minus(y0) do
-      :io.write(y0)
-    end
     (mean_square(y1,t) - mean_square(y0,t)) / h
   end
 
@@ -153,9 +150,6 @@ defmodule Deep do
     h = 0.0001
     y0 = forward(network,x)
     y1 = forward_b(network,x,n,c,h)
-    if is_minus(y0) do
-      :io.write(y0)
-    end
     (mean_square(y1,t) - mean_square(y0,t)) / h
   end
 
@@ -183,18 +177,24 @@ defmodule Deep do
   end
 
   def sgd() do
-    x = [[0.5,1]]
-    t = [[0.8,0.5]]
-    x1 = [[1,0.5]]
+    x0 = [[1.0,1.0,1,1]]
+    t0 = [[0.8,0.5]]
+    x1 = [[1,0,0,1]]
     t1 = [[0.5,0.8]]
-    network = sgd1(init_network(),x,t)
-    network1 = sgd1(network,x1,t1)
-    network2 = sgd1(network1,x,t)
-    network3 = sgd1(network2,x1,t1)
-    network4 = sgd1(network3,x,t)
-    network5 = sgd1(network4,x1,t1)
-    :io.write(forward(network5,x))
-    :io.write(forward(network5,x1))
+    network = init_network()
+    network1 = sgd1(network,x0,t0)
+    :io.write(forward(network1,x0))
+    IO.puts("")
+    :io.write(network1)
+  end
+
+  def mini_batch(network,_,_,_,_,0) do network end
+  def mini_batch(network,x0,t0,x1,t1,n) do
+    network1 = gradient(network,x0,t0)
+    network2 = learning(network,network1)
+    network3 = gradient(network2,x1,t1)
+    network4 = learning(network2,network3)
+    mini_batch(network4,x0,t0,x1,t1,n-1)
   end
 
   def sgd1(network,x,t) do
