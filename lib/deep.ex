@@ -71,49 +71,57 @@ defmodule Deep do
 
 
   def init_network() do
-    [[[0.4,0.5,0.3],[0.3,1.0,0.45],[0.43,0.45,0.55],[0.45,0.45,0.77]],
+    [[[0.06,0.17,0.12],
+      [0.08,0.33,0.16],
+      [0.15,0.92,0.12],
+      [0.98,0.11,0.20],
+      [0.06,0.91,0.12],
+      [0.29,0.18,0.21],
+      [0.35,0.12,0.22],
+      [0.19,0.97,0.03],
+      [1.00,0.16,0.93],
+      [0.89,0.97,0.11],
+      [0.94,0.12,0.09],
+      [0.04,0.06,0.13]],
      [[0,0,0]],
      fn(x) -> sigmoid(x) end,
      fn(x) -> (1-x)*x end,
-     0.1,
-     [[0.5,0.5],[0.5,0.5],[0.5,0.5]],
+     1,
+     [[0.18,0.92],
+      [0.06,0.99],
+      [0.10,0.84]],
      [[0,0]],
      fn(x) -> sigmoid(x) end,
      fn(x) -> (1-x)*x end,
-     0.05,
-     [[0.4,0.59],[0.51,0.41]],
-     [[0,0]],
-     fn(x) -> softmax(x) end,
-     fn(x) -> (1-x)*x end,
-     1]
+     0.1]
   end
 
 
   def forward([],x) do x end
   def forward([w,b,f,_,_|rest],x) do
-    x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward(rest,x1)
   end
 
   def forward_w([],x,_,_,_,_) do x end
   def forward_w([w,b,f,_,_|rest],x,0,r,c,d) do
     w1 = Dmatrix.diff(w,r,c,d)
-    x1 = Matrix.mult(x,w1)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w1)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward_w(rest,x1,-1,r,c,d)
   end
   def forward_w([w,b,f,_,_|rest],x,n,r,c,d) do
-    x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward_w(rest,x1,n-1,r,c,d)
   end
 
   def forward_b([],x,_,_,_) do x end
   def forward_b([w,b,f,_,_|rest],x,0,c,d) do
     b1 = Dmatrix.diff(b,0,c,d)
-    x1 = Matrix.mult(x,w)|> Matrix.add(b1) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b1) |> Enum.map(fn(x) -> f.(x) end)
     forward_b(rest,x1,-1,c,d)
   end
   def forward_b([w,b,f,_,_|rest],x,n,c,d) do
-    x1 = Matrix.mult(x,w)|> Matrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
     forward_b(rest,x1,n-1,c,d)
   end
 
@@ -165,8 +173,8 @@ defmodule Deep do
   def back1([g,f,_,w|rest],l,res) do
     l1 = Enum.map(l,fn(x) -> g.(x) end)
     w1 = Matrix.transpose(w)
-    l2 = Matrix.mult(l1,w1)
-    w2 = Matrix.mult(Matrix.transpose(l2),l1)
+    l2 = Dmatrix.mult(l1,w1)
+    w2 = Dmatrix.mult(Matrix.transpose(l2),l1)
     back1(rest,l2,[g,f,l1,w2|res])
   end
 
@@ -177,24 +185,26 @@ defmodule Deep do
   end
 
   def sgd() do
-    x0 = [[1.0,1.0,1,1]]
-    t0 = [[0.8,0.5]]
-    x1 = [[1,0,0,1]]
-    t1 = [[0.5,0.8]]
     network = init_network()
-    network1 = sgd1(network,x0,t0)
-    :io.write(forward(network1,x0))
-    IO.puts("")
-    :io.write(network1)
+    dt = Train.dt()
+    network1 = mini_batch(network,dt,1000)
+    :io.write(forward(network1,Enum.at(dt,0)))
+    :io.write(forward(network1,Enum.at(dt,2)))
+    :io.write(forward(network1,Enum.at(dt,4)))
+    :io.write(forward(network1,Enum.at(dt,6)))
   end
 
-  def mini_batch(network,_,_,_,_,0) do network end
-  def mini_batch(network,x0,t0,x1,t1,n) do
-    network1 = gradient(network,x0,t0)
+  def mini_batch(network,_,0) do  network end
+  def mini_batch(network,dt,n) do
+    network1 = mini_batch1(network,dt)
+    mini_batch(network1,dt,n-1)
+  end
+
+  def mini_batch1(network,[]) do network end
+  def mini_batch1(network,[x,t|rest]) do
+    network1 = gradient(network,x,t)
     network2 = learning(network,network1)
-    network3 = gradient(network2,x1,t1)
-    network4 = learning(network2,network3)
-    mini_batch(network4,x0,t0,x1,t1,n-1)
+    mini_batch1(network2,rest)
   end
 
   def sgd1(network,x,t) do
@@ -213,6 +223,32 @@ defmodule Deep do
 end
 
 defmodule Dmatrix do
+
+  def mult(x,y) do
+    {_,c} = Matrix.size(x)
+    {r,_} = Matrix.size(y)
+    if r != c do
+      IO.puts("mult error")
+      :io.write(x)
+      :io.write(y)
+    else
+      Matrix.mult(x,y)
+    end
+  end
+
+  def add(x,y) do
+    {r1,c1} = Matrix.size(x)
+    {r2,c2} = Matrix.size(y)
+    if r1 != r2 or c1 != c2 do
+      IO.puts("add error")
+      :io.write(x)
+      :io.write(y)
+    else
+      Matrix.add(x,y)
+    end
+  end
+
+
   def element_mult([],[],_) do [] end
   def element_mult([x|xs],[y|ys],r) do
     [element_mult1(x,y,r)|element_mult(xs,ys,r)]
@@ -272,5 +308,30 @@ defmodule MNIST do
   def byte_to_list1(<<b,bs::binary>>,n,ls,res) do
     byte_to_list1(bs,n-1,[b|ls],res)
   end
+end
 
+
+defmodule Train do
+    def dt() do
+      [[[1,1,1,
+         1,0,1,
+         1,0,1,
+         1,1,1]],
+        [[1,0]],
+       [[0,1,1,
+         1,0,1,
+         1,0,1,
+         1,1,1]],
+        [[1,0]],
+       [[1,0,1,
+         0,1,0,
+         1,0,1,
+         0,0,0]],
+        [[0,1]],
+       [[1,0,1,
+         0,1,0,
+         1,0,1,
+         1,0,0]],
+        [[0,1]]]
+    end
 end
