@@ -21,12 +21,24 @@ defmodule Deep do
     Enum.map(x,fn(y) -> 1 / (1+:math.exp(-y)) end )
   end
 
+  def dsigmoid(x) do
+    (1-x)*x
+  end
+
   def step(x) do
     Enum.map(x,fn(y) -> if y > 0 do 1 else 0 end end)
   end
 
   def relu(x) do
-    Enum.map(x,fn(y) -> min(0,y) end)
+    Enum.map(x,fn(y) -> max(0,y) end)
+  end
+
+  def drelu(x) do
+    if x > 0 do
+      1
+    else
+      0
+    end
   end
 
   def ident(x) do
@@ -76,16 +88,16 @@ defmodule Deep do
       [0.94,0.12,0.09],
       [0.04,0.06,0.13]],
      [[0,0,0]],
-     fn(x) -> sigmoid(x) end,
-     fn(x) -> (1-x)*x end,
-     1,
+     fn(x) -> relu(x) end,
+     fn(x) -> drelu(x) end,
+     0.01,
      [[0.18,0.92],
       [0.96,0.19],
       [0.92,0.04]],
      [[0,0]],
-     fn(x) -> sigmoid(x) end,
-     fn(x) -> (1-x)*x end,
-     0.3]
+     fn(x) -> relu(x) end,
+     fn(x) -> drelu(x) end,
+     0.01]
   end
 
 
@@ -157,17 +169,21 @@ defmodule Deep do
     Enum.any?(x,fn(x) -> x < 0 end)
   end
 
+  def bgradient(network,x,t) do
+    x1 = forward(network,x)
+    l = Matrix.sub(x1,t)
+    back(network,l)
+  end
   def back(network,l) do
     back1(Enum.reverse(network),l,[])
   end
 
-  def back1([],_,res) do Enum.reverse(res) end
-  def back1([g,f,_,w|rest],l,res) do
-    l1 = Enum.map(l,fn(x) -> g.(x) end)
-    w1 = Matrix.transpose(w)
-    l2 = Dmatrix.mult(l1,w1)
+  def back1([],_,res) do res end
+  def back1([r,g,f,_,w|rest],l,res) do
+    l1 = [Enum.map(hd(l),fn(x) -> g.(x) end)]
+    l2 = Dmatrix.mult(l1,Matrix.transpose(w))
     w2 = Dmatrix.mult(Matrix.transpose(l2),l1)
-    back1(rest,l2,[g,f,l1,w2|res])
+    back1(rest,l2,[w2,l1,f,g,r|res])
   end
 
   def learning([],_) do [] end
@@ -182,7 +198,9 @@ defmodule Deep do
            1,0,1,
            1,1,1]]
     t1 = [[1,0]]
-     gradient(init_network(),dt1,t1)
+    network = init_network()
+    print_network(bgradient(network,dt1,t1))
+    print_network(gradient(network,dt1,t1))
   end
 
   def sgd() do
@@ -208,6 +226,7 @@ defmodule Deep do
 
   def mini_batch1(network,[]) do network end
   def mini_batch1(network,[x,t|rest]) do
+    #network1 = gradient(network,x,t)
     network1 = gradient(network,x,t)
     network2 = learning(network,network1)
     mini_batch1(network2,rest)
