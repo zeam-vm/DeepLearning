@@ -17,14 +17,6 @@ defmodule Deep do
   end
 
 
-  #65
-  def test1() do
-    network = init_network()
-    x = [[1.0,0.5,1.0,0.4]]
-    forward(network,x)
-  end
-
-
   def sigmoid(x) do
     Enum.map(x,fn(y) -> 1 / (1+:math.exp(-y)) end )
   end
@@ -72,10 +64,10 @@ defmodule Deep do
 
   def init_network() do
     [[[0.06,0.17,0.12],
-      [0.08,0.33,0.16],
+      [0.08,0.33,0.18],
       [0.15,0.92,0.12],
       [0.98,0.11,0.20],
-      [0.06,0.91,0.12],
+      [0.08,0.91,0.12],
       [0.29,0.18,0.21],
       [0.35,0.12,0.22],
       [0.19,0.97,0.03],
@@ -88,12 +80,12 @@ defmodule Deep do
      fn(x) -> (1-x)*x end,
      1,
      [[0.18,0.92],
-      [0.06,0.99],
-      [0.10,0.84]],
+      [0.96,0.19],
+      [0.92,0.04]],
      [[0,0]],
      fn(x) -> sigmoid(x) end,
      fn(x) -> (1-x)*x end,
-     0.1]
+     0.3]
   end
 
 
@@ -143,7 +135,7 @@ defmodule Deep do
   end
 
   def gradient_w1(x,r,c,n,network,t) do
-    h = 0.0001
+    h = 0.01
     y0 = forward(network,x)
     y1 = forward_w(network,x,n,r,c,h)
     (mean_square(y1,t) - mean_square(y0,t)) / h
@@ -155,7 +147,7 @@ defmodule Deep do
   end
 
   def gradient_b1(x,c,n,network,t) do
-    h = 0.0001
+    h = 0.01
     y0 = forward(network,x)
     y1 = forward_b(network,x,n,c,h)
     (mean_square(y1,t) - mean_square(y0,t)) / h
@@ -184,14 +176,28 @@ defmodule Deep do
      learning(rest,gradrest)]
   end
 
+  def foo() do
+    dt1 = [[1,1,1,
+           1,0,1,
+           1,0,1,
+           1,1,1]]
+    t1 = [[1,0]]
+     gradient(init_network(),dt1,t1)
+  end
+
   def sgd() do
     network = init_network()
     dt = Train.dt()
-    network1 = mini_batch(network,dt,1000)
+    network1 = mini_batch(network,dt,2000)
     :io.write(forward(network1,Enum.at(dt,0)))
-    :io.write(forward(network1,Enum.at(dt,2)))
-    :io.write(forward(network1,Enum.at(dt,4)))
-    :io.write(forward(network1,Enum.at(dt,6)))
+    :io.write(Enum.at(dt,1))
+    :io.write(forward(network1,Enum.at(dt,14)))
+    :io.write(Enum.at(dt,15))
+    dt = [[1,1,1,
+           0,0,1,
+           1,0,1,
+           1,1,1]]
+    :io.write(forward(network1,dt))
   end
 
   def mini_batch(network,_,0) do  network end
@@ -220,9 +226,54 @@ defmodule Deep do
     end
   end
 
+  def print_network([]) do
+    IO.puts("")
+  end
+  def print_network([x|xs]) do
+    if is_list(x) do
+      Dmatrix.print(x)
+    else
+      :io.write(x)
+    end
+    print_network(xs)
+  end
+
+  def test_network() do
+    [[[1,2],
+      [3,4],
+      [5,6]],
+     [[0,0]],
+     fn(x) -> ident(x) end,
+     fn(x) -> ident(x) end,
+     1]
+  end
+
+
+  def test1(x) do
+    network = test_network()
+    forward(network,x)
+  end
+  def test2(x,r,c,d) do
+    network = test_network()
+    forward_w(network,x,0,r,c,d)
+  end
+  def test3(x,r,c,t) do
+    network = test_network()
+    gradient_w1(x,0,r,c,network,t)
+  end
+
 end
 
 defmodule Dmatrix do
+
+  def print([]) do
+    IO.puts("")
+  end
+  def print([x|xs]) do
+    :io.write(x)
+    IO.puts("")
+    print(xs)
+  end
 
   def mult(x,y) do
     {_,c} = Matrix.size(x)
@@ -318,11 +369,36 @@ defmodule Train do
          1,0,1,
          1,1,1]],
         [[1,0]],
-       [[0,1,1,
+        [[1,0,1,
+          0,1,0,
+          0,1,1,
+          1,0,1]],
+         [[0,1]],
+        [[1,0,1,
+          0,1,0,
+          0,1,1,
+          1,0,1]],
+         [[0,1]],
+       [[1,1,1,
          1,0,1,
+         1,0,1,
+         1,1,0]],
+       [[1,0]],
+       [[1,1,1,
+         1,0,1,
+         1,0,1,
+         0,1,1]],
+       [[1,0]],
+       [[0,0,0,
+         1,1,1,
          1,0,1,
          1,1,1]],
-        [[1,0]],
+       [[1,0]],
+       [[0,0,0,
+         0,1,1,
+         1,0,1,
+         1,1,1]],
+       [[1,0]],
        [[1,0,1,
          0,1,0,
          1,0,1,
@@ -332,6 +408,36 @@ defmodule Train do
          0,1,0,
          1,0,1,
          1,0,0]],
+        [[0,1]],
+       [[1,0,1,
+         0,1,0,
+         1,0,1,
+         0,0,1]],
+        [[0,1]],
+        [[0,1,1,
+          1,0,1,
+          1,0,1,
+          1,1,1]],
+         [[1,0]],
+        [[1,1,0,
+          1,0,1,
+          1,0,1,
+          1,1,0]],
+        [[1,0]],
+       [[1,0,1,
+         0,1,0,
+         0,1,0,
+         1,0,1,]],
+        [[0,1]],
+       [[1,0,1,
+         0,1,0,
+         1,1,0,
+         1,0,1]],
+        [[0,1]],
+       [[1,0,1,
+         1,1,0,
+         0,1,0,
+         1,0,1]],
         [[0,1]]]
     end
 end
