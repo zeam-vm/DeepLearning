@@ -1,17 +1,119 @@
+defmodule Dmatrix do
+  # box-muller rand
+  def box_muller() do
+    x = :rand.uniform()
+    y = :rand.uniform()
+    :math.sqrt(-2.0 * :math.log(x)) * :math.cos(2.0 * :math.pi * y);
+  end
+
+  #generate initial wweight matrix with box-muller
+  def new(0,_) do [] end
+  def new(r,c) do
+    [new1(c)|new(r-1,c)]
+  end
+
+  def new1(0) do [] end
+  def new1(c) do
+    [box_muller()|new1(c-1)]
+  end
+
+  defmacro time(exp) do
+    quote do
+    {time, dict} = :timer.tc(fn() -> unquote(exp) end)
+    IO.inspect "time: #{time} micro second"
+    IO.inspect "-------------"
+    dict
+    end
+  end
+
+  # network macro is unfinished
+  defmacro network(r,c,f,g,r) do
+    m = new(r,c)
+    b = Matrix.new(1,c,0)
+    quote do
+      [unquote(m),
+       unquote(b),
+       fn(x) -> unquote(f) end,
+       fn(x) -> unquote(g) end,
+       unquote(r)]
+    end
+  end
+
+  def print([]) do
+    IO.puts("")
+  end
+  def print([x|xs]) do
+    :io.write(x)
+    IO.puts("")
+    print(xs)
+  end
+
+  def mult(x,y) do
+    {_,c} = Matrix.size(x)
+    {r,_} = Matrix.size(y)
+    if r != c do
+      IO.puts("Dmatrix mult error")
+      :io.write(x)
+      :io.write(y)
+    else
+      Matrix.mult(x,y)
+    end
+  end
+
+  def add(x,y) do
+    {r1,c1} = Matrix.size(x)
+    {r2,c2} = Matrix.size(y)
+    if r1 != r2 or c1 != c2 do
+      IO.puts("Dmatrix add error")
+      :io.write(x)
+      :io.write(y)
+    else
+      Matrix.add(x,y)
+    end
+  end
+
+
+  def element_mult([],[],_) do [] end
+  def element_mult([x|xs],[y|ys],r) do
+    [element_mult1(x,y,r)|element_mult(xs,ys,r)]
+  end
+
+  def element_mult1([],[],_) do [] end
+  def element_mult1([x|xs],[y|ys],r) do
+    [x-x*y*r|element_mult1(xs,ys,r)]
+  end
+
+  def diff([],_,_,_) do [] end
+  def diff([m|ms],0,c,d) do
+    [diff1(m,0,c,d)|diff(ms,-1,c,d)]
+  end
+  def diff([m|ms],r,c,d) do
+    [m|diff(ms,r-1,c,d)]
+  end
+
+  def diff1([],_,_,_) do [] end
+  def diff1([v|vs],0,0,d) do
+    [v+d|diff1(vs,0,-1,d)]
+  end
+  def diff1([v|vs],0,c,d) do
+    [v|diff1(vs,0,c-1,d)]
+  end
+
+end
+
 defmodule DL do
+   require Dmatrix
   @moduledoc """
   Documentation for DL.
   """
 
   @doc """
-  Hello world.
-
   ## Examples
 
 
 
   """
-
+  # activation function
   def sigmoid(x) do
     Enum.map(x,fn(y) -> 1 / (1+:math.exp(-y)) end )
   end
@@ -29,15 +131,15 @@ defmodule DL do
   end
 
   def drelu(x) do
-    if x > 0 do
-      1
-    else
-      0
-    end
+    if x > 0 do 1 else 0 end
   end
 
   def ident(x) do
     Enum.map(x,fn(y) -> y end)
+  end
+
+  def dident(_) do
+    1
   end
 
   def softmax(x) do
@@ -208,68 +310,6 @@ defmodule DL do
 
 end
 
-defmodule Dmatrix do
-  def print([]) do
-    IO.puts("")
-  end
-  def print([x|xs]) do
-    :io.write(x)
-    IO.puts("")
-    print(xs)
-  end
-
-  def mult(x,y) do
-    {_,c} = Matrix.size(x)
-    {r,_} = Matrix.size(y)
-    if r != c do
-      IO.puts("Dmatrix mult error")
-      :io.write(x)
-      :io.write(y)
-    else
-      Matrix.mult(x,y)
-    end
-  end
-
-  def add(x,y) do
-    {r1,c1} = Matrix.size(x)
-    {r2,c2} = Matrix.size(y)
-    if r1 != r2 or c1 != c2 do
-      IO.puts("Dmatrix add error")
-      :io.write(x)
-      :io.write(y)
-    else
-      Matrix.add(x,y)
-    end
-  end
-
-
-  def element_mult([],[],_) do [] end
-  def element_mult([x|xs],[y|ys],r) do
-    [element_mult1(x,y,r)|element_mult(xs,ys,r)]
-  end
-
-  def element_mult1([],[],_) do [] end
-  def element_mult1([x|xs],[y|ys],r) do
-    [x-x*y*r|element_mult1(xs,ys,r)]
-  end
-
-  def diff([],_,_,_) do [] end
-  def diff([m|ms],0,c,d) do
-    [diff1(m,0,c,d)|diff(ms,-1,c,d)]
-  end
-  def diff([m|ms],r,c,d) do
-    [m|diff(ms,r-1,c,d)]
-  end
-
-  def diff1([],_,_,_) do [] end
-  def diff1([v|vs],0,0,d) do
-    [v+d|diff1(vs,0,-1,d)]
-  end
-  def diff1([v|vs],0,c,d) do
-    [v|diff1(vs,0,c-1,d)]
-  end
-
-end
 
 defmodule MNIST do
   def train_label() do
