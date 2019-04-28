@@ -1,6 +1,6 @@
-defmodule Deep do
+defmodule DL do
   @moduledoc """
-  Documentation for Deep.
+  Documentation for DL.
   """
 
   @doc """
@@ -8,14 +8,9 @@ defmodule Deep do
 
   ## Examples
 
-      iex> Deep.hello()
-      :world
+
 
   """
-  def foo (x) do
-    x+1
-  end
-
 
   def sigmoid(x) do
     Enum.map(x,fn(y) -> 1 / (1+:math.exp(-y)) end )
@@ -50,9 +45,6 @@ defmodule Deep do
     Enum.map(x, fn(y) -> :math.exp(y)/sum end)
   end
 
-  def square(x) do
-    x*x
-  end
 
   #error function
   def cross_entropy([x],[y]) do
@@ -73,31 +65,8 @@ defmodule Deep do
     square(x-t) + mean_square1(xs,ts)
   end
 
-
-  def init_network() do
-    [[[0.06,0.17,0.12],
-      [0.08,0.33,0.18],
-      [0.15,0.92,0.12],
-      [0.98,0.11,0.20],
-      [0.08,0.91,0.12],
-      [0.29,0.18,0.21],
-      [0.35,0.12,0.22],
-      [0.19,0.97,0.03],
-      [1.00,0.16,0.93],
-      [0.89,0.97,0.11],
-      [0.94,0.12,0.09],
-      [0.04,0.06,0.13]],
-     [[0,0,0]],
-     fn(x) -> relu(x) end,
-     fn(x) -> drelu(x) end,
-     0.01,
-     [[0.18,0.92],
-      [0.96,0.19],
-      [0.92,0.04]],
-     [[0,0]],
-     fn(x) -> relu(x) end,
-     fn(x) -> drelu(x) end,
-     0.01]
+  def square(x) do
+    x*x
   end
 
 
@@ -107,13 +76,13 @@ defmodule Deep do
     forward(rest,x1)
   end
 
-  def bforward(network,x) do
-    bforward1(network,x,[x])
+  def foward_for_back(network,x) do
+    foward_for_back1(network,x,[x])
   end
-  def bforward1([],_,res) do res end
-  def bforward1([w,b,f,_,_|rest],x,res) do
+  def foward_for_back1([],_,res) do res end
+  def foward_for_back1([w,b,f,_,_|rest],x,res) do
     x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
-    bforward1(rest,x1,[x1|res])
+    foward_for_back1(rest,x1,[x1|res])
   end
 
   def forward_w([],x,_,_,_,_) do x end
@@ -138,61 +107,57 @@ defmodule Deep do
     forward_b(rest,x1,n-1,c,d)
   end
 
-  def gradient(network,x,t) do
-    gradient1(network,x,t,0,network)
+  def numerical_gradient(network,x,t) do
+    numerical_gradient1(network,x,t,0,network)
   end
 
-  def gradient1([],_,_,_,_) do [] end
-  def gradient1([w,b,f,g,r|rest],x,t,n,network) do
-    [gradient_w(w,x,n,network,t),gradient_b(b,x,n,network,t),f,g,r|
-     gradient1(rest,x,t,n+1,network)]
+  def numerical_gradient1([],_,_,_,_) do [] end
+  def numerical_gradient1([w,b,f,g,r|rest],x,t,n,network) do
+    [numerical_gradient_w(w,x,n,network,t),numerical_gradient_b(b,x,n,network,t),f,g,r|
+     numerical_gradient1(rest,x,t,n+1,network)]
   end
 
-  def gradient_w(w,x,n,network,t) do
+  def numerical_gradient_w(w,x,n,network,t) do
     {r,c} = Matrix.size(w)
     Enum.map(0..r-1,
       fn(x1) -> Enum.map(0..c-1,
-                  fn(y1) -> gradient_w1(x,x1,y1,n,network,t) end) end)
+                  fn(y1) -> numerical_gradient_w1(x,x1,y1,n,network,t) end) end)
   end
 
-  def gradient_w1(x,r,c,n,network,t) do
-    h = 0.01
+  def numerical_gradient_w1(x,r,c,n,network,t) do
+    h = 0.0001
     y0 = forward(network,x)
     y1 = forward_w(network,x,n,r,c,h)
     (mean_square(y1,t) - mean_square(y0,t)) / h
   end
 
-  def gradient_b(b,x,n,network,t) do
+  def numerical_gradient_b(b,x,n,network,t) do
     {_,c} = Matrix.size(b)
-    [Enum.map(0..c-1,fn(y1) -> gradient_b1(x,y1,n,network,t) end)]
+    [Enum.map(0..c-1,fn(y1) -> numerical_gradient_b1(x,y1,n,network,t) end)]
   end
 
-  def gradient_b1(x,c,n,network,t) do
-    h = 0.01
+  def numerical_gradient_b1(x,c,n,network,t) do
+    h = 0.0001
     y0 = forward(network,x)
     y1 = forward_b(network,x,n,c,h)
     (mean_square(y1,t) - mean_square(y0,t)) / h
   end
 
-  def is_minus(x) do
-    Enum.any?(x,fn(x) -> x < 0 end)
-  end
-
-  def bgradient(network,x,t) do
-    x1 = bforward(network,x)
+  def gradient(network,x,t) do
+    x1 = foward_for_back(network,x)
     l = Matrix.sub(hd(x1),t)
-    back(network,l,tl(x1))
+    backpropagation(network,l,tl(x1))
   end
-  def back(network,l,u) do
-    back1(Enum.reverse(network),l,u,[])
+  def backpropagation(network,l,u) do
+    backpropagation1(Enum.reverse(network),l,u,[])
   end
 
-  def back1([],_,_,res) do res end
-  def back1([r,g,f,_,w|rest],l,[u|us],res) do
+  def backpropagation1([],_,_,res) do res end
+  def backpropagation1([r,g,f,_,w|rest],l,[u|us],res) do
     l1 = [Enum.map(hd(l),fn(x) -> g.(x)*x end)]
     l2 = Dmatrix.mult(l1,Matrix.transpose(w))
     w2 = Dmatrix.mult(Matrix.transpose(u),l1)
-    back1(rest,l2,us,[w2,l1,f,g,r|res])
+    backpropagation1(rest,l2,us,[w2,l1,f,g,r|res])
   end
 
   def learning([],_) do [] end
@@ -201,21 +166,9 @@ defmodule Deep do
      learning(rest,gradrest)]
   end
 
-  def foo() do
-    dt1 = [[1,1,1,
-           1,0,1,
-           1,0,1,
-           1,1,1]]
-    t1 = [[1,0]]
-
-    network = init_network()
-    print_network(bgradient(network,dt1,t1))
-    print_network(gradient(network,dt1,t1))
-  end
-
   def sgd() do
-    network = init_network()
-    dt = Train.dt()
+    network = Test.init_network()
+    dt = Test.dt()
     network1 = mini_batch(network,dt,100)
     :io.write(forward(network1,Enum.at(dt,0)))
     :io.write(Enum.at(dt,1))
@@ -236,23 +189,9 @@ defmodule Deep do
 
   def mini_batch1(network,[]) do network end
   def mini_batch1(network,[x,t|rest]) do
-    #network1 = gradient(network,x,t)
-    network1 = bgradient(network,x,t)
+    network1 = numerical_gradient(network,x,t)
     network2 = learning(network,network1)
     mini_batch1(network2,rest)
-  end
-
-  def sgd1(network,x,t) do
-    x1 = forward(network,x)
-    error = mean_square(x1,t)
-    IO.puts(error)
-    if error < 0.001 do
-      network
-    else
-      network1 = gradient(network,x,t)
-      network2 = learning(network,network1)
-      sgd1(network2,x,t)
-    end
   end
 
   def print_network([]) do
@@ -267,34 +206,9 @@ defmodule Deep do
     print_network(xs)
   end
 
-  def test_network() do
-    [[[1,2],
-      [3,4],
-      [5,6]],
-     [[0,0]],
-     fn(x) -> ident(x) end,
-     fn(x) -> ident(x) end,
-     1]
-  end
-
-
-  def test1(x) do
-    network = test_network()
-    forward(network,x)
-  end
-  def test2(x,r,c,d) do
-    network = test_network()
-    forward_w(network,x,0,r,c,d)
-  end
-  def test3(x,r,c,t) do
-    network = test_network()
-    gradient_w1(x,0,r,c,network,t)
-  end
-
 end
 
 defmodule Dmatrix do
-
   def print([]) do
     IO.puts("")
   end
@@ -308,7 +222,7 @@ defmodule Dmatrix do
     {_,c} = Matrix.size(x)
     {r,_} = Matrix.size(y)
     if r != c do
-      IO.puts("mult error")
+      IO.puts("Dmatrix mult error")
       :io.write(x)
       :io.write(y)
     else
@@ -320,7 +234,7 @@ defmodule Dmatrix do
     {r1,c1} = Matrix.size(x)
     {r2,c2} = Matrix.size(y)
     if r1 != r2 or c1 != c2 do
-      IO.puts("add error")
+      IO.puts("Dmatrix add error")
       :io.write(x)
       :io.write(y)
     else
@@ -390,83 +304,144 @@ defmodule MNIST do
   end
 end
 
+defmodule Test do
+  def foo() do
+    dt1 = [[1,1,1,
+           1,0,1,
+           1,0,1,
+           1,1,1]]
+    t1 = [[1,0]]
 
-defmodule Train do
-    def dt() do
-      [[[1,1,1,
-         1,0,1,
-         1,0,1,
-         1,1,1]],
-        [[1,0]],
-        [[1,0,1,
-          0,1,0,
-          0,1,1,
-          1,0,1]],
-         [[0,1]],
-        [[1,0,1,
-          0,1,0,
-          0,1,1,
-          1,0,1]],
-         [[0,1]],
-       [[1,1,1,
-         1,0,1,
-         1,0,1,
-         1,1,0]],
+    network = Test.init_network()
+    DL.print_network(DL.gradient(network,dt1,t1))
+    DL.print_network(DL.numerical_gradient(network,dt1,t1))
+  end
+
+  def init_network() do
+    [[[0.06,0.17,0.12],
+      [0.08,0.33,0.18],
+      [0.15,0.92,0.12],
+      [0.98,0.11,0.20],
+      [0.08,0.91,0.12],
+      [0.29,0.18,0.21],
+      [0.35,0.12,0.22],
+      [0.19,0.97,0.03],
+      [1.00,0.16,0.93],
+      [0.89,0.97,0.11],
+      [0.94,0.12,0.09],
+      [0.04,0.06,0.13]],
+     [[0,0,0]],
+     fn(x) -> DL.relu(x) end,
+     fn(x) -> DL.drelu(x) end,
+     0.01,
+     [[0.18,0.92],
+      [0.96,0.19],
+      [0.92,0.04]],
+     [[0,0]],
+     fn(x) -> DL.relu(x) end,
+     fn(x) -> DL.drelu(x) end,
+     0.01]
+  end
+
+
+  def test_network() do
+    [[[1,2],
+      [3,4],
+      [5,6]],
+     [[0,0]],
+     fn(x) -> DL.ident(x) end,
+     fn(x) -> DL.ident(x) end,
+     1]
+  end
+
+  def dt() do
+    [[[1,1,1,
+       1,0,1,
+       1,0,1,
+       1,1,1]],
+      [[1,0]],
+      [[1,0,1,
+        0,1,0,
+        0,1,1,
+        1,0,1]],
+       [[0,1]],
+      [[1,0,1,
+        0,1,0,
+        0,1,1,
+        1,0,1]],
+       [[0,1]],
+     [[1,1,1,
+       1,0,1,
+       1,0,1,
+       1,1,0]],
+     [[1,0]],
+     [[1,1,1,
+       1,0,1,
+       1,0,1,
+       0,1,1]],
+     [[1,0]],
+     [[0,0,0,
+       1,1,1,
+       1,0,1,
+       1,1,1]],
+     [[1,0]],
+     [[0,0,0,
+       0,1,1,
+       1,0,1,
+       1,1,1]],
+     [[1,0]],
+     [[1,0,1,
+       0,1,0,
+       1,0,1,
+       0,0,0]],
+      [[0,1]],
+     [[1,0,1,
+       0,1,0,
+       1,0,1,
+       1,0,0]],
+      [[0,1]],
+     [[1,0,1,
+       0,1,0,
+       1,0,1,
+       0,0,1]],
+      [[0,1]],
+      [[0,1,1,
+        1,0,1,
+        1,0,1,
+        1,1,1]],
        [[1,0]],
-       [[1,1,1,
-         1,0,1,
-         1,0,1,
-         0,1,1]],
-       [[1,0]],
-       [[0,0,0,
-         1,1,1,
-         1,0,1,
-         1,1,1]],
-       [[1,0]],
-       [[0,0,0,
-         0,1,1,
-         1,0,1,
-         1,1,1]],
-       [[1,0]],
-       [[1,0,1,
-         0,1,0,
-         1,0,1,
-         0,0,0]],
-        [[0,1]],
-       [[1,0,1,
-         0,1,0,
-         1,0,1,
-         1,0,0]],
-        [[0,1]],
-       [[1,0,1,
-         0,1,0,
-         1,0,1,
-         0,0,1]],
-        [[0,1]],
-        [[0,1,1,
-          1,0,1,
-          1,0,1,
-          1,1,1]],
-         [[1,0]],
-        [[1,1,0,
-          1,0,1,
-          1,0,1,
-          1,1,0]],
-        [[1,0]],
-       [[1,0,1,
-         0,1,0,
-         0,1,0,
-         1,0,1,]],
-        [[0,1]],
-       [[1,0,1,
-         0,1,0,
-         1,1,0,
-         1,0,1]],
-        [[0,1]],
-       [[1,0,1,
-         1,1,0,
-         0,1,0,
-         1,0,1]],
-        [[0,1]]]
-    end
+      [[1,1,0,
+        1,0,1,
+        1,0,1,
+        1,1,0]],
+      [[1,0]],
+     [[1,0,1,
+       0,1,0,
+       0,1,0,
+       1,0,1,]],
+      [[0,1]],
+     [[1,0,1,
+       0,1,0,
+       1,1,0,
+       1,0,1]],
+      [[0,1]],
+     [[1,0,1,
+       1,1,0,
+       0,1,0,
+       1,0,1]],
+      [[0,1]]]
+  end
+
+  def test1(x) do
+    network = test_network()
+    DL.forward(network,x)
+  end
+  def test2(x,r,c,d) do
+    network = test_network()
+    DL.forward_w(network,x,0,r,c,d)
+  end
+  def test3(x,r,c,t) do
+    network = test_network()
+    DL.numerical_gradient_w1(x,0,r,c,network,t)
+  end
 end
