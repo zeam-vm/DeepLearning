@@ -99,6 +99,92 @@ defmodule Dmatrix do
     [v|diff1(vs,0,c-1,d)]
   end
 
+  def convolute(x,y) do
+    {r1,c1} = Matrix.size(x)
+    {r2,c2} = Matrix.size(y)
+    convolute1(x,y,r1-r2+1,c1-c2+1,0,0,1)
+  end
+  def convolute(x,y,s,p) do
+    {r1,c1} = Matrix.size(x)
+    {r2,c2} = Matrix.size(y)
+    x1 = pad(x,p)
+    if rem(r1+2*p-r2,s) == 0 and  rem(c1+2*p-c2,s) == 0 do
+      convolute1(x1,y,r1-r2+1,c1-c2+1,0,0,s)
+    else
+      :error
+    end
+  end
+
+  def convolute1(_,_,r,_,r,_,_) do [] end
+  def convolute1(x,y,r,c,m,n,s) do
+    [convolute2(x,y,r,c,m,n,s)|convolute1(x,y,r,c,m+s,n,s)]
+  end
+
+  def convolute2(_,_,_,c,_,c,_) do [] end
+  def convolute2(x,y,r,c,m,n,s) do
+    [convolute_mult_sum(x,y,m,n)|convolute2(x,y,r,c,m,n+s,s)]
+  end
+
+  def convolute_mult_sum(x,y,m,n) do
+    {r,c} = Matrix.size(y)
+    x1 = part(x,m,n,r,c)
+    Matrix.emult(x1,y) |> sum
+  end
+
+  def pad(x,0) do x end
+  def pad(x,n) do
+    {_,c} = Matrix.size(x)
+    zero1 = Matrix.zeros(n,c+n*2)
+    zero2 = Matrix.zeros(1,n)
+    x1 = Enum.map(x,fn(y) -> hd(zero2) ++ y ++ hd(zero2) end)
+    zero1 ++ x1 ++ zero1
+  end
+
+  #partial matrix from position(tr,tc) size (m,n)
+  def part(x,tr,tc,m,n) do
+    {r,c} = Matrix.size(x)
+    if tr+m > r or tc+n > c do
+      :error
+    else
+      part1(x,tr,tc,tr+m,n,tr)
+    end
+  end
+
+  def part1(_,_,_,m,_,m) do [] end
+  def part1(x,tr,tc,m,n,r) do
+    l = Enum.at(x,r) |> Enum.drop(tc) |> Enum.take(n)
+    [l|part1(x,tr,tc,m,n,r+1)]
+  end
+
+  def sum(x) do
+    Enum.reduce(
+      Enum.map(x, fn(y) -> Enum.reduce(y, 0, fn(z,acc) -> z + acc end) end),
+      0, fn(z,acc) -> z + acc end)
+  end
+
+  def max(x) do
+    Enum.max(Enum.map(x, fn(y) -> Enum.max(y) end))
+  end
+
+  def pool(x,s) do
+    {r,c} = Matrix.size(x)
+    if rem(r,s) != 0 or rem(c,s) != 0 do
+      :error
+    else
+      pool1(x,r,c,0,s)
+    end
+  end
+
+  def pool1(_,r,_,r,_) do [] end
+  def pool1(x,r,c,m,s) do
+    [pool2(x,r,c,m,0,s)|pool1(x,r,c,m+s,s)]
+  end
+
+  def pool2(_,_,c,_,c,_) do [] end
+  def pool2(x,r,c,m,n,s) do
+    x1 = part(x,m,n,s,s)
+    [max(x1)|pool2(x,r,c,m,n+s,s)]
+  end
 end
 
 defmodule DL do
@@ -296,6 +382,16 @@ defmodule DL do
     mini_batch1(network2,rest)
   end
 
+  #for mini batch
+  def rand_sequence(c,n) do
+    rand_sequence1(c,n,[]) |> Enum.sort
+  end
+
+  def rand_sequence1(0,_,res) do res end
+  def rand_sequence1(c,n,res) do
+    rand_sequence1(c-1,n,[:rand.uniform(n)|res])
+  end
+
   def print_network([]) do
     IO.puts("")
   end
@@ -484,4 +580,28 @@ defmodule Test do
     network = test_network()
     DL.numerical_gradient_w1(x,0,r,c,network,t)
   end
+  def test4() do
+    a = [[1,2,3,0],
+         [0,1,2,3],
+         [3,0,1,2],
+         [2,3,0,1]]
+    b = [[2,0,1],
+         [0,1,2],
+         [1,0,2]]
+    Dmatrix.convolute(a,b)
+  end
+
+  def test5() do
+    a = [[1,2,3,0],
+         [0,1,2,3],
+         [3,0,1,2],
+         [2,3,0,1]]
+    b = [[2,0,1],
+         [0,1,2],
+         [1,0,2]]
+    Dmatrix.convolute(a,b,1,0)
+  end
+
+
+
 end
