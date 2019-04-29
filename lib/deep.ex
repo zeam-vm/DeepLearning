@@ -80,7 +80,7 @@ defmodule Dmatrix do
 
   def element_mult1([],[],_) do [] end
   def element_mult1([x|xs],[y|ys],r) do
-    [x-x*y*r|element_mult1(xs,ys,r)]
+    [x-y*r|element_mult1(xs,ys,r)]
   end
 
   def diff([],_,_,_) do [] end
@@ -264,13 +264,13 @@ defmodule DL do
     forward(rest,x1)
   end
 
-  def foward_for_back(network,x) do
-    foward_for_back1(network,x,[x])
+  def forward_for_back(network,x) do
+    forward_for_back1(network,x,[x])
   end
-  def foward_for_back1([],_,res) do res end
-  def foward_for_back1([w,b,f,_,_|rest],x,res) do
+  def forward_for_back1([],_,res) do res end
+  def forward_for_back1([w,b,f,_,_|rest],x,res) do
     x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
-    foward_for_back1(rest,x1,[x1|res])
+    forward_for_back1(rest,x1,[x1|res])
   end
 
   def forward_w([],x,_,_,_,_) do x end
@@ -332,7 +332,7 @@ defmodule DL do
   end
 
   def gradient(network,x,t) do
-    x1 = foward_for_back(network,x)
+    x1 = forward_for_back(network,x)
     l = Matrix.sub(hd(x1),t)
     backpropagation(network,l,tl(x1))
   end
@@ -342,7 +342,7 @@ defmodule DL do
 
   def backpropagation1([],_,_,res) do res end
   def backpropagation1([r,g,f,_,w|rest],l,[u|us],res) do
-    l1 = [Enum.map(hd(l),fn(x) -> g.(x)*x end)]
+    l1 = [Enum.map(hd(l),fn(x) -> g.(u)*x end)]
     l2 = Dmatrix.mult(l1,Matrix.transpose(w))
     w2 = Dmatrix.mult(Matrix.transpose(u),l1)
     backpropagation1(rest,l2,us,[w2,l1,f,g,r|res])
@@ -357,7 +357,7 @@ defmodule DL do
   def sgd() do
     network = Test.init_network()
     dt = Test.dt()
-    network1 = mini_batch(network,dt,100)
+    network1 = mini_batch(network,dt,500)
     :io.write(forward(network1,Enum.at(dt,0)))
     :io.write(Enum.at(dt,1))
     :io.write(forward(network1,Enum.at(dt,14)))
@@ -371,15 +371,20 @@ defmodule DL do
 
   def mini_batch(network,_,0) do  network end
   def mini_batch(network,dt,n) do
-    network1 = mini_batch1(network,dt)
+    network1 = mini_batch1(network,dt,0)
     mini_batch(network1,dt,n-1)
   end
 
-  def mini_batch1(network,[]) do network end
-  def mini_batch1(network,[x,t|rest]) do
-    network1 = numerical_gradient(network,x,t)
+  def mini_batch1(network,[],error) do
+    IO.puts(error)
+    network
+  end
+  def mini_batch1(network,[x,t|rest],error) do
+    network1 = gradient(network,x,t)
     network2 = learning(network,network1)
-    mini_batch1(network2,rest)
+    x1 = forward(network,x)
+    error1 = mean_square(x1,t)
+    mini_batch1(network2,rest,error1+error)
   end
 
   #for mini batch
