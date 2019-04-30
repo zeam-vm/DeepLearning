@@ -267,6 +267,7 @@ defmodule DL do
     forward_b(rest,x1,n-1,c,d)
   end
 
+  # numerical gradient
   def numerical_gradient(network,x,t) do
     numerical_gradient1(network,x,t,0,network)
   end
@@ -277,6 +278,7 @@ defmodule DL do
      numerical_gradient1(rest,x,t,n+1,network)]
   end
 
+  # numerical gradient for wight matrix
   def numerical_gradient_w(w,x,n,network,t) do
     {r,c} = Matrix.size(w)
     Enum.map(0..r-1,
@@ -291,6 +293,7 @@ defmodule DL do
     (mean_square(y1,t) - mean_square(y0,t)) / h
   end
 
+  # numerical gradient bias row vector
   def numerical_gradient_b(b,x,n,network,t) do
     {_,c} = Matrix.size(b)
     [Enum.map(0..c-1,fn(y1) -> numerical_gradient_b1(x,y1,n,network,t) end)]
@@ -309,6 +312,7 @@ defmodule DL do
     l = Matrix.sub(hd(x1),t)
     backpropagation(network,l,tl(x1))
   end
+
   def backpropagation(network,l,u) do
     backpropagation1(Enum.reverse(network),l,u,[])
   end
@@ -340,8 +344,8 @@ defmodule DL do
     network1 = mini_batch(network,dt,100)
     print(forward(network1,Enum.at(dt,0)))
     print(Enum.at(dt,1))
-    print(forward(network1,Enum.at(dt,14)))
-    print(Enum.at(dt,15))
+    print(forward(network1,Enum.at(dt,2)))
+    print(Enum.at(dt,3))
     dt = [[1,1,1,
            0,0,1,
            1,0,1,
