@@ -99,6 +99,7 @@ defmodule Dmatrix do
     [v|diff1(vs,0,c-1,d)]
   end
 
+  # for CNN
   def convolute(x,y) do
     {r1,c1} = Matrix.size(x)
     {r2,c2} = Matrix.size(y)
@@ -131,6 +132,7 @@ defmodule Dmatrix do
     Matrix.emult(x1,y) |> sum
   end
 
+  # padding
   def pad(x,0) do x end
   def pad(x,n) do
     {_,c} = Matrix.size(x)
@@ -162,10 +164,11 @@ defmodule Dmatrix do
       0, fn(z,acc) -> z + acc end)
   end
 
+  # for pooling
   def max(x) do
     Enum.max(Enum.map(x, fn(y) -> Enum.max(y) end))
   end
-
+  # poolong
   def pool(x,s) do
     {r,c} = Matrix.size(x)
     if rem(r,s) != 0 or rem(c,s) != 0 do
@@ -201,10 +204,6 @@ defmodule DL do
   """
   # activation function
   def sigmoid(x) do
-    Enum.map(x,fn(y) -> sigmoid1(y) end )
-  end
-
-  def sigmoid1(x) do
     cond do
       x > 100 -> 1
       x < -100 -> 0
@@ -213,15 +212,15 @@ defmodule DL do
   end
 
   def dsigmoid(x) do
-    (1 - sigmoid1(x)) * sigmoid1(x)
+    (1 - sigmoid(x)) * sigmoid(x)
   end
 
   def step(x) do
-    Enum.map(x,fn(y) -> if y > 0 do 1 else 0 end end)
+    if x > 0 do 1 else 0 end
   end
 
   def relu(x) do
-    Enum.map(x,fn(y) -> max(0,y) end)
+    max(0,x)
   end
 
   def drelu(x) do
@@ -229,7 +228,7 @@ defmodule DL do
   end
 
   def ident(x) do
-    Enum.map(x,fn(y) -> y end)
+    x
   end
 
   def dident(_) do
@@ -264,11 +263,14 @@ defmodule DL do
   def square(x) do
     x*x
   end
-
+  # apply functin for row matrix
+  def apply_function([x],f) do
+    [Enum.map(x,fn(y) -> f.(y) end)]
+  end
 
   def forward([],x) do x end
   def forward([w,b,f,_,_|rest],x) do
-    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> apply_function(f)
     forward(rest,x1)
   end
 
@@ -278,29 +280,29 @@ defmodule DL do
   def forward_for_back1([],_,res) do res end
   def forward_for_back1([w,b,f,_,_|rest],x,res) do
     x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b)
-    x2 = x1 |> Enum.map(fn(x) -> f.(x) end)
+    x2 = x1 |> apply_function(f)
     forward_for_back1(rest,x2,[x2,x1|res])
   end
 
   def forward_w([],x,_,_,_,_) do x end
   def forward_w([w,b,f,_,_|rest],x,0,r,c,d) do
     w1 = Dmatrix.diff(w,r,c,d)
-    x1 = Dmatrix.mult(x,w1)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w1)|> Dmatrix.add(b) |> apply_function(f)
     forward_w(rest,x1,-1,r,c,d)
   end
   def forward_w([w,b,f,_,_|rest],x,n,r,c,d) do
-    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> apply_function(f)
     forward_w(rest,x1,n-1,r,c,d)
   end
 
   def forward_b([],x,_,_,_) do x end
   def forward_b([w,b,f,_,_|rest],x,0,c,d) do
     b1 = Dmatrix.diff(b,0,c,d)
-    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b1) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b1) |> apply_function(f)
     forward_b(rest,x1,-1,c,d)
   end
   def forward_b([w,b,f,_,_|rest],x,n,c,d) do
-    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> apply_function(f)
     forward_b(rest,x1,n-1,c,d)
   end
 
@@ -372,7 +374,7 @@ defmodule DL do
   def sgd() do
     network = Test.init_network()
     dt = Test.dt()
-    network1 = mini_batch(network,dt,500)
+    network1 = mini_batch(network,dt,100)
     :io.write(forward(network1,Enum.at(dt,0)))
     :io.write(Enum.at(dt,1))
     :io.write(forward(network1,Enum.at(dt,14)))
