@@ -201,11 +201,19 @@ defmodule DL do
   """
   # activation function
   def sigmoid(x) do
-    Enum.map(x,fn(y) -> 1 / (1+:math.exp(-y)) end )
+    Enum.map(x,fn(y) -> sigmoid1(y) end )
+  end
+
+  def sigmoid1(x) do
+    cond do
+      x > 100 -> 1
+      x < -100 -> 0
+      true ->  1 / (1+:math.exp(-x))
+    end
   end
 
   def dsigmoid(x) do
-    (1-x)*x
+    (1 - sigmoid1(x)) * sigmoid1(x)
   end
 
   def step(x) do
@@ -269,8 +277,9 @@ defmodule DL do
   end
   def forward_for_back1([],_,res) do res end
   def forward_for_back1([w,b,f,_,_|rest],x,res) do
-    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b) |> Enum.map(fn(x) -> f.(x) end)
-    forward_for_back1(rest,x1,[x1|res])
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b)
+    x2 = x1 |> Enum.map(fn(x) -> f.(x) end)
+    forward_for_back1(rest,x2,[x2,x1|res])
   end
 
   def forward_w([],x,_,_,_,_) do x end
@@ -341,11 +350,17 @@ defmodule DL do
   end
 
   def backpropagation1([],_,_,res) do res end
-  def backpropagation1([r,g,f,_,w|rest],l,[u|us],res) do
-    l1 = [Enum.map(hd(l),fn(x) -> g.(u)*x end)]
+  def backpropagation1([r,g,f,_,w|rest],l,[u1,u2|us],res) do
+    l1 = [backpropagation2(hd(l),hd(u1),g)]
+    #l1 = [Enum.map(hd(l),fn(x) -> g.(u1)*x end)]
     l2 = Dmatrix.mult(l1,Matrix.transpose(w))
-    w2 = Dmatrix.mult(Matrix.transpose(u),l1)
+    w2 = Dmatrix.mult(Matrix.transpose(u2),l1)
     backpropagation1(rest,l2,us,[w2,l1,f,g,r|res])
+  end
+
+  def backpropagation2([],[],_) do [] end
+  def backpropagation2([l|ls],[u|us],g) do
+    [g.(u)*l|backpropagation2(ls,us,g)]
   end
 
   def learning([],_) do [] end
@@ -472,16 +487,16 @@ defmodule Test do
       [0.94,0.12,0.09],
       [0.04,0.06,0.13]],
      [[0,0,0]],
-     fn(x) -> DL.relu(x) end,
-     fn(x) -> DL.drelu(x) end,
-     0.01,
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     0.1,
      [[0.18,0.92],
       [0.96,0.19],
       [0.92,0.04]],
      [[0,0]],
-     fn(x) -> DL.relu(x) end,
-     fn(x) -> DL.drelu(x) end,
-     0.01]
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     0.1]
   end
 
 
