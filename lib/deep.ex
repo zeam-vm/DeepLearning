@@ -232,6 +232,7 @@ defmodule DL do
     forward(rest,x1)
   end
 
+  # for backpropagation
   def forward_for_back(network,x) do
     forward_for_back1(network,x,[x])
   end
@@ -242,6 +243,7 @@ defmodule DL do
     forward_for_back1(rest,x2,[x2,x1|res])
   end
 
+  # for numerical gradient
   def forward_w([],x,_,_,_,_) do x end
   def forward_w([w,b,f,_,_|rest],x,0,r,c,d) do
     w1 = Dmatrix.diff(w,r,c,d)
@@ -253,6 +255,7 @@ defmodule DL do
     forward_w(rest,x1,n-1,r,c,d)
   end
 
+  # for numerical gradient
   def forward_b([],x,_,_,_) do x end
   def forward_b([w,b,f,_,_|rest],x,0,c,d) do
     b1 = Dmatrix.diff(b,0,c,d)
@@ -300,6 +303,7 @@ defmodule DL do
     (mean_square(y1,t) - mean_square(y0,t)) / h
   end
 
+  # gradient with backpropagation
   def gradient(network,x,t) do
     x1 = forward_for_back(network,x)
     l = Matrix.sub(hd(x1),t)
@@ -322,12 +326,14 @@ defmodule DL do
     [g.(u)*l|backpropagation2(ls,us,g)]
   end
 
+  # update wight and bias
   def learning([],_) do [] end
   def learning([w,b,f,g,r|rest],[w1,b1,_,_,_|gradrest]) do
     [Dmatrix.element_mult(w,w1,r),Dmatrix.element_mult(b,b1,r),f,g,r|
      learning(rest,gradrest)]
   end
 
+  # stochastic gradient descent
   def sgd() do
     network = Test.init_network1()
     dt = Test.dt()
@@ -464,7 +470,7 @@ defmodule Dmatrix do
     end
   end
 
-
+  # for learning
   def element_mult([],[],_) do [] end
   def element_mult([x|xs],[y|ys],r) do
     [element_mult1(x,y,r)|element_mult(xs,ys,r)]
@@ -475,6 +481,7 @@ defmodule Dmatrix do
     [x-y*r|element_mult1(xs,ys,r)]
   end
 
+  # for numerical gradient
   def diff([],_,_,_) do [] end
   def diff([m|ms],0,c,d) do
     [diff1(m,0,c,d)|diff(ms,-1,c,d)]
@@ -550,6 +557,7 @@ defmodule Dmatrix do
     [l|part1(x,tr,tc,m,n,r+1)]
   end
 
+  # sum of all element
   def sum(x) do
     Enum.reduce(
       Enum.map(x, fn(y) -> Enum.reduce(y, 0, fn(z,acc) -> z + acc end) end),
