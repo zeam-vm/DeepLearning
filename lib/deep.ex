@@ -1,197 +1,155 @@
-defmodule Dmatrix do
-  # box-muller rand
-  def box_muller() do
-    x = :rand.uniform()
-    y = :rand.uniform()
-    :math.sqrt(-2.0 * :math.log(x)) * :math.cos(2.0 * :math.pi * y);
-  end
-
-  #generate initial wweight matrix with box-muller
-  def new(0,_) do [] end
-  def new(r,c) do
-    [new1(c)|new(r-1,c)]
-  end
-
-  def new1(0) do [] end
-  def new1(c) do
-    [box_muller()|new1(c-1)]
-  end
-
-  defmacro time(exp) do
-    quote do
-    {time, dict} = :timer.tc(fn() -> unquote(exp) end)
-    IO.inspect "time: #{time} micro second"
-    IO.inspect "-------------"
-    dict
-    end
-  end
-
-  # network macro is unfinished
-  defmacro network(r,c,f,g,r) do
-    m = new(r,c)
-    b = Matrix.new(1,c,0)
-    quote do
-      [unquote(m),
-       unquote(b),
-       fn(x) -> unquote(f) end,
-       fn(x) -> unquote(g) end,
-       unquote(r)]
-    end
-  end
-
-  def print([]) do
-    IO.puts("")
-  end
-  def print([x|xs]) do
-    :io.write(x)
-    IO.puts("")
-    print(xs)
-  end
-
-  def mult(x,y) do
-    {_,c} = Matrix.size(x)
-    {r,_} = Matrix.size(y)
-    if r != c do
-      IO.puts("Dmatrix mult error")
-      :io.write(x)
-      :io.write(y)
-    else
-      Matrix.mult(x,y)
-    end
-  end
-
-  def add(x,y) do
-    {r1,c1} = Matrix.size(x)
-    {r2,c2} = Matrix.size(y)
-    if r1 != r2 or c1 != c2 do
-      IO.puts("Dmatrix add error")
-      :io.write(x)
-      :io.write(y)
-    else
-      Matrix.add(x,y)
-    end
+defmodule Test do
+  def init_network1() do
+    [Dmatrix.new(12,8),
+     [[0,0,0,0,0,0,0,0]],
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1,
+     Dmatrix.new(8,6),
+     [[0,0,0,0,0,0]],
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1,
+     Dmatrix.new(6,3),
+     [[0,0,0]],
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1,
+     Dmatrix.new(3,2),
+     [[0,0]],
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1]
   end
 
 
-  def element_mult([],[],_) do [] end
-  def element_mult([x|xs],[y|ys],r) do
-    [element_mult1(x,y,r)|element_mult(xs,ys,r)]
+  def dt() do
+    [[[1,1,1,
+       1,0,1,
+       1,0,1,
+       1,1,1]],
+      [[1,0]],
+      [[1,0,1,
+        0,1,0,
+        0,1,1,
+        1,0,1]],
+       [[0,1]],
+      [[1,0,1,
+        0,1,0,
+        0,1,1,
+        1,0,1]],
+       [[0,1]],
+     [[1,1,1,
+       1,0,1,
+       1,0,1,
+       1,1,0]],
+     [[1,0]],
+     [[1,1,1,
+       1,0,1,
+       1,0,1,
+       0,1,1]],
+     [[1,0]],
+     [[0,0,0,
+       1,1,1,
+       1,0,1,
+       1,1,1]],
+     [[1,0]],
+     [[0,0,0,
+       0,1,1,
+       1,0,1,
+       1,1,1]],
+     [[1,0]],
+     [[1,0,1,
+       0,1,0,
+       1,0,1,
+       0,0,0]],
+      [[0,1]],
+     [[1,0,1,
+       0,1,0,
+       1,0,1,
+       1,0,0]],
+      [[0,1]],
+     [[1,0,1,
+       0,1,0,
+       1,0,1,
+       0,0,1]],
+      [[0,1]],
+      [[0,1,1,
+        1,0,1,
+        1,0,1,
+        1,1,1]],
+       [[1,0]],
+      [[1,1,0,
+        1,0,1,
+        1,0,1,
+        1,1,0]],
+      [[1,0]],
+     [[1,0,1,
+       0,1,0,
+       0,1,0,
+       1,0,1,]],
+      [[0,1]],
+     [[1,0,1,
+       0,1,0,
+       1,1,0,
+       1,0,1]],
+      [[0,1]],
+     [[1,0,1,
+       1,1,0,
+       0,1,0,
+       1,0,1]],
+      [[0,1]]]
   end
 
-  def element_mult1([],[],_) do [] end
-  def element_mult1([x|xs],[y|ys],r) do
-    [x-y*r|element_mult1(xs,ys,r)]
+  def test_network() do
+    [[[1,2],
+      [3,4],
+      [5,6]],
+     [[0,0]],
+     fn(x) -> DL.ident(x) end,
+     fn(x) -> DL.ident(x) end,
+     1]
   end
 
-  def diff([],_,_,_) do [] end
-  def diff([m|ms],0,c,d) do
-    [diff1(m,0,c,d)|diff(ms,-1,c,d)]
+  def test1(x) do
+    network = test_network()
+    DL.forward(network,x)
   end
-  def diff([m|ms],r,c,d) do
-    [m|diff(ms,r-1,c,d)]
+  def test2(x,r,c,d) do
+    network = test_network()
+    DL.forward_w(network,x,0,r,c,d)
   end
-
-  def diff1([],_,_,_) do [] end
-  def diff1([v|vs],0,0,d) do
-    [v+d|diff1(vs,0,-1,d)]
+  def test3(x,r,c,t) do
+    network = test_network()
+    DL.numerical_gradient_w1(x,0,r,c,network,t)
   end
-  def diff1([v|vs],0,c,d) do
-    [v|diff1(vs,0,c-1,d)]
-  end
-
-  # for CNN
-  def convolute(x,y) do
-    {r1,c1} = Matrix.size(x)
-    {r2,c2} = Matrix.size(y)
-    convolute1(x,y,r1-r2+1,c1-c2+1,0,0,1)
-  end
-  def convolute(x,y,s,p) do
-    {r1,c1} = Matrix.size(x)
-    {r2,c2} = Matrix.size(y)
-    x1 = pad(x,p)
-    if rem(r1+2*p-r2,s) == 0 and  rem(c1+2*p-c2,s) == 0 do
-      convolute1(x1,y,r1-r2+1,c1-c2+1,0,0,s)
-    else
-      :error
-    end
+  def test4() do
+    a = [[1,2,3,0],
+         [0,1,2,3],
+         [3,0,1,2],
+         [2,3,0,1]]
+    b = [[2,0,1],
+         [0,1,2],
+         [1,0,2]]
+    Dmatrix.convolute(a,b)
   end
 
-  def convolute1(_,_,r,_,r,_,_) do [] end
-  def convolute1(x,y,r,c,m,n,s) do
-    [convolute2(x,y,r,c,m,n,s)|convolute1(x,y,r,c,m+s,n,s)]
-  end
-
-  def convolute2(_,_,_,c,_,c,_) do [] end
-  def convolute2(x,y,r,c,m,n,s) do
-    [convolute_mult_sum(x,y,m,n)|convolute2(x,y,r,c,m,n+s,s)]
-  end
-
-  def convolute_mult_sum(x,y,m,n) do
-    {r,c} = Matrix.size(y)
-    x1 = part(x,m,n,r,c)
-    Matrix.emult(x1,y) |> sum
-  end
-
-  # padding
-  def pad(x,0) do x end
-  def pad(x,n) do
-    {_,c} = Matrix.size(x)
-    zero1 = Matrix.zeros(n,c+n*2)
-    zero2 = Matrix.zeros(1,n)
-    x1 = Enum.map(x,fn(y) -> hd(zero2) ++ y ++ hd(zero2) end)
-    zero1 ++ x1 ++ zero1
-  end
-
-  #partial matrix from position(tr,tc) size (m,n)
-  def part(x,tr,tc,m,n) do
-    {r,c} = Matrix.size(x)
-    if tr+m > r or tc+n > c do
-      :error
-    else
-      part1(x,tr,tc,tr+m,n,tr)
-    end
-  end
-
-  def part1(_,_,_,m,_,m) do [] end
-  def part1(x,tr,tc,m,n,r) do
-    l = Enum.at(x,r) |> Enum.drop(tc) |> Enum.take(n)
-    [l|part1(x,tr,tc,m,n,r+1)]
-  end
-
-  def sum(x) do
-    Enum.reduce(
-      Enum.map(x, fn(y) -> Enum.reduce(y, 0, fn(z,acc) -> z + acc end) end),
-      0, fn(z,acc) -> z + acc end)
-  end
-
-  # for pooling
-  def max(x) do
-    Enum.max(Enum.map(x, fn(y) -> Enum.max(y) end))
-  end
-  # poolong
-  def pool(x,s) do
-    {r,c} = Matrix.size(x)
-    if rem(r,s) != 0 or rem(c,s) != 0 do
-      :error
-    else
-      pool1(x,r,c,0,s)
-    end
-  end
-
-  def pool1(_,r,_,r,_) do [] end
-  def pool1(x,r,c,m,s) do
-    [pool2(x,r,c,m,0,s)|pool1(x,r,c,m+s,s)]
-  end
-
-  def pool2(_,_,c,_,c,_) do [] end
-  def pool2(x,r,c,m,n,s) do
-    x1 = part(x,m,n,s,s)
-    [max(x1)|pool2(x,r,c,m,n+s,s)]
+  def test5() do
+    a = [[1,2,3,0],
+         [0,1,2,3],
+         [3,0,1,2],
+         [2,3,0,1]]
+    b = [[2,0,1],
+         [0,1,2],
+         [1,0,2]]
+    Dmatrix.convolute(a,b,1,0)
   end
 end
 
+
+
+
 defmodule DL do
-   require Dmatrix
   @moduledoc """
   Documentation for DL.
   """
@@ -428,6 +386,198 @@ defmodule DL do
 
 end
 
+defmodule Dmatrix do
+  # box-muller rand
+  def box_muller() do
+    x = :rand.uniform()
+    y = :rand.uniform()
+    :math.sqrt(-2.0 * :math.log(x)) * :math.cos(2.0 * :math.pi * y);
+  end
+
+  #generate initial wweight matrix with box-muller
+  def new(0,_) do [] end
+  def new(r,c) do
+    [new1(c)|new(r-1,c)]
+  end
+
+  def new1(0) do [] end
+  def new1(c) do
+    [box_muller()|new1(c-1)]
+  end
+
+  defmacro time(exp) do
+    quote do
+    {time, dict} = :timer.tc(fn() -> unquote(exp) end)
+    IO.inspect "time: #{time} micro second"
+    IO.inspect "-------------"
+    dict
+    end
+  end
+
+  # network macro is unfinished
+  defmacro network(r,c,f,g,r) do
+    m = new(r,c)
+    b = Matrix.new(1,c,0)
+    quote do
+      [unquote(m),
+       unquote(b),
+       fn(x) -> unquote(f) end,
+       fn(x) -> unquote(g) end,
+       unquote(r)]
+    end
+  end
+
+  def print([]) do
+    IO.puts("")
+  end
+  def print([x|xs]) do
+    :io.write(x)
+    IO.puts("")
+    print(xs)
+  end
+
+  def mult(x,y) do
+    {_,c} = Matrix.size(x)
+    {r,_} = Matrix.size(y)
+    if r != c do
+      IO.puts("Dmatrix mult error")
+      :io.write(x)
+      :io.write(y)
+    else
+      Matrix.mult(x,y)
+    end
+  end
+
+  def add(x,y) do
+    {r1,c1} = Matrix.size(x)
+    {r2,c2} = Matrix.size(y)
+    if r1 != r2 or c1 != c2 do
+      IO.puts("Dmatrix add error")
+      :io.write(x)
+      :io.write(y)
+    else
+      Matrix.add(x,y)
+    end
+  end
+
+
+  def element_mult([],[],_) do [] end
+  def element_mult([x|xs],[y|ys],r) do
+    [element_mult1(x,y,r)|element_mult(xs,ys,r)]
+  end
+
+  def element_mult1([],[],_) do [] end
+  def element_mult1([x|xs],[y|ys],r) do
+    [x-y*r|element_mult1(xs,ys,r)]
+  end
+
+  def diff([],_,_,_) do [] end
+  def diff([m|ms],0,c,d) do
+    [diff1(m,0,c,d)|diff(ms,-1,c,d)]
+  end
+  def diff([m|ms],r,c,d) do
+    [m|diff(ms,r-1,c,d)]
+  end
+
+  def diff1([],_,_,_) do [] end
+  def diff1([v|vs],0,0,d) do
+    [v+d|diff1(vs,0,-1,d)]
+  end
+  def diff1([v|vs],0,c,d) do
+    [v|diff1(vs,0,c-1,d)]
+  end
+
+  # for CNN
+  def convolute(x,y) do
+    {r1,c1} = Matrix.size(x)
+    {r2,c2} = Matrix.size(y)
+    convolute1(x,y,r1-r2+1,c1-c2+1,0,0,1)
+  end
+  def convolute(x,y,s,p) do
+    {r1,c1} = Matrix.size(x)
+    {r2,c2} = Matrix.size(y)
+    x1 = pad(x,p)
+    if rem(r1+2*p-r2,s) == 0 and  rem(c1+2*p-c2,s) == 0 do
+      convolute1(x1,y,r1-r2+1,c1-c2+1,0,0,s)
+    else
+      :error
+    end
+  end
+
+  def convolute1(_,_,r,_,r,_,_) do [] end
+  def convolute1(x,y,r,c,m,n,s) do
+    [convolute2(x,y,r,c,m,n,s)|convolute1(x,y,r,c,m+s,n,s)]
+  end
+
+  def convolute2(_,_,_,c,_,c,_) do [] end
+  def convolute2(x,y,r,c,m,n,s) do
+    [convolute_mult_sum(x,y,m,n)|convolute2(x,y,r,c,m,n+s,s)]
+  end
+
+  def convolute_mult_sum(x,y,m,n) do
+    {r,c} = Matrix.size(y)
+    x1 = part(x,m,n,r,c)
+    Matrix.emult(x1,y) |> sum
+  end
+
+  # padding
+  def pad(x,0) do x end
+  def pad(x,n) do
+    {_,c} = Matrix.size(x)
+    zero1 = Matrix.zeros(n,c+n*2)
+    zero2 = Matrix.zeros(1,n)
+    x1 = Enum.map(x,fn(y) -> hd(zero2) ++ y ++ hd(zero2) end)
+    zero1 ++ x1 ++ zero1
+  end
+
+  #partial matrix from position(tr,tc) size (m,n)
+  def part(x,tr,tc,m,n) do
+    {r,c} = Matrix.size(x)
+    if tr+m > r or tc+n > c do
+      :error
+    else
+      part1(x,tr,tc,tr+m,n,tr)
+    end
+  end
+
+  def part1(_,_,_,m,_,m) do [] end
+  def part1(x,tr,tc,m,n,r) do
+    l = Enum.at(x,r) |> Enum.drop(tc) |> Enum.take(n)
+    [l|part1(x,tr,tc,m,n,r+1)]
+  end
+
+  def sum(x) do
+    Enum.reduce(
+      Enum.map(x, fn(y) -> Enum.reduce(y, 0, fn(z,acc) -> z + acc end) end),
+      0, fn(z,acc) -> z + acc end)
+  end
+
+  # for pooling
+  def max(x) do
+    Enum.max(Enum.map(x, fn(y) -> Enum.max(y) end))
+  end
+  # poolong
+  def pool(x,s) do
+    {r,c} = Matrix.size(x)
+    if rem(r,s) != 0 or rem(c,s) != 0 do
+      :error
+    else
+      pool1(x,r,c,0,s)
+    end
+  end
+
+  def pool1(_,r,_,r,_) do [] end
+  def pool1(x,r,c,m,s) do
+    [pool2(x,r,c,m,0,s)|pool1(x,r,c,m+s,s)]
+  end
+
+  def pool2(_,_,c,_,c,_) do [] end
+  def pool2(x,r,c,m,n,s) do
+    x1 = part(x,m,n,s,s)
+    [max(x1)|pool2(x,r,c,m,n+s,s)]
+  end
+end
+
 
 defmodule MNIST do
   def train_label() do
@@ -460,183 +610,4 @@ defmodule MNIST do
   def byte_to_list1(<<b,bs::binary>>,n,ls,res) do
     byte_to_list1(bs,n-1,[b|ls],res)
   end
-end
-
-defmodule Test do
-  def foo() do
-    dt1 = [[1,1,1,
-           1,0,1,
-           1,0,1,
-           1,1,1]]
-    t1 = [[1,0]]
-
-    network = Test.init_network()
-    DL.print_network(DL.gradient(network,dt1,t1))
-    DL.print_network(DL.numerical_gradient(network,dt1,t1))
-  end
-
-  def init_network() do
-    [[[0.06,0.17,0.12],
-      [0.08,0.33,0.18],
-      [0.15,0.92,0.12],
-      [0.98,0.11,0.20],
-      [0.08,0.91,0.12],
-      [0.29,0.18,0.21],
-      [0.35,0.12,0.22],
-      [0.19,0.97,0.03],
-      [1.00,0.16,0.93],
-      [0.89,0.97,0.11],
-      [0.94,0.12,0.09],
-      [0.04,0.06,0.13]],
-     [[0,0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     0.1,
-     [[0.18,0.92],
-      [0.96,0.19],
-      [0.92,0.04]],
-     [[0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     0.1]
-  end
-
-  def init_network1() do
-    [Dmatrix.new(12,3),
-     [[0,0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     1,
-     Dmatrix.new(3,2),
-     [[0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     1]
-  end
-
-
-  def dt() do
-    [[[1,1,1,
-       1,0,1,
-       1,0,1,
-       1,1,1]],
-      [[1,0]],
-      [[1,0,1,
-        0,1,0,
-        0,1,1,
-        1,0,1]],
-       [[0,1]],
-      [[1,0,1,
-        0,1,0,
-        0,1,1,
-        1,0,1]],
-       [[0,1]],
-     [[1,1,1,
-       1,0,1,
-       1,0,1,
-       1,1,0]],
-     [[1,0]],
-     [[1,1,1,
-       1,0,1,
-       1,0,1,
-       0,1,1]],
-     [[1,0]],
-     [[0,0,0,
-       1,1,1,
-       1,0,1,
-       1,1,1]],
-     [[1,0]],
-     [[0,0,0,
-       0,1,1,
-       1,0,1,
-       1,1,1]],
-     [[1,0]],
-     [[1,0,1,
-       0,1,0,
-       1,0,1,
-       0,0,0]],
-      [[0,1]],
-     [[1,0,1,
-       0,1,0,
-       1,0,1,
-       1,0,0]],
-      [[0,1]],
-     [[1,0,1,
-       0,1,0,
-       1,0,1,
-       0,0,1]],
-      [[0,1]],
-      [[0,1,1,
-        1,0,1,
-        1,0,1,
-        1,1,1]],
-       [[1,0]],
-      [[1,1,0,
-        1,0,1,
-        1,0,1,
-        1,1,0]],
-      [[1,0]],
-     [[1,0,1,
-       0,1,0,
-       0,1,0,
-       1,0,1,]],
-      [[0,1]],
-     [[1,0,1,
-       0,1,0,
-       1,1,0,
-       1,0,1]],
-      [[0,1]],
-     [[1,0,1,
-       1,1,0,
-       0,1,0,
-       1,0,1]],
-      [[0,1]]]
-  end
-
-  def test_network() do
-    [[[1,2],
-      [3,4],
-      [5,6]],
-     [[0,0]],
-     fn(x) -> DL.ident(x) end,
-     fn(x) -> DL.ident(x) end,
-     1]
-  end
-
-  def test1(x) do
-    network = test_network()
-    DL.forward(network,x)
-  end
-  def test2(x,r,c,d) do
-    network = test_network()
-    DL.forward_w(network,x,0,r,c,d)
-  end
-  def test3(x,r,c,t) do
-    network = test_network()
-    DL.numerical_gradient_w1(x,0,r,c,network,t)
-  end
-  def test4() do
-    a = [[1,2,3,0],
-         [0,1,2,3],
-         [3,0,1,2],
-         [2,3,0,1]]
-    b = [[2,0,1],
-         [0,1,2],
-         [1,0,2]]
-    Dmatrix.convolute(a,b)
-  end
-
-  def test5() do
-    a = [[1,2,3,0],
-         [0,1,2,3],
-         [3,0,1,2],
-         [2,3,0,1]]
-    b = [[2,0,1],
-         [0,1,2],
-         [1,0,2]]
-    Dmatrix.convolute(a,b,1,0)
-  end
-
-
-
 end
