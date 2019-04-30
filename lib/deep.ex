@@ -333,15 +333,15 @@ defmodule DL do
     network = Test.init_network1()
     dt = Test.dt()
     network1 = mini_batch(network,dt,100)
-    :io.write(forward(network1,Enum.at(dt,0)))
-    :io.write(Enum.at(dt,1))
-    :io.write(forward(network1,Enum.at(dt,14)))
-    :io.write(Enum.at(dt,15))
+    print(forward(network1,Enum.at(dt,0)))
+    print(Enum.at(dt,1))
+    print(forward(network1,Enum.at(dt,14)))
+    print(Enum.at(dt,15))
     dt = [[1,1,1,
            0,0,1,
            1,0,1,
            1,1,1]]
-    :io.write(forward(network1,dt))
+    print(forward(network1,dt))
   end
 
   def mini_batch(network,_,0) do  network end
@@ -370,6 +370,11 @@ defmodule DL do
   def rand_sequence1(0,_,res) do res end
   def rand_sequence1(c,n,res) do
     rand_sequence1(c-1,n,[:rand.uniform(n)|res])
+  end
+
+  def print(x) do
+    :io.write(x)
+    IO.puts("")
   end
 
   def print_network([]) do
