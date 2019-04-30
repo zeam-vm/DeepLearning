@@ -372,7 +372,7 @@ defmodule DL do
   end
 
   def sgd() do
-    network = Test.init_network()
+    network = Test.init_network1()
     dt = Test.dt()
     network1 = mini_batch(network,dt,100)
     :io.write(forward(network1,Enum.at(dt,0)))
@@ -501,16 +501,19 @@ defmodule Test do
      0.1]
   end
 
-
-  def test_network() do
-    [[[1,2],
-      [3,4],
-      [5,6]],
+  def init_network1() do
+    [Dmatrix.new(12,3),
+     [[0,0,0]],
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1,
+     Dmatrix.new(3,2),
      [[0,0]],
-     fn(x) -> DL.ident(x) end,
-     fn(x) -> DL.ident(x) end,
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
      1]
   end
+
 
   def dt() do
     [[[1,1,1,
@@ -588,6 +591,16 @@ defmodule Test do
        0,1,0,
        1,0,1]],
       [[0,1]]]
+  end
+
+  def test_network() do
+    [[[1,2],
+      [3,4],
+      [5,6]],
+     [[0,0]],
+     fn(x) -> DL.ident(x) end,
+     fn(x) -> DL.ident(x) end,
+     1]
   end
 
   def test1(x) do
