@@ -312,10 +312,9 @@ defmodule DL do
   def backpropagation1([],_,_,res) do res end
   def backpropagation1([r,g,f,_,w|rest],l,[u1,u2|us],res) do
     l1 = [backpropagation2(hd(l),hd(u1),g)]
-    #l1 = [Enum.map(hd(l),fn(x) -> g.(u1)*x end)]
     l2 = Dmatrix.mult(l1,Matrix.transpose(w))
-    w2 = Dmatrix.mult(Matrix.transpose(u2),l1)
-    backpropagation1(rest,l2,us,[w2,l1,f,g,r|res])
+    w1 = Dmatrix.mult(Matrix.transpose(u2),l1)
+    backpropagation1(rest,l2,us,[w1,l1,f,g,r|res])
   end
 
   def backpropagation2([],[],_) do [] end
