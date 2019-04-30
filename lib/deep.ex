@@ -101,49 +101,6 @@ defmodule Test do
       [[0,1]]]
   end
 
-  def test_network() do
-    [[[1,2],
-      [3,4],
-      [5,6]],
-     [[0,0]],
-     fn(x) -> DL.ident(x) end,
-     fn(x) -> DL.ident(x) end,
-     1]
-  end
-
-  def test1(x) do
-    network = test_network()
-    DL.forward(network,x)
-  end
-  def test2(x,r,c,d) do
-    network = test_network()
-    DL.forward_w(network,x,0,r,c,d)
-  end
-  def test3(x,r,c,t) do
-    network = test_network()
-    DL.numerical_gradient_w1(x,0,r,c,network,t)
-  end
-  def test4() do
-    a = [[1,2,3,0],
-         [0,1,2,3],
-         [3,0,1,2],
-         [2,3,0,1]]
-    b = [[2,0,1],
-         [0,1,2],
-         [1,0,2]]
-    Dmatrix.convolute(a,b)
-  end
-
-  def test5() do
-    a = [[1,2,3,0],
-         [0,1,2,3],
-         [3,0,1,2],
-         [2,3,0,1]]
-    b = [[2,0,1],
-         [0,1,2],
-         [1,0,2]]
-    Dmatrix.convolute(a,b,1,0)
-  end
 end
 
 
