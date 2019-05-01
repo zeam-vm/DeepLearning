@@ -1,25 +1,43 @@
 defmodule Test do
   def init_network1() do
+    [Dmatrix.new(784,50),
+     Matrix.new(1,50),
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     0.5,
+     Dmatrix.new(50,100),
+     Matrix.new(1,100),
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     0.5,
+     Dmatrix.new(100,10),
+     Matrix.new(1,10),
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     0.5]
+  end
+
+  def init_network2() do
     [Dmatrix.new(12,8),
      [[0,0,0,0,0,0,0,0]],
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     1,
+     5,
      Dmatrix.new(8,6),
      [[0,0,0,0,0,0]],
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     1,
+     5,
      Dmatrix.new(6,3),
      [[0,0,0]],
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     1,
+     5,
      Dmatrix.new(3,2),
      [[0,0]],
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     1]
+     5]
   end
 
 
@@ -328,6 +346,39 @@ defmodule DL do
     mini_batch1(network2,rest,error1+error)
   end
 
+  def mnist() do
+    image = MNIST.train_image()
+    label = MNIST.train_label()
+    network = Test.init_network1()
+    seq = rand_sequence(100,length(image))
+    network1 = batch(network,image,label,100,100,seq)
+    print(forward(network1,MNIST.normalize(Enum.at(image,2),255)))
+    print(Enum.at(label,2))
+  end
+
+  def batch(network,_,_,_,0,_) do network end
+  def batch(network,image,label,n,c,seq) do
+    network1 = batch1(network,image,label,0,seq,0)
+    batch(network1,image,label,n,c-1,seq)
+  end
+
+  def batch1(network,_,_,_,[],error) do
+    print(error)
+    network
+  end
+  def batch1(network,[image|ires],[label|lres],n,[n|sres],error) do
+    x = MNIST.normalize(image,255)
+    t = MNIST.to_onehot(label)
+    network1 = gradient(network,x,t)
+    network2 = learning(network,network1)
+    x1 = forward(network2,x)
+    error1 = mean_square(x1,t)
+    batch1(network2,ires,lres,n+1,sres,error1+error)
+  end
+  def batch1(network,[_|ires],[_|lres],n,[seq|sres],error) do
+    batch1(network,ires,lres,n+1,[seq|sres],error)
+  end
+
   #for mini batch
   def rand_sequence(c,n) do
     rand_sequence1(c,n,[]) |> Enum.sort
@@ -582,5 +633,20 @@ defmodule MNIST do
   end
   def byte_to_list1(<<b,bs::binary>>,n,ls,res) do
     byte_to_list1(bs,n-1,[b|ls],res)
+  end
+
+  def normalize(x,y) do
+    [Enum.map(x,fn(z) -> z/y end)]
+  end
+  # e.g. 1 => [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+  def to_onehot(x) do
+    [to_onehot1(x,9,[])]
+  end
+  def to_onehot1(_,-1,res) do res end
+  def to_onehot1(x,x,res) do
+    to_onehot1(x,x-1,[1|res])
+  end
+  def to_onehot1(x,c,res) do
+    to_onehot1(x,c-1,[0|res])
   end
 end
