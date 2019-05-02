@@ -350,9 +350,9 @@ defmodule DL do
     image = MNIST.train_image()
     label = MNIST.train_label()
     network = Test.init_network1()
-    seq = rand_sequence(100,length(image))
+    seq = rand_sequence(1000,length(image))
     IO.puts("count error")
-    network1 = batch(network,image,label,100,n,seq)
+    network1 = batch(network,image,label,1000,n,seq)
     test_image = MNIST.test_image()
     test_label = MNIST.test_label()
     seq1 = rand_sequence(10,length(test_image))
@@ -376,9 +376,9 @@ defmodule DL do
     image = MNIST.train_image()
     label = MNIST.train_label()
     network = load("network.exs")
-    seq = rand_sequence(100,length(image))
+    seq = rand_sequence(1000,length(image))
     IO.puts("count error")
-    network1 = batch(network,image,label,100,n,seq)
+    network1 = batch(network,image,label,1000,n,seq)
     test_image = MNIST.test_image()
     test_label = MNIST.test_label()
     seq1 = rand_sequence(10,length(test_image))
@@ -397,7 +397,7 @@ defmodule DL do
     batch(network1,image,label,n,c-1,seq)
   end
 
-  def batch1(network,_,_,_,[],error) do
+  def batch1(network,_,_,60000,_,error) do
     {network,error}
   end
   def batch1(network,[image|irest],[label|lrest],n,[n|srest],error) do
@@ -521,11 +521,11 @@ defmodule Dmatrix do
       :io.write(x)
       :io.write(y)
     else
-      if r0 == 1 and c >= 100 do
-        Pmatrix.mult(x,y)
-      else
+      #if r0 == 1 and c >= 100 do
+      #  Pmatrix.mult(x,y)
+      #else
         Matrix.mult(x,y)
-      end
+      #end
     end
   end
 
