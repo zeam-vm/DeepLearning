@@ -372,6 +372,21 @@ defmodule DL do
     minist1(network,irest,lrest,n+1,[s|srest])
   end
 
+  def remnist(n) do
+    image = MNIST.train_image()
+    label = MNIST.train_label()
+    network = load("network.exs")
+    seq = rand_sequence(100,length(image))
+    IO.puts("count error")
+    network1 = batch(network,image,label,100,n,seq)
+    test_image = MNIST.test_image()
+    test_label = MNIST.test_label()
+    seq1 = rand_sequence(10,length(test_image))
+    IO.puts("predict correct")
+    minist1(network1,test_image,test_label,0,seq1)
+    save("network.exs",network1)
+  end
+
   def batch(network,_,_,_,0,_) do network end
   def batch(network,image,label,n,c,seq) do
     {network1,error} = batch1(network,image,label,0,seq,0)
@@ -428,6 +443,24 @@ defmodule DL do
     print_network(xs)
   end
 
+  def save_test() do
+    network = Test.init_network1()
+    save("network.exs",network)
+  end
+
+  def save(filename,network) do
+    File.write(filename,inspect(network))
+  end
+
+  def load(filename) do
+    {state,data} = File.read(filename)
+    if state == :ok do
+      data
+    else
+      :error
+    end
+  end
+
 end
 
 defmodule Dmatrix do
@@ -481,14 +514,18 @@ defmodule Dmatrix do
   end
 
   def mult(x,y) do
-    {_,c} = Matrix.size(x)
+    {r0,c} = Matrix.size(x)
     {r,_} = Matrix.size(y)
     if r != c do
       IO.puts("Dmatrix mult error")
       :io.write(x)
       :io.write(y)
     else
-      Matrix.mult(x,y)
+      if r0 == 1 and c >= 100 do
+        Pmatrix.mult(x,y)
+      else
+        Matrix.mult(x,y)
+      end
     end
   end
 
@@ -689,18 +726,19 @@ defmodule Pmatrix do
   def mult(x,y) do
     y1 = Matrix.transpose(y)
     {r,c} = Matrix.size(x)
-    {r1,_} = Matrix.size(y)
+    {r1,c1} = Matrix.size(y)
     d = 10
     if c != r1 do
       :error
-    else if r < 10 and r1 < 10 do
+    else if r > 1 or c < 100 do
             Matrix.mult(x,y)
          else
-            mult1(x,y1,r,r,lot(r,d),last_lot(r,d))
-            mult2(d,[])
+            mult1(x,y1,c1,c1,lot(c1,d),last_lot(c1,d))
+            ans = mult2(d,[])
             |> Enum.sort
             |> Enum.map(fn(x) -> Enum.drop(x,1) |> hd end)
             |> flatten
+            [ans]
         end
     end
   end
@@ -721,12 +759,12 @@ defmodule Pmatrix do
   def mult1(_,_,_,0,_,_) do true end
   def mult1(x,y,m,m,l1,l2) do
     pid = spawn(Worker,:part,[])
-    send pid, {self(),{m,Enum.slice(x,m-l2,l2),y}}
+    send pid, {self(),{m,x,Enum.slice(y,m-l2,l2)}}
     mult1(x,y,m,m-l2,l1,l2)
   end
   def mult1(x,y,m,c,l1,l2) do
     pid = spawn(Worker,:part,[])
-    send pid, {self(),{c,Enum.slice(x,c-l1,l1),y}}
+    send pid, {self(),{c,x,Enum.slice(y,c-l1,l1)}}
     mult1(x,y,m,c-l1,l1,l2)
   end
 
@@ -739,6 +777,16 @@ defmodule Pmatrix do
     end
   end
 
+  def rand_matrix(0,_,_) do [] end
+  def rand_matrix(m,n,i) do
+    [rand_matrix1(n,[],i)|rand_matrix(m-1,n,i)]
+  end
+
+  def rand_matrix1(0,res,_) do res end
+  def rand_matrix1(n,res,i) do
+    rand_matrix1(n-1,[:rand.uniform(i)|res],i)
+  end
+
 end
 
 defmodule Worker do
@@ -748,14 +796,9 @@ defmodule Worker do
     end
   end
 
-  def gen_row_vector([],_) do [] end
-  def gen_row_vector([v|vs],m) do
-    [gen_row_vector1(v,m)|gen_row_vector(vs,m)]
-  end
-
-  def gen_row_vector1(_,[]) do [] end
-  def gen_row_vector1(v,[m|ms]) do
-    [inner_product(v,m)|gen_row_vector1(v,ms)]
+  def gen_row_vector(_,[]) do [] end
+  def gen_row_vector([v],[m|ms]) do
+    [inner_product(v,m)|gen_row_vector([v],ms)]
   end
 
   def inner_product(x,y) do

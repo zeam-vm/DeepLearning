@@ -17,7 +17,7 @@ defmodule DLTest do
 
   end
 
-  
+
   test "test chapter3" do
     #assert DL.test1() == [[0.7043825919854788, 0.7043825919854788]]
     assert DL.cross_entropy([[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]],[[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]) == 0.510825457099338
@@ -37,5 +37,11 @@ defmodule DLTest do
     assert Dmatrix.pad([[1,2,3],[2,3,4]],1) == [[0, 0, 0, 0,0], [0, 1, 2, 3, 0], [0, 2, 3, 4, 0], [0, 0, 0, 0,0]]
     assert Dmatrix.pad([[1,2,3],[2,3,4]],0) == [[1, 2, 3], [2, 3, 4]]
     assert Dmatrix.pool([[1,2,1,0],[0,1,2,3],[3,0,1,2],[2,4,0,1]],2) == [[2, 3], [4, 2]]
+  end
+
+  test "Pmatrix test" do
+    a = Pmatrix.rand_matrix(1,728,3)
+    b = Pmatrix.rand_matrix(728,100,3)
+    assert Pmatrix.mult(a,b) == Matrix.mult(a,b)
   end
 end
