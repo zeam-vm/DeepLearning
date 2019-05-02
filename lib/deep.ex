@@ -683,3 +683,87 @@ defmodule MNIST do
     end
   end
 end
+
+defmodule Pmatrix do
+
+  def mult(x,y) do
+    y1 = Matrix.transpose(y)
+    {r,c} = Matrix.size(x)
+    {r1,_} = Matrix.size(y)
+    d = 10
+    if c != r1 do
+      :error
+    else if r < 10 and r1 < 10 do
+            Matrix.mult(x,y)
+         else
+            mult1(x,y1,r,r,lot(r,d),last_lot(r,d))
+            mult2(d,[])
+            |> Enum.sort
+            |> Enum.map(fn(x) -> Enum.drop(x,1) |> hd end)
+            |> flatten
+        end
+    end
+  end
+
+  def flatten([]) do [] end
+  def flatten([x|xs]) do
+    x ++ flatten(xs)
+  end
+
+  def lot(m,c) do
+    div(m,c)
+  end
+
+  def last_lot(m,c) do
+    div(m,c) + rem(m,c)
+  end
+
+  def mult1(_,_,_,0,_,_) do true end
+  def mult1(x,y,m,m,l1,l2) do
+    pid = spawn(Worker,:part,[])
+    send pid, {self(),{m,Enum.slice(x,m-l2,l2),y}}
+    mult1(x,y,m,m-l2,l1,l2)
+  end
+  def mult1(x,y,m,c,l1,l2) do
+    pid = spawn(Worker,:part,[])
+    send pid, {self(),{c,Enum.slice(x,c-l1,l1),y}}
+    mult1(x,y,m,c-l1,l1,l2)
+  end
+
+
+  def mult2(0,res) do res end
+  def mult2(d,res) do
+    receive do
+      {:answer,ls} ->
+        mult2(d-1,[ls|res])
+    end
+  end
+
+end
+
+defmodule Worker do
+  def part do
+    receive do
+      {sender,{c,ls1,ls2}} -> send sender,{:answer,[c, Worker.gen_row_vector(ls1,ls2)] }
+    end
+  end
+
+  def gen_row_vector([],_) do [] end
+  def gen_row_vector([v|vs],m) do
+    [gen_row_vector1(v,m)|gen_row_vector(vs,m)]
+  end
+
+  def gen_row_vector1(_,[]) do [] end
+  def gen_row_vector1(v,[m|ms]) do
+    [inner_product(v,m)|gen_row_vector1(v,ms)]
+  end
+
+  def inner_product(x,y) do
+    inner_product1(x,y,0)
+  end
+
+  def inner_product1([],[],res) do res end
+  def inner_product1([x|xs],[y|ys],res) do
+    inner_product1(xs,ys,x*y+res)
+  end
+end
