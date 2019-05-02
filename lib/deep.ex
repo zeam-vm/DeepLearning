@@ -1,39 +1,39 @@
 defmodule Test do
   def init_network1() do
-    [Dmatrix.new(784,50),
+    [Dmatrix.new(784,50,0.1),
      Matrix.new(1,50),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     0.5,
-     Dmatrix.new(50,100),
+     1.2,
+     Dmatrix.new(50,100,0.1),
      Matrix.new(1,100),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     0.5,
-     Dmatrix.new(100,10),
+     1.1,
+     Dmatrix.new(100,10,0.1),
      Matrix.new(1,10),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     0.5]
+     1]
   end
 
   def init_network2() do
-    [Dmatrix.new(12,8),
+    [Dmatrix.new(12,8,1),
      [[0,0,0,0,0,0,0,0]],
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
      5,
-     Dmatrix.new(8,6),
+     Dmatrix.new(8,6,1),
      [[0,0,0,0,0,0]],
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
      5,
-     Dmatrix.new(6,3),
+     Dmatrix.new(6,3,1),
      [[0,0,0]],
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
      5,
-     Dmatrix.new(3,2),
+     Dmatrix.new(3,2,1),
      [[0,0]],
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
@@ -351,10 +351,12 @@ defmodule DL do
     label = MNIST.train_label()
     network = Test.init_network1()
     seq = rand_sequence(100,length(image))
+    IO.puts("count error")
     network1 = batch(network,image,label,100,n,seq)
     test_image = MNIST.test_image()
     test_label = MNIST.test_label()
     seq1 = rand_sequence(10,length(test_image))
+    IO.puts("predict correct")
     minist1(network1,test_image,test_label,0,seq1)
   end
   # print predict of test data
@@ -437,14 +439,14 @@ defmodule Dmatrix do
   end
 
   #generate initial wweight matrix with box-muller
-  def new(0,_) do [] end
-  def new(r,c) do
-    [new1(c)|new(r-1,c)]
+  def new(0,_,_) do [] end
+  def new(r,c,rate) do
+    [new1(c,rate)|new(r-1,c,rate)]
   end
 
-  def new1(0) do [] end
-  def new1(c) do
-    [box_muller()|new1(c-1)]
+  def new1(0,_) do [] end
+  def new1(c,rate) do
+    [box_muller()*rate|new1(c-1,rate)]
   end
 
   defmacro time(exp) do
@@ -458,7 +460,7 @@ defmodule Dmatrix do
 
   # network macro is unfinished
   defmacro network(r,c,f,g,r) do
-    m = new(r,c)
+    m = new(r,c,1)
     b = Matrix.new(1,c,0)
     quote do
       [unquote(m),
