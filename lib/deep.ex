@@ -346,37 +346,54 @@ defmodule DL do
     mini_batch1(network2,rest,error1+error)
   end
 
-  def mnist() do
+  def mnist(n) do
     image = MNIST.train_image()
     label = MNIST.train_label()
     network = Test.init_network1()
     seq = rand_sequence(100,length(image))
-    network1 = batch(network,image,label,100,100,seq)
-    print(forward(network1,MNIST.normalize(Enum.at(image,2),255)))
-    print(Enum.at(label,2))
+    network1 = batch(network,image,label,100,n,seq)
+    test_image = MNIST.test_image()
+    test_label = MNIST.test_label()
+    seq1 = rand_sequence(10,length(test_image))
+    minist1(network1,test_image,test_label,0,seq1)
+  end
+  # print predict of test data
+  def minist1(_,_,_,_,[]) do true end
+  def minist1(network,[image|irest],[label|lrest],n,[n|srest]) do
+    print(MNIST.onehot_to_num(forward(network,MNIST.normalize(image,255))))
+    IO.write(" ")
+    print(label)
+    newline()
+    minist1(network,irest,lrest,n+1,srest)
+  end
+  def minist1(network,[_|irest],[_|lrest],n,[s|srest]) do
+    minist1(network,irest,lrest,n+1,[s|srest])
   end
 
   def batch(network,_,_,_,0,_) do network end
   def batch(network,image,label,n,c,seq) do
-    network1 = batch1(network,image,label,0,seq,0)
+    {network1,error} = batch1(network,image,label,0,seq,0)
+    print(c)
+    IO.write(" ")
+    print(error)
+    newline()
     batch(network1,image,label,n,c-1,seq)
   end
 
   def batch1(network,_,_,_,[],error) do
-    print(error)
-    network
+    {network,error}
   end
-  def batch1(network,[image|ires],[label|lres],n,[n|sres],error) do
+  def batch1(network,[image|irest],[label|lrest],n,[n|srest],error) do
     x = MNIST.normalize(image,255)
     t = MNIST.to_onehot(label)
     network1 = gradient(network,x,t)
     network2 = learning(network,network1)
     x1 = forward(network2,x)
     error1 = mean_square(x1,t)
-    batch1(network2,ires,lres,n+1,sres,error1+error)
+    batch1(network2,irest,lrest,n+1,srest,error1+error)
   end
-  def batch1(network,[_|ires],[_|lres],n,[seq|sres],error) do
-    batch1(network,ires,lres,n+1,[seq|sres],error)
+  def batch1(network,[_|irest],[_|lrest],n,[seq|srest],error) do
+    batch1(network,irest,lrest,n+1,[seq|srest],error)
   end
 
   #for mini batch
@@ -391,6 +408,9 @@ defmodule DL do
 
   def print(x) do
     :io.write(x)
+  end
+
+  def newline() do
     IO.puts("")
   end
 
@@ -648,5 +668,16 @@ defmodule MNIST do
   end
   def to_onehot1(x,c,res) do
     to_onehot1(x,c-1,[0|res])
+  end
+
+  def onehot_to_num([x]) do
+    onehot_to_num1(x,0)
+  end
+  def onehot_to_num1([x|xs],n) do
+    if x == Enum.max([x|xs]) do
+      n
+    else
+      onehot_to_num1(xs,n+1)
+    end
   end
 end
