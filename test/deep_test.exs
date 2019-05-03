@@ -42,6 +42,6 @@ defmodule DLTest do
   test "Dmatrix test" do
     a = Dmatrix.rand_matrix(1,728,3)
     b = Dmatrix.rand_matrix(728,100,3)
-    assert Dmatrix.mult(a,b) == Dmatrix.mult(a,b)
+    assert Dmatrix.mult(a,b) == Matrix.mult(a,b)
   end
 end

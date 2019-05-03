@@ -122,8 +122,6 @@ defmodule Test do
 end
 
 
-
-
 defmodule DL do
   @moduledoc """
   Documentation for DL.
@@ -456,6 +454,55 @@ defmodule DL do
   end
 
 end
+
+#DL for mini_batch
+defmodule DLB do
+  # x is matrix. This is batch data
+  def forward([],x) do x end
+  def forward([w,b,f,_,_|rest],x) do
+    x1 = Pmatrix.mult(x,w)|> Matrix.add(b) |> DL.apply_function(f)
+    forward(rest,x1)
+  end
+
+  # for backpropagation
+  def forward_for_back(network,x) do
+    forward_for_back1(network,x,[x])
+  end
+  def forward_for_back1([],_,res) do res end
+  def forward_for_back1([w,b,f,_,_|rest],x,res) do
+    x1 = Pmatrix.mult(x,w)|> Dmatrix.add(b)
+    x2 = x1 |> DL.apply_function(f)
+    forward_for_back1(rest,x2,[x2,x1|res])
+  end
+
+
+  # gradient with backpropagation x and t are matrix
+  def gradient(network,x,t) do
+    x1 = forward_for_back(network,x)
+    l = Matrix.sub(hd(x1),t)
+    backpropagation(network,l,tl(x1))
+  end
+
+  def backpropagation(network,l,u) do
+    backpropagation1(Enum.reverse(network),l,u,[])
+  end
+
+  def backpropagation1([],_,_,res) do res end
+  def backpropagation1([r,g,f,_,w|rest],l,[u1,u2|us],res) do
+    l1 = [backpropagation2(hd(l),hd(u1),g)]
+    l2 = Pmatrix.mult(l1,Matrix.transpose(w))
+    w1 = Pmatrix.mult(Matrix.transpose(u2),l1)
+    backpropagation1(rest,l2,us,[w1,l1,f,g,r|res])
+  end
+
+  #unfinished. caution l and u are matrix
+  def backpropagation2([],[],_) do [] end
+  def backpropagation2([l|ls],[u|us],g) do
+    [g.(u)*l|backpropagation2(ls,us,g)]
+  end
+
+end
+
 
 defmodule Dmatrix do
   # box-muller rand
@@ -791,4 +838,108 @@ defmodule TIme do
     end
   end
 
+end
+
+defmodule Pmatrix do
+
+  def mult(x,y) do
+    y1 = Matrix.transpose(y)
+    {r,c} = Matrix.size(x)
+    {r1,_} = Matrix.size(y)
+    d = 10
+    if c != r1 do
+      :error
+    else if r < 10 and r1 < 10 do
+            Matrix.mult(x,y)
+         else
+            mult1(x,y1,r,r,lot(r,d),last_lot(r,d))
+            mult2(d,[])
+            |> Enum.sort
+            |> Enum.map(fn(x) -> Enum.drop(x,1) |> hd end)
+            |> flatten
+        end
+    end
+  end
+
+  def flatten([]) do [] end
+  def flatten([x|xs]) do
+    x ++ flatten(xs)
+  end
+
+  def lot(m,c) do
+    div(m,c)
+  end
+
+  def last_lot(m,c) do
+    div(m,c) + rem(m,c)
+  end
+
+  def mult1(_,_,_,0,_,_) do true end
+  def mult1(x,y,m,m,l1,l2) do
+    pid = spawn(PWorker,:part,[])
+    send pid, {self(),{m,Enum.slice(x,m-l2,l2),y}}
+    mult1(x,y,m,m-l2,l1,l2)
+  end
+  def mult1(x,y,m,c,l1,l2) do
+    pid = spawn(PWorker,:part,[])
+    send pid, {self(),{c,Enum.slice(x,c-l1,l1),y}}
+    mult1(x,y,m,c-l1,l1,l2)
+  end
+
+
+  def mult2(0,res) do res end
+  def mult2(d,res) do
+    receive do
+      {:answer,ls} ->
+        mult2(d-1,[ls|res])
+    end
+  end
+
+  def rand_matrix(0,_,_) do [] end
+  def rand_matrix(m,n,i) do
+    [rand_matrix1(n,[],i)|rand_matrix(m-1,n,i)]
+  end
+
+  def rand_matrix1(0,res,_) do res end
+  def rand_matrix1(n,res,i) do
+    rand_matrix1(n-1,[:rand.uniform(i)|res],i)
+  end
+
+  def rand_matrix_float(0,_) do [] end
+  def rand_matrix_float(m,n) do
+    [rand_matrix_float1(n,[])|rand_matrix_float(m-1,n)]
+  end
+
+  def rand_matrix_float1(0,res) do res end
+  def rand_matrix_float1(n,res) do
+    rand_matrix_float1(n-1,[:rand.uniform|res])
+  end
+
+end
+
+defmodule PWorker do
+  def part do
+    receive do
+      {sender,{c,ls1,ls2}} -> send sender,{:answer,[c, PWorker.gen_row_vector(ls1,ls2)] }
+    end
+  end
+
+  def gen_row_vector([],_) do [] end
+  def gen_row_vector([v|vs],m) do
+    [gen_row_vector1(v,m)|gen_row_vector(vs,m)]
+  end
+
+  def gen_row_vector1(_,[]) do [] end
+  def gen_row_vector1(v,[m|ms]) do
+    [inner_product(v,m)|gen_row_vector1(v,ms)]
+  end
+
+  def inner_product(x,y) do
+    inner_product1(x,y,0)
+  end
+
+  def inner_product1([],[],res) do res end
+  def inner_product1([x|xs],[y|ys],res) do
+    inner_product1(xs,ys,x*y+res)
+  end
 end
