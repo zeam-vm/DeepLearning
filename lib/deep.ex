@@ -503,10 +503,10 @@ defmodule Dmatrix do
     y1 = Matrix.transpose(y)
     {r,c} = Matrix.size(x)
     {r1,c1} = Matrix.size(y)
-    d = 10
+    d = 2
     if c != r1 do
       :error
-    else if r > 1 or c < 100 do
+    else if r > 1 or c < 50 do
             Matrix.mult(x,y)
          else
             pmult1(x,y1,c1,c1,lot(c1,d),last_lot(c1,d))
