@@ -39,9 +39,9 @@ defmodule DLTest do
     assert Dmatrix.pool([[1,2,1,0],[0,1,2,3],[3,0,1,2],[2,4,0,1]],2) == [[2, 3], [4, 2]]
   end
 
-  test "Pmatrix test" do
-    a = Pmatrix.rand_matrix(1,728,3)
-    b = Pmatrix.rand_matrix(728,100,3)
-    assert Pmatrix.mult(a,b) == Matrix.mult(a,b)
+  test "Dmatrix test" do
+    a = Dmatrix.rand_matrix(1,728,3)
+    b = Dmatrix.rand_matrix(728,100,3)
+    assert Dmatrix.mult(a,b) == Dmatrix.mult(a,b)
   end
 end

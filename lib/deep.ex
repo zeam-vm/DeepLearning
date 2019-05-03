@@ -346,48 +346,37 @@ defmodule DL do
     mini_batch1(network2,rest,error1+error)
   end
 
-  def mnist(n) do
+  def mnist(m,n) do
+    IO.puts("prepareing data")
     image = MNIST.train_image()
     label = MNIST.train_label()
     network = Test.init_network1()
-    seq = rand_sequence(1000,length(image))
-    IO.puts("count error")
-    network1 = batch(network,image,label,1000,n,seq)
+    seq = rand_sequence(m,length(image))
     test_image = MNIST.test_image()
     test_label = MNIST.test_label()
-    seq1 = rand_sequence(10,length(test_image))
-    IO.puts("predict correct")
-    minist1(network1,test_image,test_label,0,seq1)
-  end
-  # print predict of test data
-  def minist1(_,_,_,_,[]) do true end
-  def minist1(network,[image|irest],[label|lrest],n,[n|srest]) do
-    print(MNIST.onehot_to_num(forward(network,MNIST.normalize(image,255))))
-    IO.write(" ")
-    print(label)
-    newline()
-    minist1(network,irest,lrest,n+1,srest)
-  end
-  def minist1(network,[_|irest],[_|lrest],n,[s|srest]) do
-    minist1(network,irest,lrest,n+1,[s|srest])
+    IO.puts("c error")
+    network1 = batch(network,image,label,m,n,seq)
+    IO.puts("verifying")
+    c = accuracy(network1,test_image,test_label,10000,0)
+    IO.write("accuracy rate = ")
+    IO.puts(c/10000)
   end
 
-  def remnist(n) do
-    image = MNIST.train_image()
-    label = MNIST.train_label()
-    network = load("network.exs")
-    seq = rand_sequence(1000,length(image))
-    IO.puts("count error")
-    network1 = batch(network,image,label,1000,n,seq)
-    test_image = MNIST.test_image()
-    test_label = MNIST.test_label()
-    seq1 = rand_sequence(10,length(test_image))
-    IO.puts("predict correct")
-    minist1(network1,test_image,test_label,0,seq1)
-    save("network.exs",network1)
+  # print predict of test data
+  def accuracy(_,_,_,0,correct) do
+    correct
+  end
+  def accuracy(network,[image|irest],[label|lrest],n,correct) do
+    dt = MNIST.onehot_to_num(forward(network,MNIST.normalize(image,255)))
+    if dt != label do
+      accuracy(network,irest,lrest,n-1,correct)
+    else
+      accuracy(network,irest,lrest,n-1,correct+1)
+    end
   end
 
   def batch(network,_,_,_,0,_) do network end
+  def batch(network,_,_,_,_,[]) do network end
   def batch(network,image,label,n,c,seq) do
     {network1,error} = batch1(network,image,label,0,seq,0)
     print(c)
@@ -398,6 +387,9 @@ defmodule DL do
   end
 
   def batch1(network,_,_,60000,_,error) do
+    {network,error}
+  end
+  def batch1(network,_,_,_,[],error) do
     {network,error}
   end
   def batch1(network,[image|irest],[label|lrest],n,[n|srest],error) do
@@ -482,28 +474,6 @@ defmodule Dmatrix do
     [box_muller()*rate|new1(c-1,rate)]
   end
 
-  defmacro time(exp) do
-    quote do
-    {time, dict} = :timer.tc(fn() -> unquote(exp) end)
-    IO.inspect "time: #{time} micro second"
-    IO.inspect "-------------"
-    dict
-    end
-  end
-
-  # network macro is unfinished
-  defmacro network(r,c,f,g,r) do
-    m = new(r,c,1)
-    b = Matrix.new(1,c,0)
-    quote do
-      [unquote(m),
-       unquote(b),
-       fn(x) -> unquote(f) end,
-       fn(x) -> unquote(g) end,
-       unquote(r)]
-    end
-  end
-
   def print([]) do
     IO.puts("")
   end
@@ -521,11 +491,65 @@ defmodule Dmatrix do
       :io.write(x)
       :io.write(y)
     else
-      #if r0 == 1 and c >= 100 do
-      #  Pmatrix.mult(x,y)
-      #else
+      if r0 == 1 and c >= 100 do
+        pmult(x,y)
+      else
         Matrix.mult(x,y)
-      #end
+      end
+    end
+  end
+
+  def pmult(x,y) do
+    y1 = Matrix.transpose(y)
+    {r,c} = Matrix.size(x)
+    {r1,c1} = Matrix.size(y)
+    d = 10
+    if c != r1 do
+      :error
+    else if r > 1 or c < 100 do
+            Matrix.mult(x,y)
+         else
+            pmult1(x,y1,c1,c1,lot(c1,d),last_lot(c1,d))
+            ans = pmult2(d,[])
+            |> Enum.sort
+            |> Enum.map(fn(x) -> Enum.drop(x,1) |> hd end)
+            |> flatten
+            [ans]
+        end
+    end
+  end
+
+  def flatten([]) do [] end
+  def flatten([x|xs]) do
+    x ++ flatten(xs)
+  end
+
+  def lot(m,c) do
+    div(m,c)
+  end
+
+  def last_lot(m,c) do
+    div(m,c) + rem(m,c)
+  end
+
+  def pmult1(_,_,_,0,_,_) do true end
+  def pmult1(x,y,m,m,l1,l2) do
+    pid = spawn(Worker,:part,[])
+    send pid, {self(),{m,x,Enum.slice(y,m-l2,l2)}}
+    pmult1(x,y,m,m-l2,l1,l2)
+  end
+  def pmult1(x,y,m,c,l1,l2) do
+    pid = spawn(Worker,:part,[])
+    send pid, {self(),{c,x,Enum.slice(y,c-l1,l1)}}
+    pmult1(x,y,m,c-l1,l1,l2)
+  end
+
+
+  def pmult2(0,res) do res end
+  def pmult2(d,res) do
+    receive do
+      {:answer,ls} ->
+        pmult2(d-1,[ls|res])
     end
   end
 
@@ -659,6 +683,17 @@ defmodule Dmatrix do
     x1 = part(x,m,n,s,s)
     [max(x1)|pool2(x,r,c,m,n+s,s)]
   end
+
+  def rand_matrix(0,_,_) do [] end
+  def rand_matrix(m,n,i) do
+    [rand_matrix1(n,[],i)|rand_matrix(m-1,n,i)]
+  end
+
+  def rand_matrix1(0,res,_) do res end
+  def rand_matrix1(n,res,i) do
+    rand_matrix1(n-1,[:rand.uniform(i)|res],i)
+  end
+
 end
 
 
@@ -721,73 +756,6 @@ defmodule MNIST do
   end
 end
 
-defmodule Pmatrix do
-
-  def mult(x,y) do
-    y1 = Matrix.transpose(y)
-    {r,c} = Matrix.size(x)
-    {r1,c1} = Matrix.size(y)
-    d = 10
-    if c != r1 do
-      :error
-    else if r > 1 or c < 100 do
-            Matrix.mult(x,y)
-         else
-            mult1(x,y1,c1,c1,lot(c1,d),last_lot(c1,d))
-            ans = mult2(d,[])
-            |> Enum.sort
-            |> Enum.map(fn(x) -> Enum.drop(x,1) |> hd end)
-            |> flatten
-            [ans]
-        end
-    end
-  end
-
-  def flatten([]) do [] end
-  def flatten([x|xs]) do
-    x ++ flatten(xs)
-  end
-
-  def lot(m,c) do
-    div(m,c)
-  end
-
-  def last_lot(m,c) do
-    div(m,c) + rem(m,c)
-  end
-
-  def mult1(_,_,_,0,_,_) do true end
-  def mult1(x,y,m,m,l1,l2) do
-    pid = spawn(Worker,:part,[])
-    send pid, {self(),{m,x,Enum.slice(y,m-l2,l2)}}
-    mult1(x,y,m,m-l2,l1,l2)
-  end
-  def mult1(x,y,m,c,l1,l2) do
-    pid = spawn(Worker,:part,[])
-    send pid, {self(),{c,x,Enum.slice(y,c-l1,l1)}}
-    mult1(x,y,m,c-l1,l1,l2)
-  end
-
-
-  def mult2(0,res) do res end
-  def mult2(d,res) do
-    receive do
-      {:answer,ls} ->
-        mult2(d-1,[ls|res])
-    end
-  end
-
-  def rand_matrix(0,_,_) do [] end
-  def rand_matrix(m,n,i) do
-    [rand_matrix1(n,[],i)|rand_matrix(m-1,n,i)]
-  end
-
-  def rand_matrix1(0,res,_) do res end
-  def rand_matrix1(n,res,i) do
-    rand_matrix1(n-1,[:rand.uniform(i)|res],i)
-  end
-
-end
 
 defmodule Worker do
   def part do
@@ -809,4 +777,16 @@ defmodule Worker do
   def inner_product1([x|xs],[y|ys],res) do
     inner_product1(xs,ys,x*y+res)
   end
+end
+
+defmodule TIme do
+  defmacro time(exp) do
+    quote do
+    {time, dict} = :timer.tc(fn() -> unquote(exp) end)
+    IO.inspect "time: #{time} micro second"
+    IO.inspect "-------------"
+    dict
+    end
+  end
+
 end
