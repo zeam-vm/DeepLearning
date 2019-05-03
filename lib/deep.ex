@@ -196,9 +196,11 @@ defmodule DL do
   def square(x) do
     x*x
   end
-  # apply functin for row matrix
-  def apply_function([x],f) do
-    [Enum.map(x,fn(y) -> f.(y) end)]
+
+  # apply functin for matrix
+  def apply_function([],_) do [] end
+  def apply_function([x|xs],f) do
+    [Enum.map(x,fn(y) -> f.(y) end)|apply_function(xs,f)]
   end
 
   def forward([],x) do x end
