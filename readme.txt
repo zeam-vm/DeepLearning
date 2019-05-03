@@ -2,7 +2,7 @@ For my study Deep Learning with elixir
 
 Usage:
   iex -S mix
-  NL.mnist(batch_size,iteration)
+  DL.mnist(batch_size,iteration) # test with MNIST data set
 
 Example:
 iex(1)> DL.mnist(1000,200)
