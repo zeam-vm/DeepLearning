@@ -40,6 +40,67 @@ defmodule Test do
      5]
   end
 
+  def init_network3() do
+    [[[1,2,3,4,5,6,7,8],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9],
+      [2,3,4,5,6,7,8,9]],
+     [[0,0,0,0,0,0,0,0]],
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1,
+     [[1,2,3,4,5,6],
+      [1,2,3,4,5,6],
+      [1,2,3,4,5,6],
+      [1,2,3,4,5,6],
+      [1,2,3,4,5,6],
+      [1,2,3,4,5,6],
+      [1,2,3,4,5,6],
+      [1,2,3,4,5,6]],
+     [[0,0,0,0,0,0]],
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1,
+     [[1,2,3],
+      [1,2,3],
+      [1,2,3],
+      [1,2,3],
+      [1,2,3],
+      [1,2,3]],
+     [[0,0,0]],
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1,
+     [[1,2],
+      [1,2],
+      [1,2]],
+     [[0,0]],
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1]
+  end
+
+
+  def dt1 do
+    [[1,1,1,1,1,1,1,1,1,1,1,1]]
+  end
+  def dt2 do
+    [[1,1,1,1,1,0,1,1,1,1,1,0]]
+  end
+  def dt3 do
+    [[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,0,1,1,1,1,1,0]]
+  end
+  def tt3 do
+    [[1,0],[0,1]]
+  end
 
   def dt() do
     [[[1,1,1,
@@ -294,15 +355,10 @@ defmodule DL do
 
   def backpropagation1([],_,_,res) do res end
   def backpropagation1([r,g,f,_,w|rest],l,[u1,u2|us],res) do
-    l1 = [backpropagation2(hd(l),hd(u1),g)]
+    l1 = Matrix.emult(l,DL.apply_function(u1,g))
     l2 = Dmatrix.mult(l1,Matrix.transpose(w))
     w1 = Dmatrix.mult(Matrix.transpose(u2),l1)
     backpropagation1(rest,l2,us,[w1,l1,f,g,r|res])
-  end
-
-  def backpropagation2([],[],_) do [] end
-  def backpropagation2([l|ls],[u|us],g) do
-    [g.(u)*l|backpropagation2(ls,us,g)]
   end
 
   # update wight and bias
@@ -457,10 +513,18 @@ end
 
 #DL for mini_batch
 defmodule DLB do
+  def stop do
+    :math.exp(1000)
+  end
+  def print(x) do
+    :io.write(x)
+  end
   # x is matrix. This is batch data
   def forward([],x) do x end
   def forward([w,b,f,_,_|rest],x) do
-    x1 = Pmatrix.mult(x,w)|> Matrix.add(b) |> DL.apply_function(f)
+    {r,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,r)
+    x1 = Pmatrix.mult(x,w)|> Matrix.add(b1) |> DL.apply_function(f)
     forward(rest,x1)
   end
 
@@ -470,7 +534,9 @@ defmodule DLB do
   end
   def forward_for_back1([],_,res) do res end
   def forward_for_back1([w,b,f,_,_|rest],x,res) do
-    x1 = Pmatrix.mult(x,w)|> Dmatrix.add(b)
+    {r,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,r)
+    x1 = Pmatrix.mult(x,w)|> Dmatrix.add(b1)
     x2 = x1 |> DL.apply_function(f)
     forward_for_back1(rest,x2,[x2,x1|res])
   end
@@ -489,17 +555,15 @@ defmodule DLB do
 
   def backpropagation1([],_,_,res) do res end
   def backpropagation1([r,g,f,_,w|rest],l,[u1,u2|us],res) do
-    l1 = [backpropagation2(hd(l),hd(u1),g)]
+    l1 = Matrix.emult(l,DL.apply_function(u1,g))
     l2 = Pmatrix.mult(l1,Matrix.transpose(w))
     w1 = Pmatrix.mult(Matrix.transpose(u2),l1)
-    backpropagation1(rest,l2,us,[w1,l1,f,g,r|res])
+    l3 = Dmatrix.reduce(l1) # reduce each bias diff value
+    backpropagation1(rest,l2,us,[w1,l3,f,g,r|res])
   end
 
-  #unfinished. caution l and u are matrix
-  def backpropagation2([],[],_) do [] end
-  def backpropagation2([l|ls],[u|us],g) do
-    [g.(u)*l|backpropagation2(ls,us,g)]
-  end
+
+
 
 end
 
@@ -642,6 +706,7 @@ defmodule Dmatrix do
     [v|diff1(vs,0,c-1,d)]
   end
 
+
   # for CNN
   def convolute(x,y) do
     {r1,c1} = Matrix.size(x)
@@ -743,6 +808,24 @@ defmodule Dmatrix do
     rand_matrix1(n-1,[:rand.uniform(i)|res],i)
   end
 
+  # reduce each row vector by sum of each element
+  def reduce([x]) do [x] end
+  def reduce([x,y]) do
+    reduce1(x,y)
+  end
+  def reduce([x|xs]) do
+    reduce1(x,reduce(xs))
+  end
+
+  def reduce1([],[]) do [] end
+  def reduce1([x|xs],[y|ys]) do
+    [x+y|reduce1(xs,ys)]
+  end
+
+  def expand(x,1) do x end
+  def expand([x],n) do
+    [x|expand([x],n-1)]
+  end
 end
 
 
@@ -848,8 +931,8 @@ defmodule Pmatrix do
     {r1,_} = Matrix.size(y)
     d = 10
     if c != r1 do
-      :error
-    else if r < 10 and r1 < 10 do
+      :errorggg
+    else if r < 20 and r1 < 20 do
             Matrix.mult(x,y)
          else
             mult1(x,y1,r,r,lot(r,d),last_lot(r,d))

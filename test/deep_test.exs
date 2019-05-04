@@ -18,7 +18,7 @@ defmodule DLTest do
   end
 
 
-  test "test chapter3" do
+  test "error function" do
     #assert DL.test1() == [[0.7043825919854788, 0.7043825919854788]]
     assert DL.cross_entropy([[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]],[[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]) == 0.510825457099338
     assert DL.cross_entropy([[0.1, 0.05, 0.1, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]],[[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]) == 2.302584092994546
@@ -43,5 +43,12 @@ defmodule DLTest do
     a = Dmatrix.rand_matrix(1,728,3)
     b = Dmatrix.rand_matrix(728,100,3)
     assert Dmatrix.mult(a,b) == Matrix.mult(a,b)
+    assert Dmatrix.reduce([[1,2,3],[4,5,6]]) == [5, 7, 9]
+    assert Dmatrix.expand([[1,2,3]],3) == [[1, 2, 3], [1, 2, 3], [1, 2, 3]]
+    assert Dmatrix.expand([[1,2,3]],1) == [[1, 2, 3]]
+  end
+
+  test "DLB test" do
+    assert DLB.forward(Test.init_network3(),Test.dt3()) == [[0.9524619803383754, 0.9975151146300772],[0.9524619803383751, 0.9975151146300772]]
   end
 end
