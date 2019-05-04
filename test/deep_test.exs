@@ -43,7 +43,7 @@ defmodule DLTest do
     a = Dmatrix.rand_matrix(1,728,3)
     b = Dmatrix.rand_matrix(728,100,3)
     assert Dmatrix.mult(a,b) == Matrix.mult(a,b)
-    assert Dmatrix.reduce([[1,2,3],[4,5,6]]) == [5, 7, 9]
+    assert Dmatrix.reduce([[1,2,3],[4,5,6]]) == [[5, 7, 9]]
     assert Dmatrix.expand([[1,2,3]],3) == [[1, 2, 3], [1, 2, 3], [1, 2, 3]]
     assert Dmatrix.expand([[1,2,3]],1) == [[1, 2, 3]]
   end
