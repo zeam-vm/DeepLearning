@@ -513,6 +513,26 @@ end
 
 #DL for mini_batch
 defmodule DLB do
+  def network() do
+    [[[1,2],
+      [3,4],
+      [5,6]],
+      [[0,0]],
+     fn(x) -> DL.ident(x) end,
+     fn(x) -> DL.ident(x) end,
+     1]
+  end
+
+  def dt1() do
+    [[1,2,3],
+     [4,5,6]]
+  end
+
+  def t1() do
+    [[1,2],
+     [3,4]]
+  end
+
   def stop do
     :math.exp(1000)
   end
@@ -541,6 +561,84 @@ defmodule DLB do
     forward_for_back1(rest,x2,[x2,x1|res])
   end
 
+  # for numerical gradient
+  def forward_w([],x,_,_,_,_) do x end
+  def forward_w([w,b,f,_,_|rest],x,0,r,c,d) do
+    w1 = Dmatrix.diff(w,r,c,d)
+    {r1,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,r1)
+    x1 = Dmatrix.mult(x,w1)|> Dmatrix.add(b1) |> DL.apply_function(f)
+    forward_w(rest,x1,-1,r,c,d)
+  end
+  def forward_w([w,b,f,_,_|rest],x,n,r,c,d) do
+    {r1,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,r1)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b1) |> DL.apply_function(f)
+    forward_w(rest,x1,n-1,r,c,d)
+  end
+
+  # for numerical gradient
+  def forward_b([],x,_,_,_) do x end
+  def forward_b([w,b,f,_,_|rest],x,0,c,d) do
+    b1 = Dmatrix.diff(b,0,c,d)
+    {r1,_} = Matrix.size(x)
+    b2 = Dmatrix.expand(b1,r1)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b2) |> DL.apply_function(f)
+    forward_b(rest,x1,-1,c,d)
+  end
+  def forward_b([w,b,f,_,_|rest],x,n,c,d) do
+    {r1,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,r1)
+    x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b1) |> DL.apply_function(f)
+    forward_b(rest,x1,n-1,c,d)
+  end
+  # numerical gradient
+  def numerical_gradient(network,x,t) do
+    numerical_gradient1(network,x,t,0,network)
+  end
+
+  def numerical_gradient1([],_,_,_,_) do [] end
+  def numerical_gradient1([w,b,f,g,r|rest],x,t,n,network) do
+    [numerical_gradient_w(w,x,n,network,t),numerical_gradient_b(b,x,n,network,t),f,g,r|
+     numerical_gradient1(rest,x,t,n+1,network)]
+  end
+
+  # numerical gradient for wight matrix
+  def numerical_gradient_w(w,x,n,network,t) do
+    {r,c} = Matrix.size(w)
+    Enum.map(0..r-1,
+      fn(x1) -> Enum.map(0..c-1,
+                  fn(y1) -> numerical_gradient_w1(x,x1,y1,n,network,t) end) end)
+  end
+
+  def numerical_gradient_w1(x,r,c,n,network,t) do
+    h = 0.0001
+    y0 = forward(network,x)
+    y1 = forward_w(network,x,n,r,c,h)
+    (batch_error(y1,t) - batch_error(y0,t)) / h
+  end
+
+  def batch_error(y,t) do
+    batch_error1(y,t,0) / length(y)
+  end
+
+  def batch_error1([],[],res) do res end
+  def batch_error1([y|ys],[t|ts],res) do
+    batch_error1(ys,ts,DL.mean_square([t],[y])+res)
+  end
+
+  # numerical gradient bias row vector
+  def numerical_gradient_b(b,x,n,network,t) do
+    {_,c} = Matrix.size(b)
+    [Enum.map(0..c-1,fn(y1) -> numerical_gradient_b1(x,y1,n,network,t) end)]
+  end
+
+  def numerical_gradient_b1(x,c,n,network,t) do
+    h = 0.0001
+    y0 = forward(network,x)
+    y1 = forward_b(network,x,n,c,h)
+    (batch_error(y1,t) - batch_error(y0,t)) / h
+  end
 
   # gradient with backpropagation x and t are matrix
   def gradient(network,x,t) do
@@ -619,6 +717,7 @@ defmodule DLB do
   def batch_error(network,image,train) do
     y = forward(network,image)
     error = Matrix.sub(y,train) |> DL.apply_function(fn(y) -> DL.square(y) end) |> Dmatrix.sum
+    error
   end
 
 
