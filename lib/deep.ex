@@ -17,90 +17,6 @@ defmodule Test do
      3]
   end
 
-  def init_network2() do
-    [Dmatrix.new(12,8,1),
-     [[0,0,0,0,0,0,0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     5,
-     Dmatrix.new(8,6,1),
-     [[0,0,0,0,0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     5,
-     Dmatrix.new(6,3,1),
-     [[0,0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     5,
-     Dmatrix.new(3,2,1),
-     [[0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     5]
-  end
-
-  def init_network3() do
-    [[[1,2,3,4,5,6,7,8],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9],
-      [2,3,4,5,6,7,8,9]],
-     [[0,0,0,0,0,0,0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     1,
-     [[1,2,3,4,5,6],
-      [1,2,3,4,5,6],
-      [1,2,3,4,5,6],
-      [1,2,3,4,5,6],
-      [1,2,3,4,5,6],
-      [1,2,3,4,5,6],
-      [1,2,3,4,5,6],
-      [1,2,3,4,5,6]],
-     [[0,0,0,0,0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     1,
-     [[1,2,3],
-      [1,2,3],
-      [1,2,3],
-      [1,2,3],
-      [1,2,3],
-      [1,2,3]],
-     [[0,0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     1,
-     [[1,2],
-      [1,2],
-      [1,2]],
-     [[0,0]],
-     fn(x) -> DL.sigmoid(x) end,
-     fn(x) -> DL.dsigmoid(x) end,
-     1]
-  end
-
-
-  def dt1 do
-    [[1,1,1,1,1,1,1,1,1,1,1,1]]
-  end
-  def dt2 do
-    [[1,1,1,1,1,0,1,1,1,1,1,0]]
-  end
-  def dt3 do
-    [[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,0,1,1,1,1,1,0]]
-  end
-  def tt3 do
-    [[1,0],[0,1]]
-  end
 
   def dt() do
     [[[1,1,1,
@@ -179,7 +95,6 @@ defmodule Test do
        1,0,1]],
       [[0,1]]]
   end
-
 end
 
 

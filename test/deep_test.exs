@@ -24,7 +24,7 @@ defmodule DLTest do
     assert DL.cross_entropy([[0.1, 0.05, 0.1, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]],[[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]) == 2.302584092994546
   end
 
-  test "CNN" do
+  test "CNN test" do
     a = [[1,2,3,0],
          [0,1,2,3],
          [3,0,1,2],
@@ -49,6 +49,6 @@ defmodule DLTest do
   end
 
   test "DLB test" do
-    assert DLB.forward(Test.init_network3(),Test.dt3()) == [[0.9524619803383754, 0.9975151146300772],[0.9524619803383751, 0.9975151146300772]]
+
   end
 end
