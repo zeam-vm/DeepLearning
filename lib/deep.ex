@@ -1022,7 +1022,7 @@ defmodule Pmatrix do
     d = 5
     if c != r1 do
       :error
-    else if r < 10 or c <100 do
+    else if true do #r < 10  do
             Matrix.mult(x,y)
          else
             mult1(x,y1,r,r,lot(r,d),last_lot(r,d))
