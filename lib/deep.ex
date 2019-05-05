@@ -1001,7 +1001,7 @@ defmodule Worker do
   end
 end
 
-defmodule TIme do
+defmodule Time do
   defmacro time(exp) do
     quote do
     {time, dict} = :timer.tc(fn() -> unquote(exp) end)
