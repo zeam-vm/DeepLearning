@@ -184,17 +184,6 @@ end
 
 
 defmodule DL do
-  @moduledoc """
-  Documentation for DL.
-  """
-
-  @doc """
-  ## Examples
-
-
-
-  """
-  # activation function
   def sigmoid(x) do
     cond do
       x > 100 -> 1
@@ -491,24 +480,6 @@ defmodule DL do
     print_network(xs)
   end
 
-  def save_test() do
-    network = Test.init_network1()
-    save("network.exs",network)
-  end
-
-  def save(filename,network) do
-    File.write(filename,inspect(network))
-  end
-
-  def load(filename) do
-    {state,data} = File.read(filename)
-    if state == :ok do
-      data
-    else
-      :error
-    end
-  end
-
 end
 
 #DL for mini_batch
@@ -519,8 +490,8 @@ defmodule DLB do
   # x is matrix. This is batch data
   def forward([],x) do x end
   def forward([w,b,f,_,_|rest],x) do
-    {r,_} = Matrix.size(x)
-    b1 = Dmatrix.expand(b,r)
+    {e,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,e)
     x1 = Pmatrix.mult(x,w)|> Matrix.add(b1) |> DL.apply_function(f)
     forward(rest,x1)
   end
@@ -531,8 +502,8 @@ defmodule DLB do
   end
   def forward_for_back1([],_,res) do res end
   def forward_for_back1([w,b,f,_,_|rest],x,res) do
-    {r,_} = Matrix.size(x)
-    b1 = Dmatrix.expand(b,r)
+    {e,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,e)
     x1 = Pmatrix.mult(x,w)|> Dmatrix.add(b1)
     x2 = x1 |> DL.apply_function(f)
     forward_for_back1(rest,x2,[x2,x1|res])
@@ -542,14 +513,14 @@ defmodule DLB do
   def forward_w([],x,_,_,_,_) do x end
   def forward_w([w,b,f,_,_|rest],x,0,r,c,d) do
     w1 = Dmatrix.diff(w,r,c,d)
-    {r1,_} = Matrix.size(x)
-    b1 = Dmatrix.expand(b,r1)
+    {e,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,e)
     x1 = Dmatrix.mult(x,w1)|> Dmatrix.add(b1) |> DL.apply_function(f)
     forward_w(rest,x1,-1,r,c,d)
   end
   def forward_w([w,b,f,_,_|rest],x,n,r,c,d) do
-    {r1,_} = Matrix.size(x)
-    b1 = Dmatrix.expand(b,r1)
+    {e,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,e)
     x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b1) |> DL.apply_function(f)
     forward_w(rest,x1,n-1,r,c,d)
   end
@@ -558,14 +529,14 @@ defmodule DLB do
   def forward_b([],x,_,_,_) do x end
   def forward_b([w,b,f,_,_|rest],x,0,c,d) do
     b1 = Dmatrix.diff(b,0,c,d)
-    {r1,_} = Matrix.size(x)
-    b2 = Dmatrix.expand(b1,r1)
+    {e,_} = Matrix.size(x)
+    b2 = Dmatrix.expand(b1,e)
     x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b2) |> DL.apply_function(f)
     forward_b(rest,x1,-1,c,d)
   end
   def forward_b([w,b,f,_,_|rest],x,n,c,d) do
-    {r1,_} = Matrix.size(x)
-    b1 = Dmatrix.expand(b,r1)
+    {e,_} = Matrix.size(x)
+    b1 = Dmatrix.expand(b,e)
     x1 = Dmatrix.mult(x,w)|> Dmatrix.add(b1) |> DL.apply_function(f)
     forward_b(rest,x1,n-1,c,d)
   end
