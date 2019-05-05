@@ -2,33 +2,26 @@ For my study Deep Learning with elixir
 
 Usage:
   iex -S mix
-  DL.mnist(batch_size,iteration) # test with MNIST data set
+  DLB.mnist(size,epoch) # test with MNIST data set
 
 Example:
-iex(1)> DL.mnist(1000,200)
+iex(1)> DLB.mnist(1000,30)
 prepareing data
-c error
-200 48.86748226514455
-199 50.086982074240616
-198 49.89497201235128
-197 41.13302243953977
-196 31.120977024814618
-195 22.869422071261084
-194 17.187102781695295
 ...
-8 0.008844112533954122
-7 0.008793636809442213
-6 0.00874371932026004
-5 0.008694350909683702
-4 0.008645522619948765
-3 0.008597225686872918
-2 0.00854945153465225
-1 0.008502191770824867
+mini batch error = 1.0368650214598516
+mini batch error = 0.9950205959254711
+mini batch error = 0.026115933479561745
+mini batch error = 0.0395832162443519
 verifying
-accuracy rate = 0.7916
+accuracy rate = 0.89
 :ok
 iex(2)>
 
+module DL is basic code for Deep learning
+module DLB is for batch processing
+module Dmatrix is code for Matrix
+module Pmatrix is code for Matrix product in paralell
+module MNIST is code for MNIST data set
 
 I implemented backpropagation and numerical-gradient
 Now I'm testing small data set.

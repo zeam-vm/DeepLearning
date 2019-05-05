@@ -4,17 +4,17 @@ defmodule Test do
      Matrix.new(1,50),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     1.6,
+     3.2,
      Dmatrix.new(50,100,0.1),
      Matrix.new(1,100),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     1.5,
+     3.1,
      Dmatrix.new(100,10,0.1),
      Matrix.new(1,10),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     1.4]
+     3]
   end
 
   def init_network2() do
@@ -513,29 +513,6 @@ end
 
 #DL for mini_batch
 defmodule DLB do
-  def network() do
-    [[[1,2],
-      [3,4],
-      [5,6]],
-      [[0,0]],
-     fn(x) -> DL.ident(x) end,
-     fn(x) -> DL.ident(x) end,
-     1]
-  end
-
-  def dt1() do
-    [[1,2,3],
-     [4,5,6]]
-  end
-
-  def t1() do
-    [[1,2],
-     [3,4]]
-  end
-
-  def stop do
-    :math.exp(1000)
-  end
   def print(x) do
     :io.write(x)
   end
@@ -653,31 +630,12 @@ defmodule DLB do
 
   def backpropagation1([],_,_,res) do res end
   def backpropagation1([r,g,f,_,w|rest],l,[u1,u2|us],res) do
+    {n,_} = Matrix.size(l)
     l1 = Matrix.emult(l,DL.apply_function(u1,g))
     l2 = Pmatrix.mult(l1,Matrix.transpose(w))
-    w1 = Pmatrix.mult(Matrix.transpose(u2),l1)
-    l3 = Dmatrix.reduce(l1) # reduce each bias diff value
+    w1 = Pmatrix.mult(Matrix.transpose(u2),l1) |> DL.apply_function(fn(x) -> x/n end)
+    l3 = Dmatrix.reduce(l1) |> DL.apply_function(fn(x) -> x/n end) #bias
     backpropagation1(rest,l2,us,[w1,l3,f,g,r|res])
-  end
-
-  def test1() do
-    network = Test.init_network3()
-    dt1 = Test.dt1()
-    dt2 = Test.dt2()
-    network1 = DL.gradient(network,dt1,[[1,0]])
-    network2 = DL.learning(network,network1)
-    network3 = DL.gradient(network2,dt2,[[0,1]])
-    network4 = DL.learning(network2,network3)
-    network4
-  end
-
-  def test2() do
-    network = Test.init_network3()
-    dt3 = Test.dt3()
-    tt3 = Test.tt3()
-    network1 = gradient(network,dt3,tt3)
-    network2 = DL.learning(network,network1)
-    network2
   end
 
   def mnist(m,n) do
@@ -697,7 +655,8 @@ defmodule DLB do
 
   def batch(network,_,_,_,0) do network end
   def batch(network,image,train,m,n) do
-    print(n)
+    IO.write("rest epoch = ")
+    IO.puts(n)
     network1 = mini_batch(network,image,train,m)
     batch(network1,image,train,m,n-1)
   end
@@ -709,15 +668,14 @@ defmodule DLB do
     network1 = gradient(network,mini_image,mini_train)
     network2 = DL.learning(network,network1)
     error = batch_error(network2,mini_image,mini_train)
-    print(error)
-    IO.puts("")
+    IO.write("mini batch error = ")
+    IO.puts(error)
     mini_batch(network2,Enum.drop(image,10),Enum.drop(train,10),m-10)
   end
 
   def batch_error(network,image,train) do
     y = forward(network,image)
-    error = Matrix.sub(y,train) |> DL.apply_function(fn(y) -> DL.square(y) end) |> Dmatrix.sum
-    error
+    Matrix.sub(y,train) |> DL.apply_function(fn(y) -> DL.square(y) end) |> Dmatrix.sum
   end
 
 
@@ -965,6 +923,7 @@ defmodule Dmatrix do
   end
 
   # reduce each row vector by sum of each element
+  # and calcurate average
   def reduce(x) do
     [reduce1(x)]
   end
@@ -1089,10 +1048,10 @@ defmodule Pmatrix do
     y1 = Matrix.transpose(y)
     {r,c} = Matrix.size(x)
     {r1,_} = Matrix.size(y)
-    d = 10
+    d = 5
     if c != r1 do
-      :errorggg
-    else if r < 100 do
+      :error
+    else if r < 10 or c <100 do
             Matrix.mult(x,y)
          else
             mult1(x,y1,r,r,lot(r,d),last_lot(r,d))
