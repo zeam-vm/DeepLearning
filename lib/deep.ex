@@ -466,8 +466,8 @@ defmodule DLB do
     l1 = Matrix.emult(l,DL.apply_function(u1,g))
     l2 = Pmatrix.mult(l1,Matrix.transpose(w))
     w1 = Pmatrix.mult(Matrix.transpose(u2),l1) |> DL.apply_function(fn(x) -> x/n end)
-    l3 = Dmatrix.reduce(l1) |> DL.apply_function(fn(x) -> x/n end) #bias
-    backpropagation1(rest,l2,us,[w1,l3,f,g,r|res])
+    b1 = Dmatrix.reduce(l1) |> DL.apply_function(fn(x) -> x/n end) #bias
+    backpropagation1(rest,l2,us,[w1,b1,f,g,r|res])
   end
 
   def mnist(m,n) do
