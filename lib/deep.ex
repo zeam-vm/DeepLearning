@@ -4,19 +4,31 @@ defmodule Test do
      Matrix.new(1,50),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     3.2,
+     4.2,
      Dmatrix.new(50,100,0.1),
      Matrix.new(1,100),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     3.1,
+     4.1,
      Dmatrix.new(100,10,0.1),
      Matrix.new(1,10),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     3]
+     4]
   end
 
+  def init_network2() do
+    [Dmatrix.new(12,6,0.1),
+     Matrix.new(1,6),
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1,
+     Dmatrix.new(6,2,0.1),
+     Matrix.new(1,2),
+     fn(x) -> DL.sigmoid(x) end,
+     fn(x) -> DL.dsigmoid(x) end,
+     1]
+  end
 
   def dt() do
     [[[1,1,1,
@@ -268,19 +280,21 @@ defmodule DL do
   # update wight and bias
   def learning([],_) do [] end
   def learning([w,b,f,g,r|rest],[w1,b1,_,_,_|gradrest]) do
-    [Dmatrix.element_mult(w,w1,r),Dmatrix.element_mult(b,b1,r),f,g,r|
+    [Dmatrix.update(w,w1,r),Dmatrix.update(b,b1,r),f,g,r|
      learning(rest,gradrest)]
   end
 
   # stochastic gradient descent
   def sgd() do
-    network = Test.init_network1()
+    network = Test.init_network2()
     dt = Test.dt()
-    network1 = mini_batch(network,dt,100)
+    network1 = sgd1(network,dt,100)
     print(forward(network1,Enum.at(dt,0)))
     print(Enum.at(dt,1))
+    newline()
     print(forward(network1,Enum.at(dt,2)))
     print(Enum.at(dt,3))
+    newline()
     dt = [[1,1,1,
            0,0,1,
            1,0,1,
@@ -288,92 +302,24 @@ defmodule DL do
     print(forward(network1,dt))
   end
 
-  def mini_batch(network,_,0) do  network end
-  def mini_batch(network,dt,n) do
-    network1 = mini_batch1(network,dt,0)
-    mini_batch(network1,dt,n-1)
+  def sgd1(network,_,0) do  network end
+  def sgd1(network,dt,n) do
+    network1 = sgd2(network,dt,0)
+    sgd1(network1,dt,n-1)
   end
 
-  def mini_batch1(network,[],error) do
+  def sgd2(network,[],error) do
     IO.puts(error)
     network
   end
-  def mini_batch1(network,[x,t|rest],error) do
+  def sgd2(network,[x,t|rest],error) do
     network1 = gradient(network,x,t)
     network2 = learning(network,network1)
     x1 = forward(network,x)
     error1 = mean_square(x1,t)
-    mini_batch1(network2,rest,error1+error)
+    sgd2(network2,rest,error1+error)
   end
 
-  def mnist(m,n) do
-    IO.puts("prepareing data")
-    image = MNIST.train_image()
-    label = MNIST.train_label()
-    network = Test.init_network1()
-    seq = rand_sequence(m,length(image))
-    test_image = MNIST.test_image()
-    test_label = MNIST.test_label()
-    IO.puts("c error")
-    network1 = batch(network,image,label,m,n,seq)
-    IO.puts("verifying")
-    c = accuracy(network1,test_image,test_label,10000,0)
-    IO.write("accuracy rate = ")
-    IO.puts(c/10000)
-  end
-
-  # print predict of test data
-  def accuracy(_,_,_,0,correct) do
-    correct
-  end
-  def accuracy(network,[image|irest],[label|lrest],n,correct) do
-    dt = MNIST.onehot_to_num(forward(network,[MNIST.normalize(image,255)]))
-    if dt != label do
-      accuracy(network,irest,lrest,n-1,correct)
-    else
-      accuracy(network,irest,lrest,n-1,correct+1)
-    end
-  end
-
-  def batch(network,_,_,_,0,_) do network end
-  def batch(network,_,_,_,_,[]) do network end
-  def batch(network,image,label,n,c,seq) do
-    {network1,error} = batch1(network,image,label,0,seq,0)
-    print(c)
-    IO.write(" ")
-    print(error)
-    newline()
-    batch(network1,image,label,n,c-1,seq)
-  end
-
-  def batch1(network,_,_,60000,_,error) do
-    {network,error}
-  end
-  def batch1(network,_,_,_,[],error) do
-    {network,error}
-  end
-  def batch1(network,[image|irest],[label|lrest],n,[n|srest],error) do
-    x = [MNIST.normalize(image,255)]
-    t = [MNIST.to_onehot(label)]
-    network1 = gradient(network,x,t)
-    network2 = learning(network,network1)
-    x1 = forward(network2,x)
-    error1 = mean_square(x1,t)
-    batch1(network2,irest,lrest,n+1,srest,error1+error)
-  end
-  def batch1(network,[_|irest],[_|lrest],n,[seq|srest],error) do
-    batch1(network,irest,lrest,n+1,[seq|srest],error)
-  end
-
-  #for mini batch
-  def rand_sequence(c,n) do
-    rand_sequence1(c,n,[]) |> Enum.sort
-  end
-
-  def rand_sequence1(0,_,res) do res end
-  def rand_sequence1(c,n,res) do
-    rand_sequence1(c-1,n,[:rand.uniform(n)|res])
-  end
 
   def print(x) do
     :io.write(x)
@@ -534,7 +480,7 @@ defmodule DLB do
     IO.puts("c error")
     network1 = batch(network,image,label,m,n)
     IO.puts("verifying")
-    c = DL.accuracy(network1,test_image,test_label,100,0)
+    c = accuracy(network1,test_image,test_label,100,0)
     IO.write("accuracy rate = ")
     IO.puts(c/100)
   end
@@ -564,6 +510,18 @@ defmodule DLB do
     Matrix.sub(y,train) |> DL.apply_function(fn(y) -> DL.square(y) end) |> Dmatrix.sum
   end
 
+  # print predict of test data
+  def accuracy(_,_,_,0,correct) do
+    correct
+  end
+  def accuracy(network,[image|irest],[label|lrest],n,correct) do
+    dt = MNIST.onehot_to_num(forward(network,[MNIST.normalize(image,255)]))
+    if dt != label do
+      accuracy(network,irest,lrest,n-1,correct)
+    else
+      accuracy(network,irest,lrest,n-1,correct+1)
+    end
+  end
 
 end
 
@@ -576,7 +534,7 @@ defmodule Dmatrix do
     :math.sqrt(-2.0 * :math.log(x)) * :math.cos(2.0 * :math.pi * y);
   end
 
-  #generate initial wweight matrix with box-muller
+  #generate initial weight matrix with box-muller
   def new(0,_,_) do [] end
   def new(r,c,rate) do
     [new1(c,rate)|new(r-1,c,rate)]
@@ -597,72 +555,14 @@ defmodule Dmatrix do
   end
 
   def mult(x,y) do
-    {r0,c} = Matrix.size(x)
+    {_,c} = Matrix.size(x)
     {r,_} = Matrix.size(y)
     if r != c do
       IO.puts("Dmatrix mult error")
       :io.write(x)
       :io.write(y)
     else
-      if r0 == 1 and c >= 100 do
-        pmult(x,y)
-      else
-        Matrix.mult(x,y)
-      end
-    end
-  end
-
-  def pmult(x,y) do
-    y1 = Matrix.transpose(y)
-    {r,c} = Matrix.size(x)
-    {r1,c1} = Matrix.size(y)
-    d = 2
-    if c != r1 do
-      :error
-    else if r > 1 or c < 50 do
-            Matrix.mult(x,y)
-         else
-            pmult1(x,y1,c1,c1,lot(c1,d),last_lot(c1,d))
-            ans = pmult2(d,[])
-            |> Enum.sort
-            |> Enum.map(fn(x) -> Enum.drop(x,1) |> hd end)
-            |> flatten
-            [ans]
-        end
-    end
-  end
-
-  def flatten([]) do [] end
-  def flatten([x|xs]) do
-    x ++ flatten(xs)
-  end
-
-  def lot(m,c) do
-    div(m,c)
-  end
-
-  def last_lot(m,c) do
-    div(m,c) + rem(m,c)
-  end
-
-  def pmult1(_,_,_,0,_,_) do true end
-  def pmult1(x,y,m,m,l1,l2) do
-    pid = spawn(Worker,:part,[])
-    send pid, {self(),{m,x,Enum.slice(y,m-l2,l2)}}
-    pmult1(x,y,m,m-l2,l1,l2)
-  end
-  def pmult1(x,y,m,c,l1,l2) do
-    pid = spawn(Worker,:part,[])
-    send pid, {self(),{c,x,Enum.slice(y,c-l1,l1)}}
-    pmult1(x,y,m,c-l1,l1,l2)
-  end
-
-
-  def pmult2(0,res) do res end
-  def pmult2(d,res) do
-    receive do
-      {:answer,ls} ->
-        pmult2(d-1,[ls|res])
+      Matrix.mult(x,y)
     end
   end
 
@@ -679,17 +579,19 @@ defmodule Dmatrix do
   end
 
   # for learning
-  def element_mult([],[],_) do [] end
-  def element_mult([x|xs],[y|ys],r) do
-    [element_mult1(x,y,r)|element_mult(xs,ys,r)]
+  # each element x-y*r
+  def update([],[],_) do [] end
+  def update([x|xs],[y|ys],r) do
+    [update1(x,y,r)|update(xs,ys,r)]
   end
 
-  def element_mult1([],[],_) do [] end
-  def element_mult1([x|xs],[y|ys],r) do
-    [x-y*r|element_mult1(xs,ys,r)]
+  def update1([],[],_) do [] end
+  def update1([x|xs],[y|ys],r) do
+    [x-y*r|update1(xs,ys,r)]
   end
 
   # for numerical gradient
+  # add d to element (r,c)
   def diff([],_,_,_) do [] end
   def diff([m|ms],0,c,d) do
     [diff1(m,0,c,d)|diff(ms,-1,c,d)]
@@ -708,6 +610,7 @@ defmodule Dmatrix do
 
 
   # for CNN
+  # convolution
   def convolute(x,y) do
     {r1,c1} = Matrix.size(x)
     {r2,c2} = Matrix.size(y)
@@ -809,7 +712,6 @@ defmodule Dmatrix do
   end
 
   # reduce each row vector by sum of each element
-  # and calcurate average
   def reduce(x) do
     [reduce1(x)]
   end
