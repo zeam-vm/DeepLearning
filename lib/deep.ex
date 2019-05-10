@@ -1,4 +1,7 @@
+
+
 defmodule Test do
+  
   def init_network1() do
     [Dmatrix.new(784,50,0.1),
      Matrix.new(1,50),
@@ -471,7 +474,7 @@ defmodule DLB do
   end
 
   def mnist(m,n) do
-    IO.puts("prepareing data")
+    IO.puts("preparing data")
     image = MNIST.train_image()
     label = MNIST.train_label()
     network = Test.init_network1()
@@ -700,6 +703,30 @@ defmodule Dmatrix do
     x1 = part(x,m,n,s,s)
     [max(x1)|pool2(x,r,c,m,n+s,s)]
   end
+
+  def rotate180(x) do
+    Enum.reverse(Enum.map(x,fn(y) -> Enum.reverse(y) end))
+  end
+
+  def deconvolute(x,filter,error) do
+    error |> pad(1) |> convolute(rotate180(filter)) |> Matrix.emult(x)
+  end
+
+  def gradient_f(x,filter,error) do
+    {r,c} = Matrix.size(filter)
+    {m,n} = Matrix.size(error)
+    Enum.map(0..r-1,
+      fn(x1) -> Enum.map(0..c-1,
+                  fn(y1) -> gradient_f1(x,filter,error,x1,y1,m,n) end) end)
+  end
+
+  def gradient_f1(x,filter,error,x1,y1,m,n) do
+    p = part(x,x1,y1,m,n)
+    p |> Matrix.emult(error)
+    |> DL.apply_function(fn(y) -> y * Matrix.elem(filter,x1,y1) end)
+    |> Dmatrix.sum
+  end
+
 
   def rand_matrix(0,_,_) do [] end
   def rand_matrix(m,n,i) do
