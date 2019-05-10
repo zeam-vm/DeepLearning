@@ -1,7 +1,7 @@
 
 
 defmodule Test do
-  
+
   def init_network1() do
     [Dmatrix.new(784,50,0.1),
      Matrix.new(1,50),
@@ -619,6 +619,15 @@ defmodule Dmatrix do
     {r2,c2} = Matrix.size(y)
     convolute1(x,y,r1-r2+1,c1-c2+1,0,0,1)
   end
+  def convolute(x,y,s) do
+    {r1,c1} = Matrix.size(x)
+    {r2,c2} = Matrix.size(y)
+    if rem(r1-r2,s) == 0 and  rem(c1-c2,s) == 0 do
+      convolute1(x,y,r1-r2+1,c1-c2+1,0,0,s)
+    else
+      :error
+    end
+  end
   def convolute(x,y,s,p) do
     {r1,c1} = Matrix.size(x)
     {r2,c2} = Matrix.size(y)
@@ -703,6 +712,30 @@ defmodule Dmatrix do
     x1 = part(x,m,n,s,s)
     [max(x1)|pool2(x,r,c,m,n+s,s)]
   end
+
+  # sparse for matrix (use backpropagation)
+  def sparse(x,s) do
+    {r,c} = Matrix.size(x)
+    if rem(r,s) != 0 or rem(c,s) != 0 do
+      :error
+    else
+      sparse1(x,r,c,0,s)
+    end
+  end
+
+  def sparse1(_,r,_,r,_) do [] end
+  def sparse1(x,r,c,m,s) do
+    [sparse2(x,r,c,m,0,s)|sparse1(x,r,c,m+s,s)]
+  end
+
+  def sparse2(_,_,c,_,c,_) do [] end
+  def sparse2(x,r,c,m,n,s) do
+    x1 = part(x,m,n,s,s)
+    m = max(x1)
+    x2 = FF.apply_function(x1,fn(y) -> if y==m do m else 0 end end)
+    [x2|sparse2(x,r,c,m,n+s,s)]
+  end
+
 
   def rotate180(x) do
     Enum.reverse(Enum.map(x,fn(y) -> Enum.reverse(y) end))

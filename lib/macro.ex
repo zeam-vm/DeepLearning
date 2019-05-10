@@ -10,17 +10,61 @@ defmodule Network do
       end
     end
   end
-
-  def parse({:f,_,[x,y,z]},_) do
+  # filter
+  def parse({:f,_,[x,y]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z))}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,0}
     end
   end
+  def parse({:f,_,[x,y,z]},_) do
+    quote do
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),0,1,0}
+    end
+  end
+  def parse({:f,_,[x,y,z,st]},_) do
+    quote do
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),1,0}
+    end
+  end
+  def parse({:f,_,[x,y,z,st,lr]},_) do
+    quote do
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),unquote(lr),0}
+    end
+  end
+  # weight
+  def parse({:w,_,[x,y]},_) do
+    quote do
+      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),1,0}
+    end
+  end
+  def parse({:w,_,[x,y,z]},_) do
+    quote do
+      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,0}
+    end
+  end
+  def parse({:w,_,[x,y,z,lr]},_) do
+    quote do
+      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(lr),0}
+    end
+  end
+  # bias
+  def parse({:b,_,[x]},_) do
+    quote do
+      {:bias,Mtrix.new(1,unquote(x)),0.1,1,0}
+    end
+  end
+  def parse({:b,_,[x,lr]},_) do
+    quote do
+      {:weight,Matrix.new(1,unquote(x)),unquote(lr),0}
+    end
+  end
+  # sigmoid
   def parse({:sigmoid,_,nil},_) do
     quote do
       {:function,fn(x) -> DL.sigmoid(x) end,fn(x) -> DL.dsigmoid(x) end}
     end
   end
+  # identity
   def parse({:ident,_,nil},_) do
     quote do
       {:function,fn(x) -> DL.ident(x) end,fn(x) -> DL.dident(x) end}
@@ -30,22 +74,14 @@ defmodule Network do
   def parse({:|>,_,exp},arg) do
     parse(exp,arg)
   end
-  def parse({:&&&,_,[exp1,exp2]},arg) do
-    Enum.reverse([{:learn,exp2}]++Enum.reverse(parse(exp1,arg)))
-  end
   def parse([{arg,_,nil},exp],arg) do
     [parse(exp,arg)]
   end
   def parse([exp1,exp2],arg) do
     Enum.reverse([parse(exp2,arg)]++Enum.reverse(parse(exp1,arg)))
   end
-
-end
-
-defmodule Foo do
-  import Network
-  defnetwork n1(_) do
-    _ |> f(2,3,0.1) |> sigmoid |> ident |> f(1,1,1) &&& [1,:adam]
+  def parse(_,_) do
+    IO.puts("Syntax error in defnetwork")
   end
 
 end
