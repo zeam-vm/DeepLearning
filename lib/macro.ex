@@ -30,6 +30,9 @@ defmodule Network do
   def parse({:|>,_,exp},arg) do
     parse(exp,arg)
   end
+  def parse({:&&&,_,[exp1,exp2]},arg) do
+    Enum.reverse([{:learn,exp2}]++Enum.reverse(parse(exp1,arg)))
+  end
   def parse([{arg,_,nil},exp],arg) do
     [parse(exp,arg)]
   end
@@ -42,7 +45,7 @@ end
 defmodule Foo do
   import Network
   defnetwork n1(_) do
-    _ |> f(2,3,0.1) |> sigmoid |> ident |> f(1,1,1)
+    _ |> f(2,3,0.1) |> sigmoid |> ident |> f(1,1,1) &&& [1,:adam]
   end
 
 end
