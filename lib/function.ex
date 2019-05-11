@@ -20,6 +20,14 @@ end
 
 # Function Flow
 defmodule FF do
+  def stop() do
+    :math.exp(800)
+  end
+
+  def print(x) do
+    :io.write(x)
+  end
+
   # apply functin for matrix
   def apply_function([],_) do [] end
   def apply_function([x|xs],f) do
@@ -57,7 +65,7 @@ defmodule FF do
   # this store all middle data
   def forward_for_back(_,[],res) do res end
   def forward_for_back(x,[{:weight,w,_,_}|rest],res) do
-    x1 = Pmatrix.mult(w,x)
+    x1 = Pmatrix.mult(x,w)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:bias,b,_,_}|rest],res) do
@@ -91,35 +99,44 @@ defmodule FF do
     Enum.reverse(res)
   end
   def numerical_gradient1(x,[{:filter,w,st,lr}|rest],t,before,res) do
-    w1 = numerical_gradient_matrix(x,w,t,before,rest)
-    numerical_gradient1(x,rest,t,[{:filter,w,st,lr}|before],[w1|res])
+    w1 = numerical_gradient_matrix(x,w,t,before,{:filter,w,st,lr},rest)
+    numerical_gradient1(x,rest,t,[{:filter,w,st,lr}|before],[{:filter,w1,st,lr}|res])
   end
-  def numerical_gradient1(x,[{:weight,w,lr}|rest],t,before,res) do
-    w1 = numerical_gradient_matrix(x,w,t,before,rest)
-    numerical_gradient1(x,rest,t,[{:weight,w,lr}|before],[w1|res])
+  def numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res) do
+    w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest)
+    numerical_gradient1(x,rest,t,[{:weight,w1,lr,v}|before],[{:weight,w1,lr,v}|res])
   end
   def numerical_gradient1(x,[{:bias,w,lr}|rest],t,before,res) do
-    w1 = numerical_gradient_matrix(x,w,t,before,rest)
-    numerical_gradient1(x,rest,t,[{:bias,w,lr}|before],[w1|res])
+    w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr},rest)
+    numerical_gradient1(x,rest,t,[{:bias,w,lr}|before],[:bias,w1,lr|res])
   end
   def numerical_gradient1(x,[y|rest],t,before,res) do
     numerical_gradient1(x,rest,t,[y|before],[y|res])
   end
   # calc numerical gradient of filter,weigth,bias matrix
-  def numerical_gradient_matrix(x,w,t,before,rest) do
+  def numerical_gradient_matrix(x,w,t,before,now,rest) do
     {r,c} = Matrix.size(w)
     Enum.map(0..r-1,
       fn(x1) -> Enum.map(0..c-1,
-                  fn(y1) -> numerical_gradient_matrix1(x,w,t,x1,y1,before,rest) end) end)
+                  fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest) end) end)
   end
-  def numerical_gradient_matrix1(x,w,t,r,c,before,rest) do
+  def numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest) do
     h = 0.0001
     w1 = Dmatrix.diff(w,r,c,h)
-    network0 = Enum.reverse(before) ++ [w] ++ rest
-    network1 = Enum.reverse(before) ++ [w1] ++ rest
+    network0 = Enum.reverse(before) ++ [{type,w,lr,v}] ++ rest
+    network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    DL.mean_square(y1,t) - DL.mean_square(y0,t) / h
+    (DL.mean_square(y1,t) - DL.mean_square(y0,t)) / h
+  end
+  def numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
+    h = 0.0001
+    w1 = Dmatrix.diff(w,r,c,h)
+    network0 = Enum.reverse(before) ++ [{type,w,st,lr,v}] ++ rest
+    network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
+    y0 = forward(x,network0)
+    y1 = forward(x,network1)
+    (DL.mean_square(y1,t) - DL.mean_square(y0,t)) / h
   end
 
   # gradient with backpropagation
@@ -161,8 +178,17 @@ defmodule FF do
   # update wight and bias
   # learning(network,gradient) -> updated network
   def learning([],_) do [] end
-  def learning([{{:weight,w,lr,_}}|rest],[{{:weight,w1,lr1,_}}|rest1]) do
-    [Dmatrix.update(w,w1,lr1)|learning(rest,rest1)]
+  def learning([{{:weight,w,_,_}}|rest],[{{:weight,w1,lr1,v}}|rest1]) do
+    [{:write,Dmatrix.update(w,w1,lr1),lr1,v}|learning(rest,rest1)]
+  end
+  def learning([{{:bias,w,_,_}}|rest],[{{:bias,w1,lr1,v}}|rest1]) do
+    [{:bias,Dmatrix.update(w,w1,lr1),lr1,v}|learning(rest,rest1)]
+  end
+  def learning([{{:filter,w,st,_,_}}|rest],[{{:filter,w1,st,lr1,v}}|rest1]) do
+    [{:filter,Dmatrix.update(w,w1,lr1),st,lr1,v}|learning(rest,rest1)]
+  end
+  def learning([network|rest],[_,rest1]) do
+    [network|learning(rest,rest1)]
   end
 
 end
