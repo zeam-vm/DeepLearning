@@ -52,4 +52,8 @@ defmodule DLTest do
   test "DLB test" do
 
   end
+
+  test "FF test" do
+    assert FF.forward([[1,2]],Foo.n2(:t)) == [[5, 8]]
+  end
 end

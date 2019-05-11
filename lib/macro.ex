@@ -13,12 +13,12 @@ defmodule Network do
   # filter
   def parse({:f,_,[x,y]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,0}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,1,0}
     end
   end
   def parse({:f,_,[x,y,z]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),0,1,0}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,1,0}
     end
   end
   def parse({:f,_,[x,y,z,st]},_) do
@@ -29,6 +29,36 @@ defmodule Network do
   def parse({:f,_,[x,y,z,st,lr]},_) do
     quote do
       {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),unquote(lr),0}
+    end
+  end
+  # pooling
+  def parse({:pool,_,[x]},_) do
+    quote do
+      {:pooling,unquote(x)}
+    end
+  end
+  # padding
+  def parse({:pad,_,[x]},_) do
+    quote do
+      {:padding,unquote(x)}
+    end
+  end
+  # constant weight for test
+  def parse({:cw,_,[x]},_) do
+    quote do
+      {:weight,unquote(x),1,0}
+    end
+  end
+  # constant filter for test
+  def parse({:cf,_,[x]},_) do
+    quote do
+      {:filter,unquote(x),1,1,0}
+    end
+  end
+  # constant bias for test
+  def parse({:cb,_,[x]},_) do
+    quote do
+      {:bias,unquote(x),1,0}
     end
   end
   # weight
@@ -80,8 +110,21 @@ defmodule Network do
   def parse([exp1,exp2],arg) do
     Enum.reverse([parse(exp2,arg)]++Enum.reverse(parse(exp1,arg)))
   end
-  def parse(_,_) do
+  def parse(x,_) do
+    :io.write(x)
     IO.puts("Syntax error in defnetwork")
+  end
+
+end
+
+defmodule Time do
+  defmacro time(exp) do
+    quote do
+    {time, dict} = :timer.tc(fn() -> unquote(exp) end)
+    IO.inspect "time: #{time} micro second"
+    IO.inspect "-------------"
+    dict
+    end
   end
 
 end

@@ -1,7 +1,19 @@
 defmodule Foo do
   import Network
-  defnetwork n1(_) do
-    _ |> f(2,3,0.1) |> sigmoid |> ident |> w(1,1,1)
+  defnetwork n1(x) do
+    x |> w(2,2,0.1)
+  end
+
+  defnetwork n2(x) do
+    x |> cw([[1,2],[2,3]])
+  end
+
+  defnetwork n3(x) do
+     x |> cw([[1,2],[2,3]]) |> sigmoid
+  end
+
+  defnetwork n4(x) do
+    x |> f(2,2) |> sigmoid |> pool(2)
   end
 
 end
@@ -17,7 +29,7 @@ defmodule FF do
   # forward
   def forward(x,[]) do x end
   def forward(x,[{:weight,w,_,_}|rest]) do
-    x1 = Pmatrix.mult(w,x)
+    x1 = Pmatrix.mult(x,w)
     forward(x1,rest)
   end
   def forward(x,[{:bias,b,_,_}|rest]) do
@@ -71,5 +83,30 @@ defmodule FF do
   end
 
   # numerical gradient
+  def numerical_gradient(x,network,t) do
+    numerical_gradient1(x,network,t,[],[])
+  end
 
+  def numerical_gradient1(_,[],_,_,res) do
+    Enum.reverse(res)
+  end
+  def numerical_gradient1(x,[{:filter,w,st,lr}|rest],t,before,res) do
+    w1 = numerical_gradient_matrix(x,w,t,before,rest)
+    numerical_gradient1(x,rest,t,[{:filter,w,st,lr}|before],[w1|res])
+  end
+  def numerical_gradient1(x,[{:weight,w,lr}|rest],t,before,res) do
+    w1 = numerical_gradient_matrix(x,w,t,before,rest)
+    numerical_gradient1(x,rest,t,[{:weight,w,lr}|before],[w1|res])
+  end
+  def numerical_gradient1(x,[{:bias,w,lr}|rest],t,before,res) do
+    w1 = numerical_gradient_matrix(x,w,t,before,rest)
+    numerical_gradient1(x,rest,t,[{:bias,w,lr}|before],[w1|res])
+  end
+  def numerical_gradient1(x,[y|rest],t,before,res) do
+    numerical_gradient1(x,rest,t,[y|before],[y|res])
+  end
+  # calc numerical gradient of filter,weigth,bias matrix
+  def numerical_gradient_matrix(x,w,t,before,rest) do
+    1
+  end
 end
