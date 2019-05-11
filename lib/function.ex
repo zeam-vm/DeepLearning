@@ -107,6 +107,68 @@ defmodule FF do
   end
   # calc numerical gradient of filter,weigth,bias matrix
   def numerical_gradient_matrix(x,w,t,before,rest) do
-    1
+    {r,c} = Matrix.size(w)
+    Enum.map(0..r-1,
+      fn(x1) -> Enum.map(0..c-1,
+                  fn(y1) -> numerical_gradient_matrix1(x,w,t,x1,y1,before,rest) end) end)
+  end
+  def numerical_gradient_matrix1(x,w,t,r,c,before,rest) do
+    h = 0.0001
+    w1 = Dmatrix.diff(w,r,c,h)
+    network0 = Enum.reverse(before) ++ [w] ++ rest
+    network1 = Enum.reverse(before) ++ [w1] ++ rest
+    y0 = forward(x,network0)
+    y1 = forward(x,network1)
+    DL.mean_square(y1,t) - DL.mean_square(y0,t) / h
+  end
+
+  # gradient with backpropagation
+  def gradient(x,network,t) do
+    x1 = forward_for_back(x,network,[x])
+    loss = Matrix.sub(hd(x1),t)
+    network1 = Enum.reverse(network)
+    backpropagation(loss,network1,tl(x1),[])
+  end
+
+  #backpropagation
+  def backpropagation(_,[],_,res) do res end
+  def backpropagation(l,[{:function,f,g}|rest],[u|ues],res) do
+    l1 = Matrix.emult(l,DL.apply_function(u,g))
+    backpropagation(l1,rest,ues,[{:function,f,g}|res])
+  end
+  def backpropagation(l,[{:bias,b,lr,v}|rest],[_|ues],res) do
+    backpropagation(l,rest,ues,[{:bias,b,lr,v}|res])
+  end
+  def backpropagation(l,[{:weight,w,lr,v}|rest],[u|ues],res) do
+    w1 = Pmatrix.mult(Matrix.transpose(u),l)
+    l1 = Dmatrix.mult(l,Matrix.transpose(w))
+    backpropagation(l1,rest,ues,[{:weight,w1,lr,v}|res])
+  end
+  def backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|ues],res) do
+    w1 = Dmatrix.gradient_filter(u,w,l)
+    l1 = Dmatrix.deconvolute(u,w,l)
+    backpropagation(l1,rest,ues,[{:filter,w1,st,lr,v}|res])
+  end
+  def backpropagation(l,[{:pooling,st}|rest],[u|ues],res) do
+    l1 = Dmatrix.restore(u,l,st)
+    backpropagation(l1,rest,ues,[{:pooling,st}|res])
+  end
+  def backpropagation(l,[{:padding,st}|rest],[_|ues],res) do
+    l1 = Dmatrix.remove(l,st)
+    backpropagation(l1,rest,ues,[{:padding,st}|res])
+  end
+end
+
+
+# function flow for batch_
+defmodule FFB do
+  # y=result data t=train_data f=error function
+  def batch_error(y,t,f) do
+    batch_error1(y,t,f,0) / length(y)
+  end
+
+  def batch_error1([],[],_,res) do res end
+  def batch_error1([y|ys],[t|ts],f,res) do
+    batch_error1(ys,ts,f,f.([t],[y])+res)
   end
 end

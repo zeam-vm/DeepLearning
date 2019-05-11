@@ -1,4 +1,48 @@
+defmodule Tensor do
+
+  def reduce([x]) do x end
+  def reduce([x|xs]) do
+    Matrix.add(x,reduce(xs))
+  end
+
+  def average_for_pool(x) do
+    y = Dmatrix.notzero_to_one(x)
+    reduce(x) |> Dmatrix.ediv(y)
+  end
+
+  def average(x) do
+    n = length(x)
+    reduce(x) |> FF.apply_function(fn(y) -> y/n end)
+  end
+
+  def apply_operation([],_,_) do [] end
+  def apply_operation([x|xs],y,op) do
+    [op.(x,y)|apply_operation(xs,y,op)]
+  end
+
+end
+
+
+
 defmodule Dmatrix do
+  # divide each element of x by y
+  def ediv([],[]) do [] end
+  def ediv([x|xs],[y|ys]) do
+    [ediv1(x,y)|ediv(xs,ys)]
+  end
+
+  def ediv1([],[]) do [] end
+  def ediv1([x|xs],[y|ys]) do
+    [x/y|ediv1(xs,ys)]
+  end
+
+  # change notzero element to 1
+  # element 0 is 0
+  def notzero_to_one([]) do [] end
+  def notzero_to_one([x|xs]) do
+    x1 = Enum.map(x,fn(y) -> if y != 0 do 1 else 0 end end)
+    [x1|notzero_to_one(xs)]
+  end
   # box-muller rand
   def box_muller() do
     x = :rand.uniform()
@@ -134,6 +178,13 @@ defmodule Dmatrix do
     zero1 ++ x1 ++ zero1
   end
 
+  #remove ,-> padding
+  def remove(x,0) do x end
+  def remove(x,n) do
+    x1 = Enum.drop(Enum.reverse(Enum.drop(Enum.reverse(x),n)),n)
+    Enum.map(x1,fn(y) -> Enum.drop(Enum.reverse(Enum.drop(Enum.reverse(y),n)),n) end)
+  end
+
   #partial matrix from position(tr,tc) size (m,n)
   def part(x,tr,tc,m,n) do
     {r,c} = Matrix.size(x)
@@ -183,6 +234,36 @@ defmodule Dmatrix do
     [max(x1)|pool2(x,r,c,m,n+s,s)]
   end
 
+  # restore <-> pool
+  def restore(u,los,st) do
+    Matrix.emult(u,increase(los,st))
+  end
+
+  # e.g.  increase(x,2)   [[1,1,2,2,],
+  #        [[1,2],         [1,1,2,2],
+  #         [3,4]]     ->  [3,3,4,4],
+  #                        [3,3,4,4]]
+  def increase([],_) do [] end
+  def increase([x|xs],st) do
+    x1 = increase1(x,st) |> increase2(st)
+    x1 ++ increase(xs,st)
+  end
+
+  def increase1([],_) do [] end
+  def increase1([x|xs],st) do
+    increase3(x,st) ++ increase1(xs,st)
+  end
+
+  def increase2(_,0) do [] end
+  def increase2(x,st) do
+    [x|increase2(x,st-1)]
+  end
+
+  def increase3(x,1) do [x] end
+  def increase3(x,st) do
+    [x|increase3(x,st-1)]
+  end
+
   # sparse for matrix (use backpropagation)
   def sparse(x,s) do
     {r,c} = Matrix.size(x)
@@ -211,20 +292,20 @@ defmodule Dmatrix do
     Enum.reverse(Enum.map(x,fn(y) -> Enum.reverse(y) end))
   end
 
-  def deconvolute(x,filter,error) do
-    error |> pad(1) |> convolute(rotate180(filter)) |> Matrix.emult(x)
+  def deconvolute(u,filter,loss) do
+    loss |> pad(1) |> convolute(rotate180(filter)) |> Matrix.emult(u)
   end
 
-  def gradient_f(x,filter,error) do
+  def gradient_filter(u,filter,loss) do
     {r,c} = Matrix.size(filter)
-    {m,n} = Matrix.size(error)
+    {m,n} = Matrix.size(loss)
     Enum.map(0..r-1,
       fn(x1) -> Enum.map(0..c-1,
-                  fn(y1) -> gradient_f1(x,filter,error,x1,y1,m,n) end) end)
+                  fn(y1) -> gradient_filter1(u,filter,loss,x1,y1,m,n) end) end)
   end
 
-  def gradient_f1(x,filter,error,x1,y1,m,n) do
-    p = part(x,x1,y1,m,n)
+  def gradient_filter1(u,filter,error,x1,y1,m,n) do
+    p = part(u,x1,y1,m,n)
     p |> Matrix.emult(error)
     |> DL.apply_function(fn(y) -> y * Matrix.elem(filter,x1,y1) end)
     |> Dmatrix.sum
