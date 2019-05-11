@@ -100,6 +100,12 @@ defmodule Network do
       {:function,fn(x) -> DL.ident(x) end,fn(x) -> DL.dident(x) end}
     end
   end
+  # flatten
+  def parse({:flatten,_,nil},_) do
+    quote do
+      {:flatten}
+    end
+  end
   def parse({x,_,nil},_) do x end
   def parse({:|>,_,exp},arg) do
     parse(exp,arg)

@@ -33,7 +33,7 @@ end
 
 
 defmodule Dmatrix do
-  
+
   # divide each element of x by y
   def ediv([],[]) do [] end
   def ediv([x|xs],[y|ys]) do
@@ -324,9 +324,26 @@ defmodule Dmatrix do
     p = part(u,x1,y1,m,n)
     p |> Matrix.emult(error)
     |> DL.apply_function(fn(y) -> y * Matrix.elem(filter,x1,y1) end)
-    |> Dmatrix.sum
+    |> sum
   end
 
+  # transform from matrix to vector
+  def flatten(x) do
+    [flatten1(x)]
+  end
+  def flatten1([]) do [] end
+  def flatten1([x|xs]) do
+    x ++ flatten1(xs)
+  end
+
+  # structure from flat vector to matrix(r,c)
+  def structure([x],r,c) do
+    structure1(x,r,c)
+  end
+  def structure1(_,0,_) do [] end
+  def structure1(x,r,c) do
+    [Enum.take(x,c)|structure1(Enum.drop(x,c),r-1,c)]
+  end
 
   def rand_matrix(0,_,_) do [] end
   def rand_matrix(m,n,i) do

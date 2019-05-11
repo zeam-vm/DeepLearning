@@ -13,7 +13,13 @@ defmodule Foo do
   end
 
   defnetwork n4(x) do
-    x |> f(2,2) |> sigmoid |> pool(2)
+    x |> cf([[1.001,2],[3,4]]) |> flatten
+  end
+
+  def dt() do
+    [[1,2,3],
+     [1,2,3],
+     [1,2,3]]
   end
 
 end
@@ -60,6 +66,10 @@ defmodule FF do
     x1 = Dmatrix.pool(x,st)
     forward(x1,rest)
   end
+  def forward(x,[{:flatten}|rest]) do
+    x1 = Dmatrix.flatten(x)
+    forward(x1,rest)
+  end
 
   # forward for backpropagation
   # this store all middle data
@@ -89,6 +99,10 @@ defmodule FF do
     x2 = Dmatrix.sparse(x,st)
     forward_for_back(x1,rest,[x2|res])
   end
+  def forward_for_back(x,[{:flatten}|rest],res) do
+    x1 = Dmatrix.flatten(x)
+    forward_for_back(x1,rest,[x1|res])
+  end
 
   # numerical gradient
   def numerical_gradient(x,network,t) do
@@ -98,9 +112,9 @@ defmodule FF do
   def numerical_gradient1(_,[],_,_,res) do
     Enum.reverse(res)
   end
-  def numerical_gradient1(x,[{:filter,w,st,lr}|rest],t,before,res) do
-    w1 = numerical_gradient_matrix(x,w,t,before,{:filter,w,st,lr},rest)
-    numerical_gradient1(x,rest,t,[{:filter,w,st,lr}|before],[{:filter,w1,st,lr}|res])
+  def numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res) do
+    w1 = numerical_gradient_matrix(x,w,t,before,{:filter,w,st,lr,v},rest)
+    numerical_gradient1(x,rest,t,[{:filter,w,st,lr,v}|before],[{:filter,w1,st,lr,v}|res])
   end
   def numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest)
@@ -162,6 +176,8 @@ defmodule FF do
     backpropagation(l1,rest,ues,[{:weight,w1,lr,v}|res])
   end
   def backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|ues],res) do
+    print(l)
+    stop()
     w1 = Dmatrix.gradient_filter(u,w,l)
     l1 = Dmatrix.deconvolute(u,w,l)
     backpropagation(l1,rest,ues,[{:filter,w1,st,lr,v}|res])
@@ -173,6 +189,11 @@ defmodule FF do
   def backpropagation(l,[{:padding,st}|rest],[_|ues],res) do
     l1 = Dmatrix.remove(l,st)
     backpropagation(l1,rest,ues,[{:padding,st}|res])
+  end
+  def backpropagation(l,[{:flatten}|rest],[u|ues],res) do
+    {r,c} = Matrix.size(u)
+    l1 = Dmatrix.structure(l,r,c)
+    backpropagation(l1,rest,ues,[{:flatten}|res])
   end
 
   # update wight and bias
