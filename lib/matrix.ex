@@ -33,6 +33,7 @@ end
 
 
 defmodule Dmatrix do
+  
   # divide each element of x by y
   def ediv([],[]) do [] end
   def ediv([x|xs],[y|ys]) do
@@ -213,6 +214,13 @@ defmodule Dmatrix do
   def sum(x) do
     Enum.reduce(
       Enum.map(x, fn(y) -> Enum.reduce(y, 0, fn(z,acc) -> z + acc end) end),
+      0, fn(z,acc) -> z + acc end)
+  end
+
+  # absolute sum of element
+  def abssum(x) do
+    Enum.reduce(
+      Enum.map(x, fn(y) -> Enum.reduce(y, 0, fn(z,acc) -> abs(z) + acc end) end),
       0, fn(z,acc) -> z + acc end)
   end
 
