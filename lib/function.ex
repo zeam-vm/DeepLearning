@@ -157,6 +157,14 @@ defmodule FF do
     l1 = Dmatrix.remove(l,st)
     backpropagation(l1,rest,ues,[{:padding,st}|res])
   end
+
+  # update wight and bias
+  # learning(network,gradient) -> updated network
+  def learning([],_) do [] end
+  def learning([{{:weight,w,lr,_}}|rest],[{{:weight,w1,lr1,_}}|rest1]) do
+    [Dmatrix.update(w,w1,lr1)|learning(rest,rest1)]
+  end
+
 end
 
 
