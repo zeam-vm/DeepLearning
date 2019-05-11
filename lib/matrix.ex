@@ -10,14 +10,22 @@ defmodule Tensor do
     reduce(x) |> Dmatrix.ediv(y)
   end
 
+  # normal average
   def average(x) do
     n = length(x)
     reduce(x) |> FF.apply_function(fn(y) -> y/n end)
   end
 
+  # op(tensor,matrix)
   def apply_operation([],_,_) do [] end
   def apply_operation([x|xs],y,op) do
     [op.(x,y)|apply_operation(xs,y,op)]
+  end
+
+  # apply_function(tensor,function)
+  def apply_function([],_) do [] end
+  def apply_function([x|xs],f) do
+    [FF.apply_function(x,f)|apply_function(xs,f)]
   end
 
 end
