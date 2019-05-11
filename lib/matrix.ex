@@ -323,7 +323,6 @@ defmodule Dmatrix do
   def gradient_filter1(u,filter,error,x1,y1,m,n) do
     p = part(u,x1,y1,m,n)
     p |> Matrix.emult(error)
-    |> DL.apply_function(fn(y) -> y * Matrix.elem(filter,x1,y1) end)
     |> sum
   end
 

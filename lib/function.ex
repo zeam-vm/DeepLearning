@@ -176,8 +176,6 @@ defmodule FF do
     backpropagation(l1,rest,ues,[{:weight,w1,lr,v}|res])
   end
   def backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|ues],res) do
-    print(l)
-    stop()
     w1 = Dmatrix.gradient_filter(u,w,l)
     l1 = Dmatrix.deconvolute(u,w,l)
     backpropagation(l1,rest,ues,[{:filter,w1,st,lr,v}|res])
