@@ -326,10 +326,10 @@ defmodule Dmatrix do
     {m,n} = Matrix.size(loss)
     Enum.map(0..r-1,
       fn(x1) -> Enum.map(0..c-1,
-                  fn(y1) -> gradient_filter1(u,filter,loss,x1,y1,m,n) end) end)
+                  fn(y1) -> gradient_filter1(u,loss,x1,y1,m,n) end) end)
   end
 
-  def gradient_filter1(u,filter,error,x1,y1,m,n) do
+  def gradient_filter1(u,error,x1,y1,m,n) do
     p = part(u,x1,y1,m,n)
     p |> Matrix.emult(error)
     |> sum

@@ -29,9 +29,9 @@ defmodule Foo do
   end
 
   def test() do
-    FF.print(FF.numerical_gradient(Foo.dt(),Foo.n4(0),[[1,2,3]]))
+    FF.print(FF.numerical_gradient(Foo.dt(),n4(0),[[1,2,3]]))
     FF.newline()
-    FF.print(FF.gradient(Foo.dt(),Foo.n4(0),[[1,2,3]]))
+    FF.print(FF.gradient(Foo.dt(),n4(0),[[1,2,3]]))
   end
 
   def test1() do
