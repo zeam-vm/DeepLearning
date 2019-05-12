@@ -1,19 +1,19 @@
 defmodule Foo do
   import Network
-  defnetwork n1(x) do
-    x |> w(2,2,0.1)
+  defnetwork n1(_x) do
+    _x |> w(2,2,0.1)
   end
 
-  defnetwork n2(x) do
-    x |> cw([[1,2],[2,3]])
+  defnetwork n2(_x) do
+    _x |> cw([[1,2],[2,3]])
   end
 
-  defnetwork n3(x) do
-     x |> cw([[1,2],[2,3]]) |> sigmoid
+  defnetwork n3(_x) do
+     _x |> cw([[1,2],[2,3]]) |> sigmoid
   end
 
-  defnetwork n4(x) do
-    x |> pad(1) |> pool(2) |> cf([[0.1,0.2],[0.3,0.4]])
+  defnetwork n4(_x) do
+    _x |> pad(1) |> pool(2) |> cf([[0.1,0.2],[0.3,0.4]])
     |> sigmoid |> flatten
     |> cw([[0.1,0.2,0.3],
            [0.3,0.4,0.5],

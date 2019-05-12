@@ -307,7 +307,7 @@ defmodule Dmatrix do
   # joint  [[1,2],  [[2,3],   [[1,2,2,3],
   #         [2,3]]   [4,5]]    [2,3,4,5]]
   def join(x,[]) do x end
-  def joint([],[]) do [] end
+  def join([],[]) do [] end
   def join([x|xs],[y|ys]) do
     [x++y|join(xs,ys)]
   end
