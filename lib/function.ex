@@ -1,7 +1,7 @@
 defmodule Foo do
   import Network
-  defnetwork init_network1(x) do
-    x |> w(784,50) |> b(50) |> sigmoid
+  defnetwork init_network1(_x) do
+    _x |> w(784,50) |> b(50) |> sigmoid
     |> w(50,100) |> b(100) |> sigmoid
     |> w(100,10) |> b(10) |> sigmoid
   end

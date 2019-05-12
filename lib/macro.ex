@@ -6,7 +6,6 @@ defmodule Network do
     body1 = parse(body,arg)
     quote do
       def unquote(name) do
-        unquote(arg)
         unquote(body1)
       end
     end
