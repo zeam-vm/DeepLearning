@@ -32,6 +32,8 @@ defmodule DLTest do
     b = [[2,0,1],
          [0,1,2],
          [1,0,2]]
+    assert Dmatrix.part(a,2,2,2,2) == [[1,2],[0,1]]
+    assert Dmatrix.sparse(a,2) == [[0,2,3,0],[0,0,0,3],[3,0,0,2],[0,3,0,0]]
     assert Dmatrix.convolute(a,b) == [[15, 16], [6, 15]]
     assert Dmatrix.convolute(a,b,1,0) == [[15, 16], [6, 15]]
     assert Dmatrix.pad([[1,2,3],[2,3,4]],1) == [[0, 0, 0, 0,0], [0, 1, 2, 3, 0], [0, 2, 3, 4, 0], [0, 0, 0, 0,0]]

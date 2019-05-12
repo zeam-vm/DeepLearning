@@ -198,6 +198,7 @@ defmodule Dmatrix do
   def part(x,tr,tc,m,n) do
     {r,c} = Matrix.size(x)
     if tr+m > r or tc+n > c do
+      IO.puts("Bad argument part/5")
       :error
     else
       part1(x,tr,tc,tr+m,n,tr)
@@ -292,15 +293,23 @@ defmodule Dmatrix do
 
   def sparse1(_,r,_,r,_) do [] end
   def sparse1(x,r,c,m,s) do
-    [sparse2(x,r,c,m,0,s)|sparse1(x,r,c,m+s,s)]
+    sparse2(x,r,c,m,0,s) ++ sparse1(x,r,c,m+s,s)
   end
 
   def sparse2(_,_,c,_,c,_) do [] end
   def sparse2(x,r,c,m,n,s) do
     x1 = part(x,m,n,s,s)
-    m = max(x1)
-    x2 = FF.apply_function(x1,fn(y) -> if y==m do m else 0 end end)
-    [x2|sparse2(x,r,c,m,n+s,s)]
+    max_element = max(x1)
+    x2 = FF.apply_function(x1,fn(y) -> if y==max_element do max_element else 0 end end)
+    join(x2,sparse2(x,r,c,m,n+s,s))
+  end
+
+  # joint  [[1,2],  [[2,3],   [[1,2,2,3],
+  #         [2,3]]   [4,5]]    [2,3,4,5]]
+  def join(x,[]) do x end
+  def joint([],[]) do [] end
+  def join([x|xs],[y|ys]) do
+    [x++y|join(xs,ys)]
   end
 
 

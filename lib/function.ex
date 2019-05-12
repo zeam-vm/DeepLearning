@@ -13,13 +13,29 @@ defmodule Foo do
   end
 
   defnetwork n4(x) do
-    x |> cf([[1.001,2],[3,4]]) |> flatten
+    x |> pad(1) |> pool(2) |> cf([[0.1,0.2],[0.3,0.4]])
+    |> sigmoid |> flatten
+    |> cw([[0.1,0.2,0.3],
+           [0.3,0.4,0.5],
+           [0.5,0.4,0.2],
+           [0.4,0.5,0.3]]) |> b(3) |> sigmoid
   end
 
   def dt() do
-    [[1,2,3],
-     [1,2,3],
-     [1,2,3]]
+    [[1,2,3,4],
+     [5,6,7,8],
+     [9,10,11,12],
+     [13,14,15,16]]
+  end
+
+  def test() do
+    FF.print(FF.numerical_gradient(Foo.dt(),Foo.n4(0),[[1,2,3]]))
+    FF.newline()
+    FF.print(FF.gradient(Foo.dt(),Foo.n4(0),[[1,2,3]]))
+  end
+
+  def test1() do
+    FF.print(FF.forward(dt(),n4(0)))
   end
 
 end
@@ -32,6 +48,10 @@ defmodule FF do
 
   def print(x) do
     :io.write(x)
+  end
+
+  def newline() do
+    IO.puts("")
   end
 
   # apply functin for matrix
@@ -94,10 +114,10 @@ defmodule FF do
     x1 = Dmatrix.pad(x,st)
     forward_for_back(x1,rest,[x1|res])
   end
-  def forward_for_back(x,[{:pooling,st}|rest],res) do
+  def forward_for_back(x,[{:pooling,st}|rest],[_|res]) do
     x1 = Dmatrix.pool(x,st)
     x2 = Dmatrix.sparse(x,st)
-    forward_for_back(x1,rest,[x2|res])
+    forward_for_back(x1,rest,[x1,x2|res])
   end
   def forward_for_back(x,[{:flatten}|rest],res) do
     x1 = Dmatrix.flatten(x)

@@ -80,7 +80,7 @@ defmodule Network do
   # bias
   def parse({:b,_,[x]},_) do
     quote do
-      {:bias,Mtrix.new(1,unquote(x)),0.1,1,0}
+      {:bias,Matrix.new(1,unquote(x)),1,0}
     end
   end
   def parse({:b,_,[x,lr]},_) do
