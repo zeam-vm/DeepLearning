@@ -1,5 +1,11 @@
 defmodule Foo do
   import Network
+  defnetwork init_network1(x) do
+    x |> w(784,50) |> b(50) |> sigmoid
+    |> w(50,100) |> b(100) |> sigmoid
+    |> w(100,10) |> b(10) |> sigmoid
+  end
+
   defnetwork n1(x) do
     x |> w(2,2,0.1)
   end
@@ -217,17 +223,38 @@ defmodule FF do
   # update wight and bias
   # learning(network,gradient) -> updated network
   def learning([],_) do [] end
-  def learning([{{:weight,w,_,_}}|rest],[{{:weight,w1,lr1,v}}|rest1]) do
-    [{:write,Dmatrix.update(w,w1,lr1),lr1,v}|learning(rest,rest1)]
+  def learning([{:weight,w,_,_}|rest],[{:weight,w1,lr1,v}|rest1]) do
+    [{:weight,Dmatrix.update(w,w1,lr1),lr1,v}|learning(rest,rest1)]
   end
-  def learning([{{:bias,w,_,_}}|rest],[{{:bias,w1,lr1,v}}|rest1]) do
+  def learning([{:bias,w,_,_}|rest],[{:bias,w1,lr1,v}|rest1]) do
     [{:bias,Dmatrix.update(w,w1,lr1),lr1,v}|learning(rest,rest1)]
   end
-  def learning([{{:filter,w,st,_,_}}|rest],[{{:filter,w1,st,lr1,v}}|rest1]) do
+  def learning([{:filter,w,st,_,_}|rest],[{:filter,w1,st,lr1,v}|rest1]) do
     [{:filter,Dmatrix.update(w,w1,lr1),st,lr1,v}|learning(rest,rest1)]
   end
-  def learning([network|rest],[_,rest1]) do
+  def learning([network|rest],[_|rest1]) do
     [network|learning(rest,rest1)]
+  end
+
+  def sgd(n) do
+    IO.puts("preparing data")
+    image = MNIST.train_image()
+    label = MNIST.train_label()
+    network = Foo.init_network1(0)
+    image1 = MNIST.normalize(hd(image),255)
+    train1 = MNIST.to_onehot(hd(label))
+    sgd1([image1],network,[train1],n)
+  end
+
+  def sgd1(_,_,_,0) do true end
+  def sgd1(image,network,train,n) do
+    network1 = gradient(image,network,train)
+    network2 = learning(network,network1)
+    y = forward(image,network2)
+    loss = DL.mean_square(y,train)
+    FF.print(loss)
+    FF.newline()
+    sgd1(image,network2,train,n-1)
   end
 
 end
