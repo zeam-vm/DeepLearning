@@ -265,7 +265,7 @@ defmodule FF do
     network = Foo.init_network2(0)
     image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
     train1 = MNIST.to_onehot(hd(label))
-    sgd1([image1],network,[train1],n)
+    sgd1(image1,network,[train1],n)
   end
 
   def sgd1(_,_,_,0) do true end

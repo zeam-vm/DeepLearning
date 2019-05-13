@@ -13,7 +13,7 @@ defmodule Network do
   # filter
   def parse({:f,_,[x,y]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,1,0}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),1),1,1,0}
     end
   end
   def parse({:f,_,[x,y,z]},_) do
