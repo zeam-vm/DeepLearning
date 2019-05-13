@@ -7,17 +7,17 @@ defmodule Test do
      Matrix.new(1,50),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     4.2,
+     4.3,
      Dmatrix.new(50,100,0.1),
      Matrix.new(1,100),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     4.1,
+     4.2,
      Dmatrix.new(100,10,0.1),
      Matrix.new(1,10),
      fn(x) -> DL.sigmoid(x) end,
      fn(x) -> DL.dsigmoid(x) end,
-     4]
+     4.1]
   end
 
   def init_network2() do

@@ -6,25 +6,35 @@ defmodule Foo do
     |> w(100,10) |> b(10) |> sigmoid
   end
 
-  defnetwork n1(x) do
-    x |> w(2,2,0.1)
+  defnetwork init_network2(_x) do
+    _x |> f(5,5) |> pool(2) |> flatten
+    |> w(144,100) |> b(100) |> sigmoid
+    |> w(100,10) |> b(10) |> sigmoid
   end
 
-  defnetwork n2(x) do
-    x |> cw([[1,2],[2,3]])
+  defnetwork n1(_x) do
+    _x |> w(2,2,0.1)
   end
 
-  defnetwork n3(x) do
-     x |> cw([[1,2],[2,3]]) |> sigmoid
+  defnetwork n2(_x) do
+    _x |> cw([[1,2],[2,3]])
   end
 
-  defnetwork n4(x) do
-    x |> pad(1) |> pool(2) |> cf([[0.1,0.2],[0.3,0.4]])
+  defnetwork n3(_x) do
+     _x |> cw([[1,2],[2,3]]) |> sigmoid
+  end
+
+  defnetwork n4(_x) do
+    _x |> pad(1) |> pool(2) |> cf([[0.1,0.2],[0.3,0.4]])
     |> sigmoid |> flatten
     |> cw([[0.1,0.2,0.3],
            [0.3,0.4,0.5],
            [0.5,0.4,0.2],
            [0.4,0.5,0.3]]) |> b(3) |> sigmoid
+  end
+
+  defnetwork n5(_x) do
+    _x |> f(3,3) |> flatten
   end
 
   def dt() do
@@ -42,6 +52,18 @@ defmodule Foo do
 
   def test1() do
     FF.print(FF.forward(dt(),n4(0)))
+  end
+
+  def test2() do
+    IO.puts("preparing data")
+    image = MNIST.train_image()
+    network = Foo.init_network2(0)
+    image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
+    FF.forward(image1,network)
+  end
+
+  def test3() do
+    FF.gradient(dt(),n5(0),[[1,0],[0,1],[1,1],[0,0]])
   end
 
 end
@@ -240,8 +262,8 @@ defmodule FF do
     IO.puts("preparing data")
     image = MNIST.train_image()
     label = MNIST.train_label()
-    network = Foo.init_network1(0)
-    image1 = MNIST.normalize(hd(image),255)
+    network = Foo.init_network2(0)
+    image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
     train1 = MNIST.to_onehot(hd(label))
     sgd1([image1],network,[train1],n)
   end
