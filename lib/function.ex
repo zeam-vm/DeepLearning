@@ -7,8 +7,8 @@ defmodule Foo do
   end
 
   defnetwork init_network2(_x) do
-    _x |> f(5,5) |> pool(2) |> flatten
-    |> w(144,100) |> b(100) |> sigmoid
+    _x |> f(5,5,0.3,1,0.05) |> flatten
+    |> w(576,100) |> b(100) |> sigmoid
     |> w(100,10) |> b(10) |> sigmoid
   end
 
