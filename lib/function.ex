@@ -258,26 +258,53 @@ defmodule FF do
     [network|learning(rest,rest1)]
   end
 
-  def sgd(n) do
+  def sgd(m,n) do
     IO.puts("preparing data")
     image = MNIST.train_image()
     label = MNIST.train_label()
     network = Foo.init_network2(0)
-    image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
-    train1 = MNIST.to_onehot(hd(label))
-    sgd1(image1,network,[train1],n)
+    test_image = MNIST.test_image()
+    test_label = MNIST.test_label()
+    network1 = sgd1(image,network,label,m,n)
+    correct = accuracy(test_image,network1,test_label,100,0)
+    IO.puts("accuracy rate = ")
+    IO.puts(correct / 100)
   end
 
-  def sgd1(_,_,_,0) do true end
-  def sgd1(image,network,train,n) do
-    network1 = gradient(image,network,train)
-    network2 = learning(network,network1)
-    y = forward(image,network2)
-    loss = DL.mean_square(y,train)
+  def sgd1(_,network,_,_,0) do network end
+  def sgd1(image,network,label,m,n) do
+    network1= sgd2(image,network,label,m,n)
+    image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
+    train1 = [MNIST.to_onehot(hd(label))]
+    y = forward(image1,network1)
+    loss = DL.mean_square(y,train1)
     FF.print(loss)
     FF.newline()
-    sgd1(image,network2,train,n-1)
+    sgd1(image,network1,label,m,n-1)
   end
+
+  def sgd2(_,network,_,0,_) do network end
+  def sgd2(image,network,label,m,n) do
+    image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
+    train1 = [MNIST.to_onehot(hd(label))]
+    network1 = gradient(image1,network,train1)
+    network2 = learning(network,network1)
+    sgd2(tl(image),network2,tl(label),m-1,n)
+  end
+
+  # print predict of test data
+  def accuracy(_,_,_,0,correct) do
+    correct
+  end
+  def accuracy([image|irest],network,[label|lrest],n,correct) do
+    dt = MNIST.onehot_to_num(forward(Dmatrix.structure([MNIST.normalize(image,255)],28,28),network))
+    if dt != label do
+      accuracy(irest,network,lrest,n-1,correct)
+    else
+      accuracy(irest,network,lrest,n-1,correct+1)
+    end
+  end
+
 
 end
 

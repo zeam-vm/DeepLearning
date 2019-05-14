@@ -26,4 +26,24 @@ module MNIST is code for MNIST data set
 I implemented backpropagation and numerical-gradient
 Now I'm testing small data set.
 
-I implemented CNN partialy.
+I implemented CNN and testing.
+New frame work is called Function Flow (FF)
+module FF
+This module is extremely incomplete.Now I am improving
+
+expample:
+iex(2)> FF.sgd(1000,10)
+preparing data
+0.9216612874827346
+0.4091472906734123
+0.8847265957408526
+0.39379069738773986
+0.5004997865551227
+0.48475640640413414
+0.48623808106756966
+0.4592649683497244
+0.48522146985722414
+0.4932535818702111
+accuracy rate =
+0.29
+:ok
