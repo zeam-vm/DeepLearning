@@ -1,10 +1,20 @@
 For my study Deep Learning with elixir
+This project is called Function Flow(FF)
+
+Network example
+
+defnetwork init_network2(_x) do
+  _x |> f(5,5,0.3,1,0.05) |> flatten
+  |> w(576,100) |> b(100) |> sigmoid
+  |> w(100,10) |> b(10) |> sigmoid
+end
 
 Usage:
   iex -S mix
 
-module DL is basic code for Deep learning
-module DLB is for batch processing
+module FF is Function Flow(FF) module
+module FFB is FF for batch
+module Tensor is code for CNN data operation
 module Dmatrix is code for Matrix
 module Pmatrix is code for Matrix product in paralell
 module MNIST is code for MNIST data set

@@ -82,6 +82,68 @@ defmodule FF do
     IO.puts("")
   end
 
+  # activate function
+  def sigmoid(x) do
+    cond do
+      x > 100 -> 1
+      x < -100 -> 0
+      true ->  1 / (1+:math.exp(-x))
+    end
+  end
+
+  def dsigmoid(x) do
+    (1 - sigmoid(x)) * sigmoid(x)
+  end
+
+  def step(x) do
+    if x > 0 do 1 else 0 end
+  end
+
+  def relu(x) do
+    max(0,x)
+  end
+
+  def drelu(x) do
+    if x > 0 do 1 else 0 end
+  end
+
+  def ident(x) do
+    x
+  end
+
+  def dident(_) do
+    1
+  end
+
+  def softmax(x) do
+    sum = Enum.reduce(x, fn(y, acc) -> :math.exp(y) + acc end)
+    Enum.map(x, fn(y) -> :math.exp(y)/sum end)
+  end
+
+
+  #error function
+  def cross_entropy([x],[y]) do
+    cross_entropy1(x,y)
+  end
+  def cross_entropy1([],[]) do 0 end
+  def cross_entropy1([y|ys],[t|ts]) do
+    delta = 1.0e-7
+    -(t * :math.log(y+delta)) + cross_entropy1(ys,ts)
+  end
+
+  def mean_square([x],[t]) do
+    mean_square1(x,t) / 2
+  end
+
+  def mean_square1([],[]) do 0 end
+  def mean_square1([x|xs],[t|ts]) do
+    square(x-t) + mean_square1(xs,ts)
+  end
+
+  def square(x) do
+    x*x
+  end
+
   # apply functin for matrix
   def apply_function([],_) do [] end
   def apply_function([x|xs],f) do
@@ -189,7 +251,7 @@ defmodule FF do
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (DL.mean_square(y1,t) - DL.mean_square(y0,t)) / h
+    (mean_square(y1,t) - mean_square(y0,t)) / h
   end
   def numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
@@ -198,7 +260,7 @@ defmodule FF do
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (DL.mean_square(y1,t) - DL.mean_square(y0,t)) / h
+    (mean_square(y1,t) - mean_square(y0,t)) / h
   end
 
   # gradient with backpropagation
@@ -212,7 +274,7 @@ defmodule FF do
   #backpropagation
   def backpropagation(_,[],_,res) do res end
   def backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
-    l1 = Matrix.emult(l,DL.apply_function(u,g))
+    l1 = Matrix.emult(l,apply_function(u,g))
     backpropagation(l1,rest,us,[{:function,f,g}|res])
   end
   def backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
@@ -277,7 +339,7 @@ defmodule FF do
     image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
     train1 = [MNIST.to_onehot(hd(label))]
     y = forward(image1,network1)
-    loss = DL.mean_square(y,train1)
+    loss = mean_square(y,train1)
     FF.print(loss)
     FF.newline()
     online1(image,network1,label,m,n-1)
@@ -446,7 +508,7 @@ defmodule FFB do
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (DL.mean_square(y1,t) - DL.mean_square(y0,t)) / h
+    (FF.mean_square(y1,t) - FF.mean_square(y0,t)) / h
   end
   def numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
@@ -455,7 +517,7 @@ defmodule FFB do
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (DL.mean_square(y1,t) - DL.mean_square(y0,t)) / h
+    (FF.mean_square(y1,t) - FF.mean_square(y0,t)) / h
   end
 
   # gradient with backpropagation
