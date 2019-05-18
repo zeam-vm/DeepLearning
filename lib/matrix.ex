@@ -441,6 +441,27 @@ end
 
 
 defmodule MNIST do
+  def train_label(n) do
+    Enum.take(train_label(),n)
+  end
+
+  def train_image(n) do
+    train_image()
+    |> Enum.take(n)
+    |> Enum.map(fn(x) -> Dmatrix.structure(MNIST.normalize(x,255),28,28) end)
+  end
+
+  def test_label(n) do
+    Enum.take(test_label(),n)
+  end
+
+  def test_image(n) do
+    test_image()
+    |> Enum.take(n)
+    |> Enum.map(fn(x) -> Dmatrix.structure(MNIST.normalize(x,255),28,28) end)
+  end
+
+
   def train_label() do
     {:ok,<<0,0,8,1,0,0,234,96,label::binary>>} = File.read("train-labels-idx1-ubyte")
     label |> String.to_charlist
@@ -473,11 +494,11 @@ defmodule MNIST do
   end
 
   def normalize(x,y) do
-    Enum.map(x,fn(z) -> z/y end)
+    [Enum.map(x,fn(z) -> z/y end)]
   end
   # e.g. 1 => [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
   def to_onehot(x) do
-    to_onehot1(x,9,[])
+    [to_onehot1(x,9,[])]
   end
   def to_onehot1(_,-1,res) do res end
   def to_onehot1(x,x,res) do

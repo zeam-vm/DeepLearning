@@ -58,7 +58,7 @@ defmodule Foo do
     IO.puts("preparing data")
     image = MNIST.train_image()
     network = Foo.init_network2(0)
-    image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
+    image1 = Dmatrix.structure(MNIST.normalize(hd(image),255),28,28)
     FF.forward(image1,network)
   end
 
@@ -322,36 +322,34 @@ defmodule FF do
 
   def online(m,n) do
     IO.puts("preparing data")
-    image = MNIST.train_image()
-    label = MNIST.train_label()
+    image = MNIST.train_image(m)
+    label = MNIST.train_label(m)
     network = Foo.init_network2(0)
-    test_image = MNIST.test_image()
-    test_label = MNIST.test_label()
+    test_image = MNIST.test_image(100)
+    test_label = MNIST.test_label(100)
     network1 = online1(image,network,label,m,n)
     correct = accuracy(test_image,network1,test_label,100,0)
-    IO.puts("accuracy rate = ")
+    IO.write("accuracy rate = ")
     IO.puts(correct / 100)
   end
 
   def online1(_,network,_,_,0) do network end
   def online1(image,network,label,m,n) do
-    network1= online2(image,network,label,m,n)
-    image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
-    train1 = [MNIST.to_onehot(hd(label))]
-    y = forward(image1,network1)
+    network1= online2(image,network,label,m)
+    train1 = MNIST.to_onehot(hd(label))
+    y = forward(hd(image),network1)
     loss = mean_square(y,train1)
     FF.print(loss)
     FF.newline()
     online1(image,network1,label,m,n-1)
   end
 
-  def online2(_,network,_,0,_) do network end
-  def online2(image,network,label,m,n) do
-    image1 = Dmatrix.structure([MNIST.normalize(hd(image),255)],28,28)
-    train1 = [MNIST.to_onehot(hd(label))]
+  def online2(_,network,_,0) do network end
+  def online2([image1|image],network,[label1|label],m) do
+    train1 = MNIST.to_onehot(label1)
     network1 = gradient(image1,network,train1)
     network2 = learning(network,network1)
-    online2(tl(image),network2,tl(label),m-1,n)
+    online2(image,network2,label,m-1)
   end
 
 
@@ -360,7 +358,7 @@ defmodule FF do
     correct
   end
   def accuracy([image|irest],network,[label|lrest],n,correct) do
-    dt = MNIST.onehot_to_num(forward(Dmatrix.structure([MNIST.normalize(image,255)],28,28),network))
+    dt = MNIST.onehot_to_num(forward(image,network))
     if dt != label do
       accuracy(irest,network,lrest,n-1,correct)
     else
