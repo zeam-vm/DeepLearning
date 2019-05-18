@@ -526,28 +526,37 @@ defmodule FFB do
   #backpropagation
   def backpropagation(_,[],_,res) do res end
   def backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
+    IO.puts("function")
     if is_tensor(u) do
       l1 = Tensor.emult(l,Tensor.apply_function(u,g))
+      FF.print(l1)
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     else
       l1 = Matrix.emult(l,FF.apply_function(u,g))
+      FF.print(l1)
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     end
   end
   def backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
+    IO.puts("bias")
     {n,_} = Matrix.size(l)
     b1 = Dmatrix.reduce(l) |> FF.apply_function(fn(x) -> x/n end)
+    FF.print(l)
     backpropagation(l,rest,us,[{:bias,b1,lr,v}|res])
   end
   def backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
+    IO.puts("weight")
     {n,_} = Matrix.size(l)
     w1 = Pmatrix.mult(Matrix.transpose(u),l) |> FF.apply_function(fn(x) -> x/n end)
     l1 = Dmatrix.mult(l,Matrix.transpose(w))
+    FF.print(l1)
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end
   def backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
+    IO.puts("filter")
     w1 = Tensor.gradient_filter(u,w,l) |> Tensor.average
     l1 = Tensor.deconvolute(u,w,l,st)
+    FF.print(l1)
     backpropagation(l1,rest,us,[{:filter,w1,st,lr,v}|res])
   end
   def backpropagation(l,[{:pooling,st}|rest],[u|us],res) do
@@ -559,8 +568,10 @@ defmodule FFB do
     backpropagation(l1,rest,us,[{:padding,st}|res])
   end
   def backpropagation(l,[{:flatten}|rest],[u|us],res) do
+    IO.puts("flatten")
     {r,c} = Matrix.size(hd(u))
     l1 = Tensor.structure(l,r,c)
+    FF.print(l1)
     backpropagation(l1,rest,us,[{:flatten}|res])
   end
 

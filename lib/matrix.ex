@@ -1,8 +1,8 @@
 defmodule Tensor do
 
   def gradient_filter([],_,_) do [] end
-  def gradient_filter([u|us],w,l) do
-    [Dmatrix.gradient_filter(u,w,l)|gradient_filter(us,w,l)]
+  def gradient_filter([u|us],w,[l|ls]) do
+    [Dmatrix.gradient_filter(u,w,l)|gradient_filter(us,w,ls)]
   end
 
   def deconvolute([],_,_,_) do [] end
@@ -22,10 +22,10 @@ defmodule Tensor do
 
   def structure([],_,_) do [] end
   def structure([l|ls],r,c) do
-    [Dmatrix.structure(l,r,c)|structure(ls,r,c)]
+    [Dmatrix.structure0(l,r,c)|structure(ls,r,c)]
   end
 
-  def reduce([x]) do [x] end
+  def reduce([x]) do x end
   def reduce([x|xs]) do
     Matrix.add(x,reduce(xs))
   end
@@ -37,6 +37,7 @@ defmodule Tensor do
 
   # normal average
   def average(x) do
+    FF.print(x)
     n = length(x)
     reduce(x) |> FF.apply_function(fn(y) -> y/n end)
   end
@@ -408,6 +409,9 @@ defmodule Dmatrix do
   def structure([x],r,c) do
     structure1(x,r,c)
   end
+  def structure0(x,r,c) do
+    structure1(x,r,c)
+  end
   def structure1(_,0,_) do [] end
   def structure1(x,r,c) do
     [Enum.take(x,c)|structure1(Enum.drop(x,c),r-1,c)]
@@ -447,7 +451,7 @@ defmodule MNIST do
   end
 
   def train_label_onehot(n) do
-    Enum.take(train_label(),n) |> Enum.map(fn(y) -> to_onehot(y) end)
+    Enum.take(train_label(),n) |> Enum.map(fn(y) -> to_onehot0(y) end)
   end
 
   def train_image(n) do
@@ -457,11 +461,11 @@ defmodule MNIST do
   end
 
   def test_label(n) do
-    Enum.take(test_label(),n) |> Enum.map(fn(y) -> to_onehot(y) end)
+    Enum.take(test_label(),n)
   end
 
   def test_label_onehot(n) do
-    Enum.take(test_label(),n) |> Enum.map(fn(y) -> to_onehot(y) end)
+    Enum.take(test_label(),n) |> Enum.map(fn(y) -> to_onehot0(y) end)
   end
 
   def test_image(n) do
@@ -506,6 +510,9 @@ defmodule MNIST do
     [Enum.map(x,fn(z) -> z/y end)]
   end
   # e.g. 1 => [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+  def to_onehot0(x) do
+    to_onehot1(x,9,[])
+  end
   def to_onehot(x) do
     [to_onehot1(x,9,[])]
   end
