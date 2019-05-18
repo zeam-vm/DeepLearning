@@ -51,10 +51,6 @@ defmodule DLTest do
     assert Dmatrix.expand([[1,2,3]],1) == [[1, 2, 3]]
   end
 
-  test "DLB test" do
-
-  end
-
   test "FF test" do
     assert FF.forward([[1,2]],Foo.n2(:t)) == [[5, 8]]
   end

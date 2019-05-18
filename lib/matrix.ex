@@ -42,6 +42,11 @@ defmodule Tensor do
   end
 
   # op(tensor,matrix)
+  def apply_operation([],_) do [] end
+  def apply_operation([x|xs],op) do
+    [op.(x)|apply_operation(xs,op)]
+  end
+
   def apply_operation([],_,_) do [] end
   def apply_operation([x|xs],y,op) do
     [op.(x,y)|apply_operation(xs,y,op)]
@@ -63,21 +68,21 @@ defmodule Tensor do
 
   # padding for multi channel
   def pad(x,s) do
-    apply_function(x,fn(y) -> Dmatrix.pad(y,s) end)
+    apply_operation(x,fn(y) -> Dmatrix.pad(y,s) end)
   end
 
   # pooling for multi channel
   def pool(x,st) do
-    apply_function(x,fn(y) -> Dmatrix.pool(y,st) end)
+    apply_operation(x,fn(y) -> Dmatrix.pool(y,st) end)
   end
 
   # flatten  for multi channel
   def flatten(x) do
-    apply_function(x,fn(y) -> Dmatrix.flatten(y) end)
+    apply_operation(x,fn(y) -> Dmatrix.flatten1(y) end)
   end
 
   def sparse(x,st) do
-    apply_function(x,fn(y) -> Dmatrix.sparse(y,st) end)
+    apply_operation(x,fn(y) -> Dmatrix.sparse(y,st) end)
   end
 
   # emult for tensor
@@ -142,8 +147,6 @@ defmodule Dmatrix do
     {r,_} = Matrix.size(y)
     if r != c do
       IO.puts("Dmatrix mult error")
-      :io.write(x)
-      :io.write(y)
     else
       Matrix.mult(x,y)
     end
@@ -154,8 +157,6 @@ defmodule Dmatrix do
     {r2,c2} = Matrix.size(y)
     if r1 != r2 or c1 != c2 do
       IO.puts("Dmatrix add error")
-      :io.write(x)
-      :io.write(y)
     else
       Matrix.add(x,y)
     end
@@ -552,8 +553,7 @@ defmodule Pmatrix do
     {r1,_} = Matrix.size(y)
     d = 5 # for icore5
     if c != r1 do
-      :io.write(x)
-      :io.write(y)
+      IO.puts("Pmatrix error")
       :error
     else if r < 10  do
             Matrix.mult(x,y)

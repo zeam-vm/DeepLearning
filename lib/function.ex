@@ -51,15 +51,11 @@ defmodule Foo do
   end
 
   def test1() do
-    FF.print(FF.forward(dt(),n4(0)))
+    FF.print(FF.forward(hd(MNIST.train_image(1)),init_network2(0)))
   end
 
   def test2() do
-    IO.puts("preparing data")
-    image = MNIST.train_image()
-    network = Foo.init_network2(0)
-    image1 = Dmatrix.structure(MNIST.normalize(hd(image),255),28,28)
-    FF.forward(image1,network)
+    FF.print(FFB.forward(MNIST.train_image(2),init_network2(0)))
   end
 
   def test3() do
@@ -327,6 +323,7 @@ defmodule FF do
     network = Foo.init_network2(0)
     test_image = MNIST.test_image(100)
     test_label = MNIST.test_label(100)
+    IO.puts("ready")
     network1 = online1(image,network,label,m,n)
     correct = accuracy(test_image,network1,test_label,100,0)
     IO.write("accuracy rate = ")
@@ -425,7 +422,7 @@ defmodule FFB do
     forward(x1,rest)
   end
   def forward(x,[{:flatten}|rest]) do
-    x1 = Dmatrix.flatten(x)
+    x1 = Tensor.flatten(x)
     forward(x1,rest)
   end
 
