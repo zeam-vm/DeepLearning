@@ -59,7 +59,7 @@ defmodule Foo do
   end
 
   def test3() do
-    FF.gradient(dt(),n5(0),[[1,0],[0,1],[1,1],[0,0]])
+    FFB.gradient(MNIST.train_image(2),init_network2(0),MNIST.train_label_onehot(2))
   end
 
 end

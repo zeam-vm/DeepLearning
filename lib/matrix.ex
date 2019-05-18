@@ -446,6 +446,10 @@ defmodule MNIST do
     Enum.take(train_label(),n)
   end
 
+  def train_label_onehot(n) do
+    Enum.take(train_label(),n) |> Enum.map(fn(y) -> to_onehot(y) end)
+  end
+
   def train_image(n) do
     train_image()
     |> Enum.take(n)
@@ -453,7 +457,11 @@ defmodule MNIST do
   end
 
   def test_label(n) do
-    Enum.take(test_label(),n)
+    Enum.take(test_label(),n) |> Enum.map(fn(y) -> to_onehot(y) end)
+  end
+
+  def test_label_onehot(n) do
+    Enum.take(test_label(),n) |> Enum.map(fn(y) -> to_onehot(y) end)
   end
 
   def test_image(n) do
