@@ -1,6 +1,31 @@
 defmodule Tensor do
 
-  def reduce([x]) do x end
+  def gradient_filter([],_,_) do [] end
+  def gradient_filter([u|us],w,l) do
+    [Dmatrix.gradient_filter(u,w,l)|gradient_filter(us,w,l)]
+  end
+
+  def deconvolute([],_,_,_) do [] end
+  def deconvolute([u|us],filter,loss,st) do
+    [Dmatrix.deconvolute(u,filter,loss,st)|deconvolute(us,filter,loss,st)]
+  end
+
+  def restore([],_,_) do [] end
+  def restore([u|us],l,st) do
+    [Dmatrix.restore(u,l,st)|restore(us,l,st)]
+  end
+
+  def remove([],_) do [] end
+  def remove([l|ls],st) do
+    [Dmatrix.remove(l,st)|remove(ls,st)]
+  end
+
+  def structure([],_,_) do [] end
+  def structure([l|ls],r,c) do
+    [Dmatrix.structure(l,r,c)|structure(ls,r,c)]
+  end
+
+  def reduce([x]) do [x] end
   def reduce([x|xs]) do
     Matrix.add(x,reduce(xs))
   end
@@ -26,6 +51,39 @@ defmodule Tensor do
   def apply_function([],_) do [] end
   def apply_function([x|xs],f) do
     [FF.apply_function(x,f)|apply_function(xs,f)]
+  end
+
+  # convolution for multi channel
+  def convolute(x,y) do
+    apply_operation(x,y,fn(x,y) -> Dmatrix.convolute(x,y) end)
+  end
+  def convolute(x,y,s) do
+    apply_operation(x,y,fn(x,y) -> Dmatrix.convolute(x,y,s) end)
+  end
+
+  # padding for multi channel
+  def pad(x,s) do
+    apply_function(x,fn(y) -> Dmatrix.pad(y,s) end)
+  end
+
+  # pooling for multi channel
+  def pool(x,st) do
+    apply_function(x,fn(y) -> Dmatrix.pool(y,st) end)
+  end
+
+  # flatten  for multi channel
+  def flatten(x) do
+    apply_function(x,fn(y) -> Dmatrix.flatten(y) end)
+  end
+
+  def sparse(x,st) do
+    apply_function(x,fn(y) -> Dmatrix.sparse(y,st) end)
+  end
+
+  # emult for tensor
+  def emult([],[]) do [] end
+  def emult([x|xs],[y|ys]) do
+    [Matrix.emult(x,y)|emult(xs,ys)]
   end
 
 end
@@ -150,16 +208,7 @@ defmodule Dmatrix do
       :error
     end
   end
-  def convolute(x,y,s,p) do
-    {r1,c1} = Matrix.size(x)
-    {r2,c2} = Matrix.size(y)
-    x1 = pad(x,p)
-    if rem(r1+2*p-r2,s) == 0 and  rem(c1+2*p-c2,s) == 0 do
-      convolute1(x1,y,r1-r2+1,c1-c2+1,0,0,s)
-    else
-      :error
-    end
-  end
+
 
   def convolute1(_,_,r,_,r,_,_) do [] end
   def convolute1(x,y,r,c,m,n,s) do
@@ -317,8 +366,8 @@ defmodule Dmatrix do
     Enum.reverse(Enum.map(x,fn(y) -> Enum.reverse(y) end))
   end
 
-  def deconvolute(u,filter,loss) do
-    loss |> pad(1) |> convolute(rotate180(filter)) |> Matrix.emult(u)
+  def deconvolute(u,filter,loss,st) do
+    loss |> pad(1) |> convolute(rotate180(filter),st) |> Matrix.emult(u)
   end
 
   def gradient_filter(u,filter,loss) do
@@ -333,6 +382,16 @@ defmodule Dmatrix do
     p = part(u,x1,y1,m,n)
     p |> Matrix.emult(error)
     |> sum
+  end
+
+  def momentum([],[],_) do [] end
+  def momentum([v|vs],[g|gs],lr) do
+    [momentum1(v,g,lr)|momentum(vs,gs,lr)]
+  end
+
+  def momentum1([],[],_) do [] end
+  def momentum1([v|vs],[g|gs],lr) do
+    [0.9*v - lr*g|momentum1(vs,gs,lr)]
   end
 
   # transform from matrix to vector
@@ -363,22 +422,15 @@ defmodule Dmatrix do
     rand_matrix1(n-1,[:rand.uniform(i)|res],i)
   end
 
+  def average(x) do
+    n = length(x)
+    reduce(x) |> FF.apply_function(fn(y) -> y/n end)
+  end
+
   # reduce each row vector by sum of each element
-  def reduce(x) do
-    [reduce1(x)]
-  end
-
-  def reduce1([x]) do [x] end
-  def reduce1([x,y]) do
-    reduce2(x,y)
-  end
-  def reduce1([x|xs]) do
-    reduce2(x,reduce1(xs))
-  end
-
-  def reduce2([],[]) do [] end
-  def reduce2([x|xs],[y|ys]) do
-    [x+y|reduce2(xs,ys)]
+  def reduce([x]) do [x] end
+  def reduce([x|xs]) do
+    Matrix.add([x],reduce(xs))
   end
 
   def expand(x,1) do x end

@@ -13,22 +13,22 @@ defmodule Network do
   # filter
   def parse({:f,_,[x,y]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,0.01,0}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,0.01,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,z]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,1,0}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,z,st]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),1,0}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,z,st,lr]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),unquote(lr),0}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),unquote(lr),Matrix.new(unquote(x),unquote(y))}
     end
   end
   # pooling
@@ -64,28 +64,28 @@ defmodule Network do
   # weight
   def parse({:w,_,[x,y]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),1,0}
+      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:w,_,[x,y,z]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,0}
+      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:w,_,[x,y,z,lr]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(lr),0}
+      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(lr),Matrix.new(unquote(x),unquote(y))}
     end
   end
   # bias
   def parse({:b,_,[x]},_) do
     quote do
-      {:bias,Matrix.new(1,unquote(x)),1,0}
+      {:bias,Matrix.new(1,unquote(x)),1,Matrix.new(1,unquote(x))}
     end
   end
   def parse({:b,_,[x,lr]},_) do
     quote do
-      {:weight,Matrix.new(1,unquote(x)),unquote(lr),0}
+      {:weight,Matrix.new(1,unquote(x)),unquote(lr),Matrix.new(1,unquote(x))}
     end
   end
   # sigmoid
