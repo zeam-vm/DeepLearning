@@ -18,12 +18,12 @@ defmodule Network do
   end
   def parse({:f,_,[x,y,z]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,0.2,Matrix.new(unquote(x),unquote(y))}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,z,st]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),0.05,Matrix.new(unquote(x),unquote(y))}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,z,st,lr]},_) do
@@ -64,7 +64,7 @@ defmodule Network do
   # weight
   def parse({:w,_,[x,y]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),0.5,Matrix.new(unquote(x),unquote(y))}
+      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:w,_,[x,y,z]},_) do

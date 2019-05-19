@@ -7,7 +7,7 @@ defmodule Foo do
   end
 
   defnetwork init_network2(_x) do
-    _x |> f(5,5,0.3,1,0.05) |> flatten
+    _x |> f(5,5) |> flatten
     |> w(576,100) |> b(100) |> sigmoid
     |> w(100,10) |> b(10) |> sigmoid
   end
@@ -587,22 +587,6 @@ defmodule FFB do
     backpropagation(l1,rest,us,[{:flatten}|res])
   end
 
-  def batch(n) do
-    network = Foo.n5(0)
-    dt = Foo.dt()
-    tt = Foo.tt()
-    network1 = batch1(dt,network,tt,n)
-    FF.print(FFB.forward(dt,network1))
-  end
-
-  def batch1(_,network,_,0) do network end
-  def batch1(dt,network,tt,n) do
-    network1 = gradient(dt,network,tt)
-    network2 = learning(network,network1)
-    batch1(dt,network2,tt,n-1)
-  end
-
-
   def learning([],_) do [] end
   def learning([{:weight,w,lr,v}|rest],[{:weight,w1,_,_}|rest1]) do
     v1 = Dmatrix.momentum(v,w1,lr)
@@ -621,7 +605,7 @@ defmodule FFB do
   end
 
   # MNIST test
-  def mnist(m,n) do
+  def batch(m,n) do
     IO.puts("preparing data")
     image = MNIST.train_image(m)
     label = MNIST.train_label_onehot(m)
@@ -629,21 +613,21 @@ defmodule FFB do
     test_image = MNIST.test_image(100)
     test_label = MNIST.test_label(100)
     IO.puts("ready")
-    network1 = mnist1(image,network,label,n)
+    network1 = batch1(image,network,label,n)
     correct = accuracy(test_image,network1,test_label,100,0)
     IO.write("accuracy rate = ")
     IO.puts(correct / 100)
   end
 
-  def mnist1(_,network,_,0) do network end
-  def mnist1(image,network,train,n) do
+  def batch1(_,network,_,0) do network end
+  def batch1(image,network,train,n) do
     network1 = gradient(image,network,train)
     network2 = learning(network,network1)
     y = forward(image,network1)
     loss = batch_error(y,train,fn(x,y) -> FF.mean_square(x,y) end)
     FF.print(loss)
     FF.newline()
-    mnist1(image,network2,train,n-1)
+    batch1(image,network2,train,n-1)
   end
 
   # print predict of test data
@@ -657,6 +641,40 @@ defmodule FFB do
     else
       accuracy(irest,network,lrest,n-1,correct+1)
     end
+  end
+
+  def sgd(m,n) do
+    IO.puts("preparing data")
+    image = MNIST.train_image(2000)
+    label = MNIST.train_label_onehot(2000)
+    network = Foo.init_network2(0)
+    test_image = MNIST.test_image(100)
+    test_label = MNIST.test_label(100)
+    IO.puts("ready")
+    network1 = sgd1(image,network,label,m,n)
+    correct = accuracy(test_image,network1,test_label,100,0)
+    IO.write("accuracy rate = ")
+    IO.puts(correct / 100)
+  end
+
+  def sgd1(_,network,_,_,0) do network end
+  def sgd1(image,network,train,m,n) do
+    {image1,train1} = random_select(image,train,[],[],m)
+    network1 = gradient(image1,network,train1)
+    network2 = learning(network,network1)
+    y = forward(image1,network2)
+    loss = batch_error(y,train1,fn(x,y) -> FF.mean_square(x,y) end)
+    FF.print(loss)
+    FF.newline()
+    sgd1(image,network2,train,m,n-1)
+  end
+
+  def random_select(_,_,res1,res2,0) do {res1,res2} end
+  def random_select(image,train,res1,res2,m) do
+    i = :rand.uniform(500)
+    image1 = Enum.at(image,i)
+    train1 = Enum.at(train,i)
+    random_select(image,train,[image1|res1],[train1|res2],m-1)
   end
 
 end
