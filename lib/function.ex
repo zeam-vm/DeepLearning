@@ -34,14 +34,37 @@ defmodule Foo do
   end
 
   defnetwork n5(_x) do
-    _x |> f(3,3) |> flatten
+    _x |> f(3,3) |> sigmoid |> flatten
+    |> w(4,4) |> b(4) |> sigmoid
   end
 
   def dt() do
+    [
     [[1,2,3,4],
      [5,6,7,8],
      [9,10,11,12],
-     [13,14,15,16]]
+     [13,14,15,16]],
+    [[2,3,1,2],
+     [2,3,1,2],
+     [3,2,1,1],
+     [2,1,1,1]]
+    ]
+  end
+
+  def tt() do
+    [[0.1,0.2,0.3,0.4],[0.4,0.3,0.2,0.1]]
+  end
+
+  def test5() do
+    network = n5(0)
+    FF.print(FFB.gradient(dt(),network,tt()))
+    FF.newline()
+    FF.print(FFB.numerical_gradient(dt(),network,tt()))
+  end
+
+  def test6() do
+    network = n5(0)
+    FF.print(FFB.forward(dt(),network))
   end
 
   def test() do
@@ -503,7 +526,7 @@ defmodule FFB do
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (FF.mean_square(y1,t) - FF.mean_square(y0,t)) / h
+    (batch_error(y1,t,fn(x,y) -> FF.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> FF.mean_square(x,y) end)) / h
   end
   def numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
@@ -512,7 +535,7 @@ defmodule FFB do
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (FF.mean_square(y1,t) - FF.mean_square(y0,t)) / h
+    (batch_error(y1,t,fn(x,y) -> FF.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> FF.mean_square(x,y) end)) / h
   end
 
   # gradient with backpropagation
@@ -526,37 +549,28 @@ defmodule FFB do
   #backpropagation
   def backpropagation(_,[],_,res) do res end
   def backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
-    IO.puts("function")
     if is_tensor(u) do
       l1 = Tensor.emult(l,Tensor.apply_function(u,g))
-      FF.print(l1)
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     else
       l1 = Matrix.emult(l,FF.apply_function(u,g))
-      FF.print(l1)
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     end
   end
   def backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
-    IO.puts("bias")
     {n,_} = Matrix.size(l)
     b1 = Dmatrix.reduce(l) |> FF.apply_function(fn(x) -> x/n end)
-    FF.print(l)
     backpropagation(l,rest,us,[{:bias,b1,lr,v}|res])
   end
   def backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
-    IO.puts("weight")
     {n,_} = Matrix.size(l)
     w1 = Pmatrix.mult(Matrix.transpose(u),l) |> FF.apply_function(fn(x) -> x/n end)
     l1 = Dmatrix.mult(l,Matrix.transpose(w))
-    FF.print(l1)
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end
   def backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
-    IO.puts("filter")
     w1 = Tensor.gradient_filter(u,w,l) |> Tensor.average
     l1 = Tensor.deconvolute(u,w,l,st)
-    FF.print(l1)
     backpropagation(l1,rest,us,[{:filter,w1,st,lr,v}|res])
   end
   def backpropagation(l,[{:pooling,st}|rest],[u|us],res) do
@@ -568,12 +582,26 @@ defmodule FFB do
     backpropagation(l1,rest,us,[{:padding,st}|res])
   end
   def backpropagation(l,[{:flatten}|rest],[u|us],res) do
-    IO.puts("flatten")
     {r,c} = Matrix.size(hd(u))
     l1 = Tensor.structure(l,r,c)
-    FF.print(l1)
     backpropagation(l1,rest,us,[{:flatten}|res])
   end
+
+  def batch(n) do
+    network = Foo.n5(0)
+    dt = Foo.dt()
+    tt = Foo.tt()
+    network1 = batch1(dt,network,tt,n)
+    FF.print(FFB.forward(dt,network1))
+  end
+
+  def batch1(_,network,_,0) do network end
+  def batch1(dt,network,tt,n) do
+    network1 = gradient(dt,network,tt)
+    network2 = learning(network,network1)
+    batch1(dt,network2,tt,n-1)
+  end
+
 
   def learning([],_) do [] end
   def learning([{:weight,w,lr,v}|rest],[{:weight,w1,_,_}|rest1]) do
@@ -590,6 +618,45 @@ defmodule FFB do
   end
   def learning([network|rest],[_|rest1]) do
     [network|learning(rest,rest1)]
+  end
+
+  # MNIST test
+  def mnist(m,n) do
+    IO.puts("preparing data")
+    image = MNIST.train_image(m)
+    label = MNIST.train_label_onehot(m)
+    network = Foo.init_network2(0)
+    test_image = MNIST.test_image(100)
+    test_label = MNIST.test_label(100)
+    IO.puts("ready")
+    network1 = mnist1(image,network,label,n)
+    correct = accuracy(test_image,network1,test_label,100,0)
+    IO.write("accuracy rate = ")
+    IO.puts(correct / 100)
+  end
+
+  def mnist1(_,network,_,0) do network end
+  def mnist1(image,network,train,n) do
+    network1 = gradient(image,network,train)
+    network2 = learning(network,network1)
+    y = forward(image,network1)
+    loss = batch_error(y,train,fn(x,y) -> FF.mean_square(x,y) end)
+    FF.print(loss)
+    FF.newline()
+    mnist1(image,network2,train,n-1)
+  end
+
+  # print predict of test data
+  def accuracy(_,_,_,0,correct) do
+    correct
+  end
+  def accuracy([image|irest],network,[label|lrest],n,correct) do
+    dt = MNIST.onehot_to_num(FF.forward(image,network))
+    if dt != label do
+      accuracy(irest,network,lrest,n-1,correct)
+    else
+      accuracy(irest,network,lrest,n-1,correct+1)
+    end
   end
 
 end

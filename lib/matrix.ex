@@ -6,8 +6,8 @@ defmodule Tensor do
   end
 
   def deconvolute([],_,_,_) do [] end
-  def deconvolute([u|us],filter,loss,st) do
-    [Dmatrix.deconvolute(u,filter,loss,st)|deconvolute(us,filter,loss,st)]
+  def deconvolute([u|us],filter,[l|ls],st) do
+    [Dmatrix.deconvolute(u,filter,l,st)|deconvolute(us,filter,ls,st)]
   end
 
   def restore([],_,_) do [] end
@@ -37,7 +37,6 @@ defmodule Tensor do
 
   # normal average
   def average(x) do
-    FF.print(x)
     n = length(x)
     reduce(x) |> FF.apply_function(fn(y) -> y/n end)
   end
@@ -393,7 +392,7 @@ defmodule Dmatrix do
 
   def momentum1([],[],_) do [] end
   def momentum1([v|vs],[g|gs],lr) do
-    [0.9*v - lr*g|momentum1(vs,gs,lr)]
+    [0.5*v - lr*g|momentum1(vs,gs,lr)]
   end
 
   # transform from matrix to vector
