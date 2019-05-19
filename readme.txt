@@ -4,7 +4,7 @@ This project is called Function Flow(FF)
 Network example
 
 defnetwork init_network2(_x) do
-  _x |> f(5,5,0.3,1,0.05) |> flatten
+  _x |> f(5,5) |> flatten
   |> w(576,100) |> b(100) |> sigmoid
   |> w(100,10) |> b(10) |> sigmoid
 end
