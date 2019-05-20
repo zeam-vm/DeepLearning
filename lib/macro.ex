@@ -80,7 +80,7 @@ defmodule Network do
   # bias
   def parse({:b,_,[x]},_) do
     quote do
-      {:bias,Matrix.new(1,unquote(x)),0.5,Matrix.new(1,unquote(x))}
+      {:bias,Matrix.new(1,unquote(x)),1,Matrix.new(1,unquote(x))}
     end
   end
   def parse({:b,_,[x,lr]},_) do
@@ -91,13 +91,13 @@ defmodule Network do
   # sigmoid
   def parse({:sigmoid,_,nil},_) do
     quote do
-      {:function,fn(x) -> DL.sigmoid(x) end,fn(x) -> DL.dsigmoid(x) end}
+      {:function,fn(x) -> FF.sigmoid(x) end,fn(x) -> FF.dsigmoid(x) end}
     end
   end
   # identity
   def parse({:ident,_,nil},_) do
     quote do
-      {:function,fn(x) -> DL.ident(x) end,fn(x) -> DL.dident(x) end}
+      {:function,fn(x) -> FF.ident(x) end,fn(x) -> FF.dident(x) end}
     end
   end
   # flatten

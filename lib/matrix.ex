@@ -395,6 +395,24 @@ defmodule Dmatrix do
     [0.5*v - lr*g|momentum1(vs,gs,lr)]
   end
 
+  def adagrad([],[],[],_) do [] end
+  def adagrad([w|ws],[g|gs],[h|hs],lr) do
+    [adagrad1(w,g,h,lr)|adagrad(ws,gs,hs,lr)]
+  end
+
+  def adagrad1([],[],[],_) do [] end
+  def adagrad1([w|ws],[g|gs],[h|hs],lr) do
+    [w-lr*(1 / adagrad_sqrt(h))*g|adagrad1(ws,gs,hs,lr)]
+  end
+
+  def adagrad_sqrt(x) do
+    if x != 0 do
+      :math.sqrt(x)
+    else
+      1
+    end
+  end
+
   # transform from matrix to vector
   def flatten(x) do
     [flatten1(x)]

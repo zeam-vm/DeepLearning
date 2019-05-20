@@ -8,7 +8,8 @@ defmodule Foo do
 
   defnetwork init_network2(_x) do
     _x |> f(5,5) |> flatten
-    |> w(576,100) |> b(100) |> sigmoid
+    |> w(576,300) |> b(300) |> sigmoid
+    |> w(300,100) |> b(100) |> sigmoid
     |> w(100,10) |> b(10) |> sigmoid
   end
 
@@ -602,6 +603,23 @@ defmodule FFB do
   end
   def learning([network|rest],[_|rest1]) do
     [network|learning(rest,rest1)]
+  end
+  #--------AdaGrad--------------
+  def learning([],_,:adagrad) do [] end
+  def learning([{:weight,w,lr,h}|rest],[{:weight,w1,_,_}|rest1],:adagrad) do
+    h1 = Matrix.add(h,Matrix.emult(w1,w1))
+    [{:weight,Dmatrix.adagrad(w,w1,h1,lr),lr,h1}|learning(rest,rest1,:adagrad)]
+  end
+  def learning([{:bias,w,lr,h}|rest],[{:bias,w1,_,_}|rest1],:adagrad) do
+    h1 = Matrix.add(h,Matrix.emult(w1,w1))
+    [{:bias,Dmatrix.adagrad(w,w1,h1,lr),lr,h1}|learning(rest,rest1,:adagrad)]
+  end
+  def learning([{:filter,w,st,lr,h}|rest],[{:filter,w1,st,_,_}|rest1],:adagrad) do
+    h1 = Matrix.add(h,Matrix.emult(w1,w1))
+    [{:filter,Dmatrix.adagrad(w,w1,h1,lr),st,lr,h1}|learning(rest,rest1,:adagrad)]
+  end
+  def learning([network|rest],[_|rest1],:adagrad) do
+    [network|learning(rest,rest1,:adagrad)]
   end
 
   # MNIST test
