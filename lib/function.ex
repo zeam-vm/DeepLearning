@@ -13,6 +13,20 @@ defmodule Foo do
     |> w(100,10) |> b(10) |> sigmoid
   end
 
+  defnetwork init_network3(_x) do
+    _x |> f(5,5) |> flatten
+    |> w(576,300) |> b(300) |> relu
+    |> w(300,100) |> b(100) |> relu
+    |> w(100,10) |> b(10) |> sigmoid
+  end
+
+  defnetwork init_network4(_x) do
+    _x |> f(5,5) |> flatten
+    |> w(576,300) |> b(300) |> relu
+    |> w(300,100) |> b(100) |> relu
+    |> w(100,10) |> b(10) |> sigmoid
+  end
+
   defnetwork n1(_x) do
     _x |> w(2,2,0.1)
   end
@@ -140,6 +154,11 @@ defmodule FF do
     Enum.map(x, fn(y) -> :math.exp(y)/sum end)
   end
 
+  # unfinished
+  def dsoftmax(x) do
+    x
+  end
+
 
   #error function
   def cross_entropy([x],[y]) do
@@ -182,6 +201,10 @@ defmodule FF do
   end
   def forward(x,[{:function,f,_}|rest]) do
     x1 = apply_function(x,f)
+    forward(x1,rest)
+  end
+  def forward(x,[{:softmax,f,_}|rest]) do
+    x1 = f.(x)
     forward(x1,rest)
   end
   def forward(x,[{:filter,w,st,_,_}|rest]) do
@@ -588,21 +611,36 @@ defmodule FFB do
     backpropagation(l1,rest,us,[{:flatten}|res])
   end
 
+  #--------sgd----------
   def learning([],_) do [] end
   def learning([{:weight,w,lr,v}|rest],[{:weight,w1,_,_}|rest1]) do
-    v1 = Dmatrix.momentum(v,w1,lr)
-    [{:weight,Dmatrix.add(w,v1),lr,v1}|learning(rest,rest1)]
+    [{:weight,Dmatrix.update(w,w1,lr),lr,v}|learning(rest,rest1)]
   end
   def learning([{:bias,w,lr,v}|rest],[{:bias,w1,_,_}|rest1]) do
-    v1 = Dmatrix.momentum(v,w1,lr)
-    [{:bias,Dmatrix.add(w,v1),lr,v1}|learning(rest,rest1)]
+    [{:bias,Dmatrix.update(w,w1,lr),lr,v}|learning(rest,rest1)]
   end
   def learning([{:filter,w,st,lr,v}|rest],[{:filter,w1,st,_,_}|rest1]) do
-    v1 = Dmatrix.momentum(v,w1,lr)
-    [{:filter,Dmatrix.add(w,v1),st,lr,v1}|learning(rest,rest1)]
+    [{:filter,Dmatrix.update(w,w1,lr),st,lr,v}|learning(rest,rest1)]
   end
   def learning([network|rest],[_|rest1]) do
     [network|learning(rest,rest1)]
+  end
+  #--------momentum-------------
+  def learning([],_,:momentum) do [] end
+  def learning([{:weight,w,lr,v}|rest],[{:weight,w1,_,_}|rest1],:momentum) do
+    v1 = Dmatrix.momentum(v,w1,lr)
+    [{:weight,Dmatrix.add(w,v1),lr,v1}|learning(rest,rest1,:momentum)]
+  end
+  def learning([{:bias,w,lr,v}|rest],[{:bias,w1,_,_}|rest1],:momentum) do
+    v1 = Dmatrix.momentum(v,w1,lr)
+    [{:bias,Dmatrix.add(w,v1),lr,v1}|learning(rest,rest1,:momentum)]
+  end
+  def learning([{:filter,w,st,lr,v}|rest],[{:filter,w1,st,_,_}|rest1],:momentum) do
+    v1 = Dmatrix.momentum(v,w1,lr)
+    [{:filter,Dmatrix.add(w,v1),st,lr,v1}|learning(rest,rest1,:momentum)]
+  end
+  def learning([network|rest],[_|rest1],:momentum) do
+    [network|learning(rest,rest1,:momentum)]
   end
   #--------AdaGrad--------------
   def learning([],_,:adagrad) do [] end
@@ -685,6 +723,58 @@ defmodule FFB do
     FF.print(loss)
     FF.newline()
     sgd1(image,network2,train,m,n-1)
+  end
+
+  def momentum(m,n) do
+    IO.puts("preparing data")
+    image = MNIST.train_image(2000)
+    label = MNIST.train_label_onehot(2000)
+    network = Foo.init_network3(0)
+    test_image = MNIST.test_image(100)
+    test_label = MNIST.test_label(100)
+    IO.puts("ready")
+    network1 = momentum1(image,network,label,m,n)
+    correct = accuracy(test_image,network1,test_label,100,0)
+    IO.write("accuracy rate = ")
+    IO.puts(correct / 100)
+  end
+
+  def momentum1(_,network,_,_,0) do network end
+  def momentum1(image,network,train,m,n) do
+    {image1,train1} = random_select(image,train,[],[],m)
+    network1 = gradient(image1,network,train1)
+    network2 = learning(network,network1,:momentum)
+    y = forward(image1,network2)
+    loss = batch_error(y,train1,fn(x,y) -> FF.mean_square(x,y) end)
+    FF.print(loss)
+    FF.newline()
+    momentum1(image,network2,train,m,n-1)
+  end
+
+  def adagrad(m,n) do
+    IO.puts("preparing data")
+    image = MNIST.train_image(2000)
+    label = MNIST.train_label_onehot(2000)
+    network = Foo.init_network2(0)
+    test_image = MNIST.test_image(100)
+    test_label = MNIST.test_label(100)
+    IO.puts("ready")
+    network1 = adagrad1(image,network,label,m,n)
+    correct = accuracy(test_image,network1,test_label,100,0)
+    IO.write("accuracy rate = ")
+    IO.puts(correct / 100)
+  end
+
+  def adagrad1(_,network,_,_,0) do network end
+  def adagrad1(image,network,train,m,n) do
+    {image1,train1} = random_select(image,train,[],[],m)
+    network1 = gradient(image1,network,train1)
+    network2 = learning(network,network1,:adagrad)
+    y = forward(image1,network2)
+    loss = batch_error(y,train1,fn(x,y) -> FF.mean_square(x,y) end)
+    FF.print(loss)
+    FF.newline()
+    adagrad1(image,network2,train,m,n-1)
   end
 
   def random_select(_,_,res1,res2,0) do {res1,res2} end

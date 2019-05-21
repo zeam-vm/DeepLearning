@@ -106,6 +106,12 @@ defmodule Network do
       {:function,fn(x) -> FF.relu(x) end,fn(x) -> FF.drelu(x) end}
     end
   end
+  # softmax
+  def parse({:softmax,_,nil},_) do
+    quote do
+      {:softmax,fn(x) -> FF.softmax(x) end,fn(x) -> FF.dsoftmax(x) end}
+    end
+  end
   # flatten
   def parse({:flatten,_,nil},_) do
     quote do
