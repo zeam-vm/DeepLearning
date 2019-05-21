@@ -13,12 +13,12 @@ defmodule Network do
   # filter
   def parse({:f,_,[x,y]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,1,Matrix.new(unquote(x),unquote(y))}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,0.1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,z]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,1,Matrix.new(unquote(x),unquote(y))}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,0.1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,z,st]},_) do
@@ -64,12 +64,12 @@ defmodule Network do
   # weight
   def parse({:w,_,[x,y]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),1,Matrix.new(unquote(x),unquote(y))}
+      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),0.1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:w,_,[x,y,z]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,Matrix.new(unquote(x),unquote(y))}
+      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),0.1,Matrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:w,_,[x,y,z,lr]},_) do
@@ -80,7 +80,7 @@ defmodule Network do
   # bias
   def parse({:b,_,[x]},_) do
     quote do
-      {:bias,Matrix.new(1,unquote(x)),1,Matrix.new(1,unquote(x))}
+      {:bias,Matrix.new(1,unquote(x)),0.1,Matrix.new(1,unquote(x))}
     end
   end
   def parse({:b,_,[x,lr]},_) do
@@ -98,6 +98,12 @@ defmodule Network do
   def parse({:ident,_,nil},_) do
     quote do
       {:function,fn(x) -> FF.ident(x) end,fn(x) -> FF.dident(x) end}
+    end
+  end
+  # relu
+  def parse({:relu,_,nil},_) do
+    quote do
+      {:function,fn(x) -> FF.relu(x) end,fn(x) -> FF.drelu(x) end}
     end
   end
   # flatten
