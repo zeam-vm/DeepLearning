@@ -22,9 +22,9 @@ defmodule Foo do
 
   defnetwork init_network4(_x) do
     _x |> f(5,5) |> flatten
-    |> w(576,300) |> b(300) |> relu
-    |> w(300,100) |> b(100) |> relu
-    |> w(100,10) |> b(10) |> sigmoid
+    |> w(576,300,0.1,0.001) |> b(300) |> relu
+    |> w(300,100,0.1,0.001) |> b(100) |> relu
+    |> w(100,10,0.1,0.001) |> b(10) |> sigmoid
   end
 
   defnetwork n1(_x) do
@@ -755,7 +755,7 @@ defmodule FFB do
     IO.puts("preparing data")
     image = MNIST.train_image(2000)
     label = MNIST.train_label_onehot(2000)
-    network = Foo.init_network2(0)
+    network = Foo.init_network4(0)
     test_image = MNIST.test_image(100)
     test_label = MNIST.test_label(100)
     IO.puts("ready")
