@@ -27,6 +27,13 @@ defmodule Foo do
     |> w(100,10,0.1,0.001) |> b(10) |> sigmoid
   end
 
+  defnetwork init_network5(_x) do
+    _x |> f(5,5) |> flatten
+    |> w(576,300) |> b(300) |> relu
+    |> w(300,100) |> b(100) |> relu
+    |> w(100,10) |> b(10) |> sigmoid
+  end
+
   defnetwork n1(_x) do
     _x |> w(2,2,0.1)
   end
@@ -659,6 +666,23 @@ defmodule FFB do
   def learning([network|rest],[_|rest1],:adagrad) do
     [network|learning(rest,rest1,:adagrad)]
   end
+  #--------Adam--------------
+  def learning([],_,:adam) do [] end
+  def learning([{:weight,w,lr,mv}|rest],[{:weight,w1,_,_}|rest1],:adam) do
+    mv1 = Dmatrix.adammv(mv,w1)
+    [{:weight,Dmatrix.adam(w,mv1,lr),lr,mv1}|learning(rest,rest1,:adam)]
+  end
+  def learning([{:bias,w,lr,mv}|rest],[{:bias,w1,_,_}|rest1],:adam) do
+    mv1 = Dmatrix.adammv(mv,w1)
+    [{:bias,Dmatrix.adam(w,mv1,lr),lr,mv1}|learning(rest,rest1,:adam)]
+  end
+  def learning([{:filter,w,st,lr,mv}|rest],[{:filter,w1,st,_,_}|rest1],:adam) do
+    mv1 = Dmatrix.adammv(mv,w1)
+    [{:filter,Dmatrix.adam(w,mv1,lr),st,lr,mv1}|learning(rest,rest1,:adam)]
+  end
+  def learning([network|rest],[_|rest1],:adam) do
+    [network|learning(rest,rest1,:adam)]
+  end
 
   # MNIST test
   def batch(m,n) do
@@ -776,6 +800,33 @@ defmodule FFB do
     FF.newline()
     adagrad1(image,network2,train,m,n-1)
   end
+
+  def adam(m,n) do
+    IO.puts("preparing data")
+    image = MNIST.train_image(2000)
+    label = MNIST.train_label_onehot(2000)
+    network = Foo.init_network4(0)
+    test_image = MNIST.test_image(100)
+    test_label = MNIST.test_label(100)
+    IO.puts("ready")
+    network1 = adam1(image,network,label,m,n)
+    correct = accuracy(test_image,network1,test_label,100,0)
+    IO.write("accuracy rate = ")
+    IO.puts(correct / 100)
+  end
+
+  def adam1(_,network,_,_,0) do network end
+  def adam1(image,network,train,m,n) do
+    {image1,train1} = random_select(image,train,[],[],m)
+    network1 = gradient(image1,network,train1)
+    network2 = learning(network,network1,:adam)
+    y = forward(image1,network2)
+    loss = batch_error(y,train1,fn(x,y) -> FF.mean_square(x,y) end)
+    FF.print(loss)
+    FF.newline()
+    adam1(image,network2,train,m,n-1)
+  end
+
 
   def random_select(_,_,res1,res2,0) do {res1,res2} end
   def random_select(image,train,res1,res2,m) do

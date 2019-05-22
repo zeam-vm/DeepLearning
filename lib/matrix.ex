@@ -413,6 +413,49 @@ defmodule Dmatrix do
     end
   end
 
+  def adam_init(w) do
+    if FFB.is_matrix(w) do
+      {r,c} = Matrix.size(w)
+      Matrix.new(r,c,[0,0])
+    else
+      w
+    end
+  end
+
+  def adammv(mv,grad) do
+    mv1 = adam_init(mv)
+    adammv1(mv1,grad)
+  end
+
+  def adammv1([],[]) do [] end
+  def adammv1([mv|mvs],[g|gs]) do
+    [adammv2(mv,g)|adammv1(mvs,gs)]
+  end
+
+  def adammv2([],[]) do [] end
+  def adammv2([mv|mvs],[g|gs]) do
+    [m,v] = mv
+    m1 = 0.9*m+(1-0.999)*g
+    v1 = 0.999*v+(1-0.999)*(g*g)
+    [[m1,v1]|adammv2(mvs,gs)]
+  end
+
+  def adam([],[],_) do [] end
+  def adam([w|ws],[mv|mvs],lr) do
+    [adam1(w,mv,lr)|adam(ws,mvs,lr)]
+  end
+
+  def adam1([],[],_) do [] end
+  def adam1([w|ws],[mv|mvs],lr) do
+    beta1 = 0.9
+    beta2 = 0.999
+    epsilon = 10.0e-8
+    [m,v] = mv
+    m1 = m/(1-beta1)
+    v1 = v/(1-beta2)
+    [w-lr/(:math.sqrt(v1)+epsilon)*m1|adam1(ws,mvs,lr)]
+  end
+
   # transform from matrix to vector
   def flatten(x) do
     [flatten1(x)]
