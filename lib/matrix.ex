@@ -434,9 +434,11 @@ defmodule Dmatrix do
 
   def adammv2([],[]) do [] end
   def adammv2([mv|mvs],[g|gs]) do
+    beta1 = 0.9
+    beta2 = 0.999
     [m,v] = mv
-    m1 = 0.9*m+(1-0.999)*g
-    v1 = 0.999*v+(1-0.999)*(g*g)
+    m1 = beta1*m+(1-beta2)*g
+    v1 = beta2*v+(1-beta2)*(g*g)
     [[m1,v1]|adammv2(mvs,gs)]
   end
 
