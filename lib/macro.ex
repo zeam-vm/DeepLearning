@@ -16,17 +16,17 @@ defmodule Network do
       {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,0.1,Matrix.new(unquote(x),unquote(y))}
     end
   end
-  def parse({:f,_,[x,y,z]},_) do
+  def parse({:f,_,[x,y,lr]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,0.1,Matrix.new(unquote(x),unquote(y))}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),0.1),1,unquote(lr),Matrix.new(unquote(x),unquote(y))}
     end
   end
-  def parse({:f,_,[x,y,z,st]},_) do
+  def parse({:f,_,[x,y,lr,z]},_) do
     quote do
-      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),1,Matrix.new(unquote(x),unquote(y))}
+      {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),1,unquote(lr),Matrix.new(unquote(x),unquote(y))}
     end
   end
-  def parse({:f,_,[x,y,z,st,lr]},_) do
+  def parse({:f,_,[x,y,lr,z,st]},_) do
     quote do
       {:filter,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),unquote(lr),Matrix.new(unquote(x),unquote(y))}
     end
@@ -46,19 +46,19 @@ defmodule Network do
   # constant weight for test
   def parse({:cw,_,[x]},_) do
     quote do
-      {:weight,unquote(x),1,0}
+      {:weight,unquote(x),0.1,0}
     end
   end
   # constant filter for test
   def parse({:cf,_,[x]},_) do
     quote do
-      {:filter,unquote(x),1,1,0}
+      {:filter,unquote(x),1,0.1,0}
     end
   end
   # constant bias for test
   def parse({:cb,_,[x]},_) do
     quote do
-      {:bias,unquote(x),1,0}
+      {:bias,unquote(x),0.1,0}
     end
   end
   # weight
@@ -67,12 +67,12 @@ defmodule Network do
       {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),0.1,Matrix.new(unquote(x),unquote(y))}
     end
   end
-  def parse({:w,_,[x,y,z]},_) do
+  def parse({:w,_,[x,y,lr]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),0.1,Matrix.new(unquote(x),unquote(y))}
+      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),unquote(lr),Matrix.new(unquote(x),unquote(y))}
     end
   end
-  def parse({:w,_,[x,y,z,lr]},_) do
+  def parse({:w,_,[x,y,lr,z]},_) do
     quote do
       {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(lr),Matrix.new(unquote(x),unquote(y))}
     end

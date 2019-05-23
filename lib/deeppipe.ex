@@ -27,11 +27,12 @@ defmodule Foo do
     |> w(100,10,0.1,0.001) |> b(10) |> sigmoid
   end
 
+  # for adam
   defnetwork init_network5(_x) do
-    _x |> f(5,5) |> flatten
-    |> w(576,300,0.1,0.1) |> b(300) |> relu
-    |> w(300,100,0.1,0.1) |> b(100) |> relu
-    |> w(100,10,0.1,0.1) |> b(10) |> sigmoid
+    _x |> f(5,5,0.1,1) |> flatten
+    |> w(576,300,0.1,1) |> b(300,0.1) |> relu
+    |> w(300,100,0.1,1) |> b(100,0.1) |> relu
+    |> w(100,10,0.1,1) |> b(10,0.1) |> sigmoid
   end
 
   defnetwork n1(_x) do
