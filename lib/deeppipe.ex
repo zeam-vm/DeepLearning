@@ -6,13 +6,15 @@ defmodule Foo do
     |> w(100,10) |> b(10) |> sigmoid
   end
 
+  # for sgd test
   defnetwork init_network2(_x) do
-    _x |> f(5,5) |> flatten
-    |> w(576,300) |> b(300) |> relu
-    |> w(300,100) |> b(100) |> relu
-    |> w(100,10) |> b(10) |> sigmoid
+    _x |> f(5,5,0.05,0.2) |> flatten
+    |> w(576,300,0.05,0.2) |> b(300,0.05) |> relu
+    |> w(300,100,0.05,0.2) |> b(100,0.05) |> relu
+    |> w(100,10,0.05,0.2) |> b(10,0.05) |> sigmoid
   end
 
+  # for momentum test
   defnetwork init_network3(_x) do
     _x |> f(5,5) |> flatten
     |> w(576,300) |> b(300) |> relu
@@ -20,6 +22,7 @@ defmodule Foo do
     |> w(100,10) |> b(10) |> sigmoid
   end
 
+  # for adagrad test
   defnetwork init_network4(_x) do
     _x |> f(5,5) |> flatten
     |> w(576,300) |> b(300) |> relu
@@ -27,7 +30,7 @@ defmodule Foo do
     |> w(100,10) |> b(10) |> sigmoid
   end
 
-  # for adam
+  # for adam test
   defnetwork init_network5(_x) do
     _x |> f(5,5,0.1,1) |> flatten
     |> w(576,300,0.1,1) |> b(300,0.1) |> relu
@@ -110,7 +113,7 @@ defmodule Foo do
 
 end
 
-# Function Flow
+# Deep Pipe
 defmodule DP do
   def stop() do
     :math.exp(800)
@@ -430,7 +433,7 @@ end
 
 #----------------------------------------------------------------------------
 
-# function flow for batch_
+# Deep Pipe for batch
 defmodule DPB do
   # y=result data t=train_data f=error function
   def batch_error(y,t,f) do

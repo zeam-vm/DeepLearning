@@ -22,10 +22,6 @@ module MNIST is code for MNIST data set
 I implemented backpropagation and numerical-gradient
 Now I'm testing small data set.
 
-I implemented CNN and testing.
-New frame work is called Function Flow (FF)
-module FF
-This module is extremely incomplete.Now I am improving
 
 expample:
 > require Time

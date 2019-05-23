@@ -85,7 +85,7 @@ defmodule Network do
   end
   def parse({:b,_,[x,lr]},_) do
     quote do
-      {:weight,Matrix.new(1,unquote(x)),unquote(lr),Matrix.new(1,unquote(x))}
+      {:bias,Matrix.new(1,unquote(x)),unquote(lr),Matrix.new(1,unquote(x))}
     end
   end
   # sigmoid
