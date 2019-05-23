@@ -22,9 +22,9 @@ defmodule Foo do
 
   defnetwork init_network4(_x) do
     _x |> f(5,5) |> flatten
-    |> w(576,300,0.1,0.001) |> b(300) |> relu
-    |> w(300,100,0.1,0.001) |> b(100) |> relu
-    |> w(100,10,0.1,0.001) |> b(10) |> sigmoid
+    |> w(576,300) |> b(300) |> relu
+    |> w(300,100) |> b(100) |> relu
+    |> w(100,10) |> b(10) |> sigmoid
   end
 
   # for adam
