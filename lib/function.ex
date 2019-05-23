@@ -79,38 +79,38 @@ defmodule Foo do
 
   def test5() do
     network = n5(0)
-    FF.print(FFB.gradient(dt(),network,tt()))
-    FF.newline()
-    FF.print(FFB.numerical_gradient(dt(),network,tt()))
+    DP.print(DPB.gradient(dt(),network,tt()))
+    DP.newline()
+    DP.print(DPB.numerical_gradient(dt(),network,tt()))
   end
 
   def test6() do
     network = n5(0)
-    FF.print(FFB.forward(dt(),network))
+    DP.print(DPB.forward(dt(),network))
   end
 
   def test() do
-    FF.print(FF.numerical_gradient(Foo.dt(),n4(0),[[1,2,3]]))
-    FF.newline()
-    FF.print(FF.gradient(Foo.dt(),n4(0),[[1,2,3]]))
+    DP.print(DP.numerical_gradient(Foo.dt(),n4(0),[[1,2,3]]))
+    DP.newline()
+    DP.print(DP.gradient(Foo.dt(),n4(0),[[1,2,3]]))
   end
 
   def test1() do
-    FF.print(FF.forward(hd(MNIST.train_image(1)),init_network2(0)))
+    DP.print(DP.forward(hd(MNIST.train_image(1)),init_network2(0)))
   end
 
   def test2() do
-    FF.print(FFB.forward(MNIST.train_image(2),init_network2(0)))
+    DP.print(DPB.forward(MNIST.train_image(2),init_network2(0)))
   end
 
   def test3() do
-    FFB.gradient(MNIST.train_image(2),init_network2(0),MNIST.train_label_onehot(2))
+    DPB.gradient(MNIST.train_image(2),init_network2(0),MNIST.train_label_onehot(2))
   end
 
 end
 
 # Function Flow
-defmodule FF do
+defmodule DP do
   def stop() do
     :math.exp(800)
   end
@@ -390,8 +390,8 @@ defmodule FF do
     train1 = MNIST.to_onehot(hd(label))
     y = forward(hd(image),network1)
     loss = mean_square(y,train1)
-    FF.print(loss)
-    FF.newline()
+    DP.print(loss)
+    DP.newline()
     online1(image,network1,label,m,n-1)
   end
 
@@ -417,13 +417,20 @@ defmodule FF do
     end
   end
 
+  def save(file,network) do
+    File.write(file,inspect(network))
+  end
+
+  def load(file) do
+    Code.eval_file(file) |> elem(0)
+  end
 
 end
 
 #----------------------------------------------------------------------------
 
 # function flow for batch_
-defmodule FFB do
+defmodule DPB do
   # y=result data t=train_data f=error function
   def batch_error(y,t,f) do
     batch_error1(y,t,f,0) / length(y)
@@ -459,7 +466,7 @@ defmodule FFB do
       x1 = Tensor.apply_function(x,f)
       forward(x1,rest)
     else
-      x1 = FF.apply_function(x,f)
+      x1 = DP.apply_function(x,f)
       forward(x1,rest)
     end
   end
@@ -498,7 +505,7 @@ defmodule FFB do
       x1 = Tensor.apply_function(x,f)
       forward_for_back(x1,rest,[x1|res])
     else
-      x1 = FF.apply_function(x,f)
+      x1 = DP.apply_function(x,f)
       forward_for_back(x1,rest,[x1|res])
     end
   end
@@ -557,7 +564,7 @@ defmodule FFB do
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (batch_error(y1,t,fn(x,y) -> FF.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> FF.mean_square(x,y) end)) / h
+    (batch_error(y1,t,fn(x,y) -> DP.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> DP.mean_square(x,y) end)) / h
   end
   def numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
@@ -566,7 +573,7 @@ defmodule FFB do
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (batch_error(y1,t,fn(x,y) -> FF.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> FF.mean_square(x,y) end)) / h
+    (batch_error(y1,t,fn(x,y) -> DP.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> DP.mean_square(x,y) end)) / h
   end
 
   # gradient with backpropagation
@@ -584,18 +591,18 @@ defmodule FFB do
       l1 = Tensor.emult(l,Tensor.apply_function(u,g))
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     else
-      l1 = Matrix.emult(l,FF.apply_function(u,g))
+      l1 = Matrix.emult(l,DP.apply_function(u,g))
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     end
   end
   def backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
     {n,_} = Matrix.size(l)
-    b1 = Dmatrix.reduce(l) |> FF.apply_function(fn(x) -> x/n end)
+    b1 = Dmatrix.reduce(l) |> DP.apply_function(fn(x) -> x/n end)
     backpropagation(l,rest,us,[{:bias,b1,lr,v}|res])
   end
   def backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
     {n,_} = Matrix.size(l)
-    w1 = Pmatrix.mult(Matrix.transpose(u),l) |> FF.apply_function(fn(x) -> x/n end)
+    w1 = Pmatrix.mult(Matrix.transpose(u),l) |> DP.apply_function(fn(x) -> x/n end)
     l1 = Dmatrix.mult(l,Matrix.transpose(w))
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end
@@ -704,9 +711,9 @@ defmodule FFB do
     network1 = gradient(image,network,train)
     network2 = learning(network,network1)
     y = forward(image,network1)
-    loss = batch_error(y,train,fn(x,y) -> FF.mean_square(x,y) end)
-    FF.print(loss)
-    FF.newline()
+    loss = batch_error(y,train,fn(x,y) -> DP.mean_square(x,y) end)
+    DP.print(loss)
+    DP.newline()
     batch1(image,network2,train,n-1)
   end
 
@@ -715,7 +722,7 @@ defmodule FFB do
     correct
   end
   def accuracy([image|irest],network,[label|lrest],n,correct) do
-    dt = MNIST.onehot_to_num(FF.forward(image,network))
+    dt = MNIST.onehot_to_num(DP.forward(image,network))
     if dt != label do
       accuracy(irest,network,lrest,n-1,correct)
     else
@@ -743,9 +750,9 @@ defmodule FFB do
     network1 = gradient(image1,network,train1)
     network2 = learning(network,network1)
     y = forward(image1,network2)
-    loss = batch_error(y,train1,fn(x,y) -> FF.mean_square(x,y) end)
-    FF.print(loss)
-    FF.newline()
+    loss = batch_error(y,train1,fn(x,y) -> DP.mean_square(x,y) end)
+    DP.print(loss)
+    DP.newline()
     sgd1(image,network2,train,m,n-1)
   end
 
@@ -769,9 +776,9 @@ defmodule FFB do
     network1 = gradient(image1,network,train1)
     network2 = learning(network,network1,:momentum)
     y = forward(image1,network2)
-    loss = batch_error(y,train1,fn(x,y) -> FF.mean_square(x,y) end)
-    FF.print(loss)
-    FF.newline()
+    loss = batch_error(y,train1,fn(x,y) -> DP.mean_square(x,y) end)
+    DP.print(loss)
+    DP.newline()
     momentum1(image,network2,train,m,n-1)
   end
 
@@ -795,9 +802,9 @@ defmodule FFB do
     network1 = gradient(image1,network,train1)
     network2 = learning(network,network1,:adagrad)
     y = forward(image1,network2)
-    loss = batch_error(y,train1,fn(x,y) -> FF.mean_square(x,y) end)
-    FF.print(loss)
-    FF.newline()
+    loss = batch_error(y,train1,fn(x,y) -> DP.mean_square(x,y) end)
+    DP.print(loss)
+    DP.newline()
     adagrad1(image,network2,train,m,n-1)
   end
 
@@ -821,9 +828,9 @@ defmodule FFB do
     network1 = gradient(image1,network,train1)
     network2 = learning(network,network1,:adam)
     y = forward(image1,network2)
-    loss = batch_error(y,train1,fn(x,y) -> FF.mean_square(x,y) end)
-    FF.print(loss)
-    FF.newline()
+    loss = batch_error(y,train1,fn(x,y) -> DP.mean_square(x,y) end)
+    DP.print(loss)
+    DP.newline()
     adam1(image,network2,train,m,n-1)
   end
 

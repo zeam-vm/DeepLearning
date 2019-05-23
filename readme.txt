@@ -1,5 +1,5 @@
 For my study Deep Learning with elixir
-This project is called Function Flow(FF)
+This project is called Deep Pipe(DP)
 
 Network example
 
@@ -12,8 +12,8 @@ end
 Usage:
   iex -S mix
 
-module FF is Function Flow(FF) module
-module FFB is FF for batch
+module DP is Deep Pipe(DP) module
+module DPB is DP for batch
 module Tensor is code for CNN data operation
 module Dmatrix is code for Matrix
 module Pmatrix is code for Matrix product in paralell
@@ -29,7 +29,7 @@ This module is extremely incomplete.Now I am improving
 
 expample:
 > require Time
-> Time.time(FFB.sgd(20,200))
+> Time.time(DPB.sgd(20,200))
 preparing data
 ready
 0.4474500733730803

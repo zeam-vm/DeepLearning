@@ -91,25 +91,25 @@ defmodule Network do
   # sigmoid
   def parse({:sigmoid,_,nil},_) do
     quote do
-      {:function,fn(x) -> FF.sigmoid(x) end,fn(x) -> FF.dsigmoid(x) end}
+      {:function,fn(x) -> DP.sigmoid(x) end,fn(x) -> DP.dsigmoid(x) end}
     end
   end
   # identity
   def parse({:ident,_,nil},_) do
     quote do
-      {:function,fn(x) -> FF.ident(x) end,fn(x) -> FF.dident(x) end}
+      {:function,fn(x) -> DP.ident(x) end,fn(x) -> DP.dident(x) end}
     end
   end
   # relu
   def parse({:relu,_,nil},_) do
     quote do
-      {:function,fn(x) -> FF.relu(x) end,fn(x) -> FF.drelu(x) end}
+      {:function,fn(x) -> DP.relu(x) end,fn(x) -> DP.drelu(x) end}
     end
   end
   # softmax
   def parse({:softmax,_,nil},_) do
     quote do
-      {:softmax,fn(x) -> FF.softmax(x) end,fn(x) -> FF.dsoftmax(x) end}
+      {:softmax,fn(x) -> DP.softmax(x) end,fn(x) -> DP.dsoftmax(x) end}
     end
   end
   # flatten
