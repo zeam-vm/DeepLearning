@@ -4,8 +4,8 @@ defmodule DLTest do
 
   test "error function" do
     #assert DL.test1() == [[0.7043825919854788, 0.7043825919854788]]
-    assert FF.cross_entropy([[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]],[[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]) == 0.510825457099338
-    assert FF.cross_entropy([[0.1, 0.05, 0.1, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]],[[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]) == 2.302584092994546
+    assert DP.cross_entropy([[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]],[[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]) == 0.510825457099338
+    assert DP.cross_entropy([[0.1, 0.05, 0.1, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]],[[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]) == 2.302584092994546
   end
 
   test "CNN test" do
@@ -36,6 +36,6 @@ defmodule DLTest do
   end
 
   test "FF test" do
-    assert FF.forward([[1,2]],Foo.n2(:t)) == [[5, 8]]
+    assert DP.forward([[1,2]],Foo.n2(:t)) == [[5, 8]]
   end
 end
