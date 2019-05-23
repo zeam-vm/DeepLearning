@@ -1,4 +1,4 @@
-For my study Deep Learning with elixir
+Deep Learning with elixir
 This project is called Deep Pipe(DP)
 
 Network example
