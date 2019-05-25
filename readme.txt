@@ -14,6 +14,7 @@ Usage:
 
 module DP is Deep Pipe(DP) module
 module DPB is DP for batch
+module DPP is DP for parallel
 module Tensor is code for CNN data operation
 module Dmatrix is code for Matrix
 module Pmatrix is code for Matrix product in paralell
