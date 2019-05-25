@@ -1,7 +1,7 @@
 Deep Learning with elixir
 This project is called Deep Pipe(DP)
 
-Network example
+Network example (See test.ex)
 
 defnetwork init_network2(_x) do
   _x |> f(5,5) |> flatten
@@ -24,17 +24,29 @@ Now I'm testing small data set.
 
 
 expample:
-> require Time
-> Time.time(DPB.sgd(20,200))
+iex(1)> require Time
+
+Time
+iex(2)> Time.time(Test.adagrad(100,50))
 preparing data
 ready
-0.4474500733730803
-0.46611457228999553
+0.44383196477296905
+0.37511510344740406
+0.42960276053222174
+0.352539961358792
+0.2861907950783934
+0.21772105559847485
+0.1880808136708525
+0.14605224305760664
 ...
-0.010044398231206475
-0.01224130775263959
-0.008253303376695118
-accuracy rate = 0.9
-"time: 132364042 micro second"
+0.016682469588708566
+0.019254450344041836
+0.00594231528389093
+0.013773451908515
+0.019834342678945693
+accuracy rate = 0.88
+"time: 202819950 micro second"
 "-------------"
 :ok
+
+>
