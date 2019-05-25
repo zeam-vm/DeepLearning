@@ -8,10 +8,10 @@ defmodule Test do
 
   # for sgd test
   defnetwork init_network2(_x) do
-    _x |> f(5,5,1) |> flatten
-    |> w(576,300,1) |> b(300,1) |> sigmoid
-    |> w(300,100,1) |> b(100,1) |> sigmoid
-    |> w(100,10,1) |> b(10,1) |> sigmoid
+    _x |> f(5,5) |> flatten
+    |> w(576,300) |> b(300) |> sigmoid
+    |> w(300,100) |> b(100) |> sigmoid
+    |> w(100,10) |> b(10) |> sigmoid
   end
 
   # for momentum test
@@ -32,10 +32,10 @@ defmodule Test do
 
   # for adam test
   defnetwork init_network5(_x) do
-    _x |> f(5,5,0.1,1) |> flatten
-    |> w(576,300,0.1,1) |> b(300,0.1) |> relu
-    |> w(300,100,0.1,1) |> b(100,0.1) |> relu
-    |> w(100,10,0.1,1) |> b(10,0.1) |> sigmoid
+    _x |> f(5,5,0.001) |> flatten
+    |> w(576,300,0.001) |> b(300,0.001) |> relu
+    |> w(300,100,0.001) |> b(100,0.001) |> relu
+    |> w(100,10,0.001) |> b(10,0.001) |> sigmoid
   end
 
   def sgd(m,n) do
