@@ -589,6 +589,9 @@ defmodule MNIST do
   def onehot_to_num([x]) do
     onehot_to_num1(x,0)
   end
+  def onehot_to_num(x) do
+    onehot_to_num1(x,0)
+  end
   def onehot_to_num1([x|xs],n) do
     if x == Enum.max([x|xs]) do
       n
