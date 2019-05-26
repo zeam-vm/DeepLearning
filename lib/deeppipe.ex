@@ -634,7 +634,7 @@ defmodule DPB do
 
   def random_select(_,_,res1,res2,0) do {res1,res2} end
   def random_select(image,train,res1,res2,m) do
-    i = :rand.uniform(1000)
+    i = :rand.uniform(2000)
     image1 = Enum.at(image,i)
     train1 = Enum.at(train,i)
     random_select(image,train,[image1|res1],[train1|res2],m-1)

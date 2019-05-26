@@ -40,8 +40,8 @@ defmodule Test do
 
   def sgd(m,n) do
     IO.puts("preparing data")
-    image = MNIST.train_image(2000)
-    label = MNIST.train_label_onehot(2000)
+    image = MNIST.train_image(3000)
+    label = MNIST.train_label_onehot(3000)
     network = init_network2(0)
     test_image = MNIST.test_image(100)
     test_label = MNIST.test_label(100)
@@ -66,8 +66,8 @@ defmodule Test do
 
   def momentum(m,n) do
     IO.puts("preparing data")
-    image = MNIST.train_image(2000)
-    label = MNIST.train_label_onehot(2000)
+    image = MNIST.train_image(3000)
+    label = MNIST.train_label_onehot(3000)
     network = init_network3(0)
     test_image = MNIST.test_image(100)
     test_label = MNIST.test_label(100)
@@ -92,8 +92,8 @@ defmodule Test do
 
   def adagrad(m,n) do
     IO.puts("preparing data")
-    image = MNIST.train_image(2000)
-    label = MNIST.train_label_onehot(2000)
+    image = MNIST.train_image(3000)
+    label = MNIST.train_label_onehot(3000)
     network = init_network4(0)
     test_image = MNIST.test_image(100)
     test_label = MNIST.test_label(100)
@@ -118,8 +118,8 @@ defmodule Test do
 
   def adam(m,n) do
     IO.puts("preparing data")
-    image = MNIST.train_image(2000)
-    label = MNIST.train_label_onehot(2000)
+    image = MNIST.train_image(3000)
+    label = MNIST.train_label_onehot(3000)
     network = init_network4(0)
     test_image = MNIST.test_image(100)
     test_label = MNIST.test_label(100)
