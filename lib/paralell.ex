@@ -1,11 +1,14 @@
 # paralell gradient
 defmodule DPP do
   def gradient(x,network,t) do
+    gradient(x,network,t,5)
+  end
+  def gradient(x,network,t,d) do
     {r,_} = Matrix.size(x)
     if r < 10 do
       DPB.gradient(x,network,t)
     else
-      n = div(r,5)
+      n = div(r,d)
       gradient1(x,network,t,r,n)
       gradient2(r,n,[]) |> sum |> average(r)
     end
