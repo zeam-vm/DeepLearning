@@ -119,7 +119,7 @@ defmodule Dmatrix do
   def box_muller() do
     x = :rand.uniform()
     y = :rand.uniform()
-    :math.sqrt(-2.0 * :math.log(x)) * :math.cos(2.0 * :math.pi * y);
+    :math.sqrt(-2.0 * :math.log(x)) * :math.cos(2.0 * :math.pi * y)
   end
 
   #generate initial weight matrix with box-muller

@@ -16,10 +16,10 @@ defmodule Test do
 
   # for momentum test
   defnetwork init_network3(_x) do
-    _x |> f(5,5) |> flatten
-    |> w(576,300,0.05) |> b(300,0.05) |> relu
-    |> w(300,100,0.05) |> b(100,0.05) |> relu
-    |> w(100,10,0.05) |> b(10,0.05) |> softmax
+    _x |> f(5,5,0.03) |> flatten
+    |> w(576,300,0.03) |> b(300,0.03) |> relu
+    |> w(300,100,0.03) |> b(100,0.03) |> relu
+    |> w(100,10,0.03) |> b(10,0.03) |> softmax
   end
 
   # for adagrad test
