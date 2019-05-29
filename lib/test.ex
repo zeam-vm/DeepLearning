@@ -43,13 +43,13 @@ defmodule Test do
     image = MNIST.train_image(3000)
     label = MNIST.train_label_onehot(3000)
     network = init_network2(0)
-    test_image = MNIST.test_image(100)
-    test_label = MNIST.test_label(100)
+    test_image = MNIST.test_image(1000)
+    test_label = MNIST.test_label(1000)
     IO.puts("ready")
     network1 = sgd1(image,network,label,m,n)
-    correct = DPB.accuracy(test_image,network1,test_label,100,0)
+    correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
-    IO.puts(correct / 100)
+    IO.puts(correct / 1000)
   end
 
   def sgd1(_,network,_,_,0) do network end
@@ -69,13 +69,13 @@ defmodule Test do
     image = MNIST.train_image(3000)
     label = MNIST.train_label_onehot(3000)
     network = init_network3(0)
-    test_image = MNIST.test_image(100)
-    test_label = MNIST.test_label(100)
+    test_image = MNIST.test_image(1000)
+    test_label = MNIST.test_label(1000)
     IO.puts("ready")
     network1 = momentum1(image,network,label,m,n)
-    correct = DPB.accuracy(test_image,network1,test_label,100,0)
+    correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
-    IO.puts(correct / 100)
+    IO.puts(correct / 1000)
   end
 
   def momentum1(_,network,_,_,0) do network end
@@ -95,13 +95,13 @@ defmodule Test do
     image = MNIST.train_image(3000)
     label = MNIST.train_label_onehot(3000)
     network = init_network4(0)
-    test_image = MNIST.test_image(100)
-    test_label = MNIST.test_label(100)
+    test_image = MNIST.test_image(1000)
+    test_label = MNIST.test_label(1000)
     IO.puts("ready")
     network1 = adagrad1(image,network,label,m,n)
-    correct = DPB.accuracy(test_image,network1,test_label,100,0)
+    correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
-    IO.puts(correct / 100)
+    IO.puts(correct / 1000)
   end
 
   def adagrad1(_,network,_,_,0) do network end
@@ -121,13 +121,13 @@ defmodule Test do
     image = MNIST.train_image(3000)
     label = MNIST.train_label_onehot(3000)
     network = init_network4(0)
-    test_image = MNIST.test_image(100)
-    test_label = MNIST.test_label(100)
+    test_image = MNIST.test_image(1000)
+    test_label = MNIST.test_label(1000)
     IO.puts("ready")
     network1 = adam1(image,network,label,m,n)
-    correct = DPB.accuracy(test_image,network1,test_label,100,0)
+    correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
-    IO.puts(correct / 100)
+    IO.puts(correct / 1000)
   end
 
   def adam1(_,network,_,_,0) do network end
@@ -148,13 +148,13 @@ defmodule Test do
     image = MNIST.train_image(m)
     label = MNIST.train_label_onehot(m)
     network = init_network2(0)
-    test_image = MNIST.test_image(100)
-    test_label = MNIST.test_label(100)
+    test_image = MNIST.test_image(1000)
+    test_label = MNIST.test_label(1000)
     IO.puts("ready")
     network1 = batch1(image,network,label,n)
-    correct = DPB.accuracy(test_image,network1,test_label,100,0)
+    correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
-    IO.puts(correct / 100)
+    IO.puts(correct / 1000)
   end
 
   def batch1(_,network,_,0) do network end

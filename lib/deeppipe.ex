@@ -620,17 +620,19 @@ defmodule DPB do
 
 
   # print predict of test data
-  def accuracy(_,_,_,0,correct) do
-    correct
+  def accuracy(image,network,label) do
+    forward(image,network) |> score(label,0)
   end
-  def accuracy([image|irest],network,[label|lrest],n,correct) do
-    dt = MNIST.onehot_to_num(DP.forward(image,network))
-    if dt != label do
-      accuracy(irest,network,lrest,n-1,correct)
+
+  def score([],[],correct) do correct end
+  def score([x|xs],[l|ls],correct) do
+    if MNIST.onehot_to_num(x) == l do
+      score(xs,ls,correct+1)
     else
-      accuracy(irest,network,lrest,n-1,correct+1)
+      score(xs,ls,correct)
     end
   end
+
 
   def random_select(_,_,res1,res2,0) do {res1,res2} end
   def random_select(image,train,res1,res2,m) do
