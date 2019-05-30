@@ -25,9 +25,9 @@ defmodule Test do
   # for adagrad test
   defnetwork init_network4(_x) do
     _x |> f(5,5,0.02) |> flatten
-    |> w(576,300,0.02) |> b(300,0.02) |> relu
-    |> w(300,100,0.02) |> b(100,0.02) |> relu
-    |> w(100,10,0.02) |> b(10,0.02) |> softmax
+    |> w(576,300,0.02) |> b(300,0.02) |> sigmoid
+    |> w(300,100,0.02) |> b(100,0.02) |> sigmoid
+    |> w(100,10,0.02) |> b(10,0.02) |> sigmoid
   end
 
   # for adam test
@@ -203,10 +203,10 @@ defmodule Test do
   end
 
   defnetwork check_network(_x) do
-    _x |> cw([[0.1,0.2,0.3,0.4],
-              [0.3,0.2,0.1,0.4],
-              [0.2,0.2,0.2,0.2],
-              [0.4,0.2,0.3,0.1]]) |> b(2)
+    _x |> cw([[0.1,0.2],
+              [0.3,0.2],
+              [0.2,0.2],
+              [0.4,0.2]]) |> cb([[0,0]])
     |> softmax
   end
   def check() do
@@ -214,7 +214,6 @@ defmodule Test do
     tt = [[0,1],[1,0]]
     network = check_network(0)
     #res = DPB.forward(dt,network)
-    #DP.print(res)
     #DPB.batch_error(res,tt,fn(x,y) -> DP.cross_entropy(x,y) end)
     network1 = DPB.numerical_gradient(dt,network,tt,:cross)
     network2 = DPB.gradient(dt,network,tt)

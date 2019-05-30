@@ -422,9 +422,9 @@ defmodule DPB do
     w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:weight,w1,lr,v}|before],[{:weight,w1,lr,v}|res])
   end
-  def numerical_gradient1(x,[{:bias,w,lr}|rest],t,before,res) do
-    w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr},rest)
-    numerical_gradient1(x,rest,t,[{:bias,w,lr}|before],[:bias,w1,lr|res])
+  def numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res) do
+    w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr,v},rest)
+    numerical_gradient1(x,rest,t,[{:bias,w,lr,v}|before],[{:bias,w1,lr,v}|res])
   end
   def numerical_gradient1(x,[y|rest],t,before,res) do
     numerical_gradient1(x,rest,t,[y|before],[y|res])
@@ -464,11 +464,11 @@ defmodule DPB do
   end
   def numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res,:cross) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest,:cross)
-    numerical_gradient1(x,rest,t,[{:weight,w1,lr,v}|before],[{:weight,w1,lr,v}|res],:cross)
+    numerical_gradient1(x,rest,t,[{:weight,w,lr,v}|before],[{:weight,w1,lr,v}|res],:cross)
   end
-  def numerical_gradient1(x,[{:bias,w,lr}|rest],t,before,res,:cross) do
-    w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr},rest,:cross)
-    numerical_gradient1(x,rest,t,[{:bias,w,lr}|before],[:bias,w1,lr|res],:cross)
+  def numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res,:cross) do
+    w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr,v},rest,:cross)
+    numerical_gradient1(x,rest,t,[{:bias,w,lr,v}|before],[{:bias,w1,lr,v}|res],:cross)
   end
   def numerical_gradient1(x,[y|rest],t,before,res,:cross) do
     numerical_gradient1(x,rest,t,[y|before],[y|res],:cross)
