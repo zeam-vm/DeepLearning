@@ -303,7 +303,7 @@ defmodule DPB do
 
   def batch_error1([],[],_,res) do res end
   def batch_error1([y|ys],[t|ts],f,res) do
-    batch_error1(ys,ts,f,f.([t],[y])+res)
+    batch_error1(ys,ts,f,f.([y],[t])+res)
   end
 
   # forward

@@ -11,7 +11,7 @@ defmodule Test do
     _x |> f(5,5) |> flatten
     |> w(576,300,0.5) |> b(300,0.5) |> sigmoid
     |> w(300,100,0.5) |> b(100,0.5) |> sigmoid
-    |> w(100,10,0.5) |> b(10,0.5) |> softmax
+    |> w(100,10,0.5) |> b(10,0.5) |> sigmoid
   end
 
   # for momentum test
@@ -25,9 +25,9 @@ defmodule Test do
   # for adagrad test
   defnetwork init_network4(_x) do
     _x |> f(5,5,0.02) |> flatten
-    |> w(576,300,0.02) |> b(300,0.02) |> sigmoid
-    |> w(300,100,0.02) |> b(100,0.02) |> sigmoid
-    |> w(100,10,0.02) |> b(10,0.02) |> sigmoid
+    |> w(576,300,0.02) |> b(300,0.02) |> relu
+    |> w(300,100,0.02) |> b(100,0.02) |> relu
+    |> w(100,10,0.02) |> b(10,0.02) |> softmax
   end
 
   # for adam test
@@ -214,6 +214,7 @@ defmodule Test do
     tt = [[0,1],[1,0]]
     network = check_network(0)
     #res = DPB.forward(dt,network)
+    #DP.print(res)
     #DPB.batch_error(res,tt,fn(x,y) -> DP.cross_entropy(x,y) end)
     network1 = DPB.numerical_gradient(dt,network,tt,:cross)
     network2 = DPB.gradient(dt,network,tt)
