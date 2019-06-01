@@ -53,8 +53,8 @@ defmodule DP do
     Enum.map(x, fn(y) -> :math.exp(y)/sum end)
   end
 
-  def listsum([]) do 0 end
-  def listsum([l|ls]) do
+  defp listsum([]) do 0 end
+  defp listsum([l|ls]) do
     :math.exp(l) + listsum(ls)
   end
 
@@ -165,32 +165,32 @@ defmodule DP do
     numerical_gradient1(x,network,t,[],[])
   end
 
-  def numerical_gradient1(_,[],_,_,res) do
+  defp numerical_gradient1(_,[],_,_,res) do
     Enum.reverse(res)
   end
-  def numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res) do
+  defp numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:filter,w,st,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:filter,w,st,lr,v}|before],[{:filter,w1,st,lr,v}|res])
   end
-  def numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res) do
+  defp numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:weight,w1,lr,v}|before],[{:weight,w1,lr,v}|res])
   end
-  def numerical_gradient1(x,[{:bias,w,lr}|rest],t,before,res) do
+  defp numerical_gradient1(x,[{:bias,w,lr}|rest],t,before,res) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr},rest)
     numerical_gradient1(x,rest,t,[{:bias,w,lr}|before],[:bias,w1,lr|res])
   end
-  def numerical_gradient1(x,[y|rest],t,before,res) do
+  defp numerical_gradient1(x,[y|rest],t,before,res) do
     numerical_gradient1(x,rest,t,[y|before],[y|res])
   end
   # calc numerical gradient of filter,weigth,bias matrix
-  def numerical_gradient_matrix(x,w,t,before,now,rest) do
+  defp numerical_gradient_matrix(x,w,t,before,now,rest) do
     {r,c} = Matrix.size(w)
     Enum.map(0..r-1,
       fn(x1) -> Enum.map(0..c-1,
                   fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest) end) end)
   end
-  def numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest) do
+  defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest) do
     h = 0.0001
     w1 = Dmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,lr,v}] ++ rest
@@ -199,7 +199,7 @@ defmodule DP do
     y1 = forward(x,network1)
     (mean_square(y1,t) - mean_square(y0,t)) / h
   end
-  def numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
+  defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
     w1 = Dmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,st,lr,v}] ++ rest
@@ -297,12 +297,22 @@ end
 # Deep Pipe for batch
 defmodule DPB do
   # y=result data t=train_data f=error function
-  def batch_error(y,t,f) do
+  def loss(y,t,:cross) do
+    batch_error(y,t,fn(x,y) -> DP.cross_entropy(x,y) end)
+  end
+  def loss(y,t,:square) do
+    batch_error(y,t,fn(x,y) -> DP.mean_square(x,y) end)
+  end
+  def loss(y,t) do
+    batch_error(y,t,fn(x,y) -> DP.mean_square(x,y) end)
+  end
+
+  defp batch_error(y,t,f) do
     batch_error1(y,t,f,0) / length(y)
   end
 
-  def batch_error1([],[],_,res) do res end
-  def batch_error1([y|ys],[t|ts],f,res) do
+  defp batch_error1([],[],_,res) do res end
+  defp batch_error1([y|ys],[t|ts],f,res) do
     batch_error1(ys,ts,f,f.([y],[t])+res)
   end
 
@@ -411,32 +421,32 @@ defmodule DPB do
     numerical_gradient1(x,network,t,[],[])
   end
 
-  def numerical_gradient1(_,[],_,_,res) do
+  defp numerical_gradient1(_,[],_,_,res) do
     Enum.reverse(res)
   end
-  def numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res) do
+  defp numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:filter,w,st,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:filter,w,st,lr,v}|before],[{:filter,w1,st,lr,v}|res])
   end
-  def numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res) do
+  defp numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:weight,w1,lr,v}|before],[{:weight,w1,lr,v}|res])
   end
-  def numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res) do
+  defp numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:bias,w,lr,v}|before],[{:bias,w1,lr,v}|res])
   end
-  def numerical_gradient1(x,[y|rest],t,before,res) do
+  defp numerical_gradient1(x,[y|rest],t,before,res) do
     numerical_gradient1(x,rest,t,[y|before],[y|res])
   end
   # calc numerical gradient of filter,weigth,bias matrix
-  def numerical_gradient_matrix(x,w,t,before,now,rest) do
+  defp numerical_gradient_matrix(x,w,t,before,now,rest) do
     {r,c} = Matrix.size(w)
     Enum.map(0..r-1,
       fn(x1) -> Enum.map(0..c-1,
                   fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest) end) end)
   end
-  def numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest) do
+  defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest) do
     h = 0.0001
     w1 = Dmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,lr,v}] ++ rest
@@ -445,7 +455,7 @@ defmodule DPB do
     y1 = forward(x,network1)
     (batch_error(y1,t,fn(x,y) -> DP.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> DP.mean_square(x,y) end)) / h
   end
-  def numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
+  defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
     w1 = Dmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,st,lr,v}] ++ rest
@@ -455,32 +465,32 @@ defmodule DPB do
     (batch_error(y1,t,fn(x,y) -> DP.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> DP.mean_square(x,y) end)) / h
   end
 
-  def numerical_gradient1(_,[],_,_,res,:cross) do
+  defp numerical_gradient1(_,[],_,_,res,:cross) do
     Enum.reverse(res)
   end
-  def numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res,:cross) do
+  defp numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res,:cross) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:filter,w,st,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:filter,w,st,lr,v}|before],[{:filter,w1,st,lr,v}|res],:cross)
   end
-  def numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res,:cross) do
+  defp numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res,:cross) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest,:cross)
     numerical_gradient1(x,rest,t,[{:weight,w,lr,v}|before],[{:weight,w1,lr,v}|res],:cross)
   end
-  def numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res,:cross) do
+  defp numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res,:cross) do
     w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr,v},rest,:cross)
     numerical_gradient1(x,rest,t,[{:bias,w,lr,v}|before],[{:bias,w1,lr,v}|res],:cross)
   end
-  def numerical_gradient1(x,[y|rest],t,before,res,:cross) do
+  defp numerical_gradient1(x,[y|rest],t,before,res,:cross) do
     numerical_gradient1(x,rest,t,[y|before],[y|res],:cross)
   end
   # calc numerical gradient of filter,weigth,bias matrix
-  def numerical_gradient_matrix(x,w,t,before,now,rest,:cross) do
+  defp numerical_gradient_matrix(x,w,t,before,now,rest,:cross) do
     {r,c} = Matrix.size(w)
     Enum.map(0..r-1,
       fn(x1) -> Enum.map(0..c-1,
                   fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest,:cross) end) end)
   end
-  def numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest,:cross) do
+  defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest,:cross) do
     h = 0.0001
     w1 = Dmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,lr,v}] ++ rest
@@ -489,7 +499,7 @@ defmodule DPB do
     y1 = forward(x,network1)
     (batch_error(y1,t,fn(x,y) -> DP.cross_entropy(x,y) end) - batch_error(y0,t,fn(x,y) -> DP.cross_entropy(x,y) end)) / h
   end
-  def numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest,:cross) do
+  defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest,:cross) do
     h = 0.0001
     w1 = Dmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,st,lr,v}] ++ rest
@@ -509,8 +519,8 @@ defmodule DPB do
   end
 
   #backpropagation
-  def backpropagation(_,[],_,res) do res end
-  def backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
+  defp backpropagation(_,[],_,res) do res end
+  defp backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
     if is_tensor(u) do
       l1 = Tensor.emult(l,Tensor.apply_function(u,g))
       backpropagation(l1,rest,us,[{:function,f,g}|res])
@@ -519,34 +529,34 @@ defmodule DPB do
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     end
   end
-  def backpropagation(l,[{:softmax,f,g}|rest],[_|us],res) do
+  defp backpropagation(l,[{:softmax,f,g}|rest],[_|us],res) do
     backpropagation(l,rest,us,[{:softmax,f,g}|res])
   end
-  def backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
+  defp backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
     {n,_} = Matrix.size(l)
     b1 = Dmatrix.reduce(l) |> DP.apply_function(fn(x) -> x/n end)
     backpropagation(l,rest,us,[{:bias,b1,lr,v}|res])
   end
-  def backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
+  defp backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
     {n,_} = Matrix.size(l)
     w1 = Pmatrix.mult(Matrix.transpose(u),l) |> DP.apply_function(fn(x) -> x/n end)
     l1 = Dmatrix.mult(l,Matrix.transpose(w))
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end
-  def backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
+  defp backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
     w1 = Tensor.gradient_filter(u,w,l) |> Tensor.average
     l1 = Tensor.deconvolute(u,w,l,st)
     backpropagation(l1,rest,us,[{:filter,w1,st,lr,v}|res])
   end
-  def backpropagation(l,[{:pooling,st}|rest],[u|us],res) do
+  defp backpropagation(l,[{:pooling,st}|rest],[u|us],res) do
     l1 = Tensor.restore(u,l,st)
     backpropagation(l1,rest,us,[{:pooling,st}|res])
   end
-  def backpropagation(l,[{:padding,st}|rest],[_|us],res) do
+  defp backpropagation(l,[{:padding,st}|rest],[_|us],res) do
     l1 = Tensor.remove(l,st)
     backpropagation(l1,rest,us,[{:padding,st}|res])
   end
-  def backpropagation(l,[{:flatten}|rest],[u|us],res) do
+  defp backpropagation(l,[{:flatten}|rest],[u|us],res) do
     {r,c} = Matrix.size(hd(u))
     l1 = Tensor.structure(l,r,c)
     backpropagation(l1,rest,us,[{:flatten}|res])
@@ -624,8 +634,8 @@ defmodule DPB do
     forward(image,network) |> score(label,0)
   end
 
-  def score([],[],correct) do correct end
-  def score([x|xs],[l|ls],correct) do
+  defp score([],[],correct) do correct end
+  defp score([x|xs],[l|ls],correct) do
     if MNIST.onehot_to_num(x) == l do
       score(xs,ls,correct+1)
     else
@@ -634,12 +644,17 @@ defmodule DPB do
   end
 
 
-  def random_select(_,_,res1,res2,0) do {res1,res2} end
-  def random_select(image,train,res1,res2,m) do
-    i = :rand.uniform(2000)
+  # select randome data size of m , range from 0 to n
+  def random_select(image,train,m,n) do
+    random_select1(image,train,[],[],m,n)
+  end
+
+  defp random_select1(_,_,res1,res2,0,_) do {res1,res2} end
+  defp random_select1(image,train,res1,res2,m,n) do
+    i = :rand.uniform(n)
     image1 = Enum.at(image,i)
     train1 = Enum.at(train,i)
-    random_select(image,train,[image1|res1],[train1|res2],m-1)
+    random_select1(image,train,[image1|res1],[train1|res2],m-1,n)
   end
 
 end

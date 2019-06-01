@@ -51,3 +51,62 @@ accuracy rate = 0.88
 :ok
 
 >
+
+specification:
+
+data structure
+matrix  e.g. [[1,2],[3,4]]
+row_vector e.g. [[1,2]]
+tensor e.g. [[[1,2],[3,4]],[[5,6],[7,8]]]
+network e.g. [{:weight,w,lr,v},{:bias,b,lr},{:function,f,g}]
+weight {:weight,w,lr,v} w is matrix, lr is learning rate, v is for momentum,adagrad,adam
+bias   {:bias,b,lr,v} b is row vector
+filter {:filter,w,lr,st,v} st is strut for convolution
+pad    {:pad,n} n is size of padding
+pool   {:pool,st} st is strut
+function {:function,f,g} f is function, g is differential function
+softmax {:softmax,f,_} f is function, only output layer softmax is set with cross_entropy
+
+module DP
+forward/2 forward calculation for single data
+forward(x,network) x is data(row_vector) , network
+numerical_gradient/3 calculate gradient by numerical differentiation
+numerical_gradient(x,network,t) x is data, t is train data, loss function is mean_square
+numerical_gradient(x,network,t,:cross) loss function is cross_entropy
+
+gradient/3 caluculate gradient by backpropagation
+gradient(x,network,t)  x is data, t is train data
+learning/2, /3 update network with gradient
+learning(network,gradient)  update with sgd
+learning(network,gradient,:momentum) update with momentum method
+learning(network,gradient,:adagrad) update with adagrad method
+learning(network,gradient,:adam) update with adam method
+
+print/1 print data
+newline/0 print LF
+mean_square/2 loss function
+mean_square(y,t) y is row vector of result and t is row vector of train
+cross_entropy/2 loss function
+cross_entropy(y,t) y is row vector of result and t is row vector of train
+
+
+module DPB
+all data is tensor
+forward/2 forward calculation for batch data
+forward(x,network) x is data(row_vector) , network
+numerical_gradient/3 calculate gradient by numerical differentiation
+numerical_gradient(x,network,t) x is data, t is train data, loss function is mean_square
+numerical_gradient(x,network,t,:cross) loss function is cross_entropy
+
+gradient/3 caluculate gradient by backpropagation
+gradient(x,network,t)  x is data, t is train data
+learning/2, /3 update network with gradient
+learning(network,gradient)  update with sgd
+learning(network,gradient,:momentum) update with momentum method
+learning(network,gradient,:adagrad) update with adagrad method
+learning(network,gradient,:adam) update with adam method
+
+module DPP
+gradient/3 caluculate gradient by backpropagation in paralell
+gradient(x,network,t)  x is data, t is train data, divide size is default(5)
+gradient(x,network,t,d)  d is dvide size

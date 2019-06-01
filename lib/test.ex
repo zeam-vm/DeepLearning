@@ -24,10 +24,10 @@ defmodule Test do
 
   # for adagrad test
   defnetwork init_network4(_x) do
-    _x |> f(5,5,0.02) |> flatten
-    |> w(576,300,0.02) |> b(300,0.02) |> relu
-    |> w(300,100,0.02) |> b(100,0.02) |> relu
-    |> w(100,10,0.02) |> b(10,0.02) |> softmax
+    _x |> f(5,5,0.04) |> flatten
+    |> w(576,300,0.04) |> b(300,0.04) |> relu
+    |> w(300,100,0.04) |> b(100,0.04) |> relu
+    |> w(100,10,0.04) |> b(10,0.04) |> softmax
   end
 
   # for adam test
@@ -54,11 +54,11 @@ defmodule Test do
 
   def sgd1(_,network,_,_,0) do network end
   def sgd1(image,network,train,m,n) do
-    {image1,train1} = DPB.random_select(image,train,[],[],m)
+    {image1,train1} = DPB.random_select(image,train,m,2000)
     network1 = DPP.gradient(image1,network,train1)
     network2 = DPB.learning(network,network1)
     y = DPB.forward(image1,network2)
-    loss = DPB.batch_error(y,train1,fn(x,y) -> DP.cross_entropy(x,y) end)
+    loss = DPB.loss(y,train1,:square)
     DP.print(loss)
     DP.newline()
     sgd1(image,network2,train,m,n-1)
@@ -80,11 +80,11 @@ defmodule Test do
 
   def momentum1(_,network,_,_,0) do network end
   def momentum1(image,network,train,m,n) do
-    {image1,train1} = DPB.random_select(image,train,[],[],m)
+    {image1,train1} = DPB.random_select(image,train,m,2000)
     network1 = DPP.gradient(image1,network,train1)
     network2 = DPB.learning(network,network1,:momentum)
     y = DPB.forward(image1,network2)
-    loss = DPB.batch_error(y,train1,fn(x,y) -> DP.cross_entropy(x,y) end)
+    loss = DPB.loss(y,train1,:cross)
     DP.print(loss)
     DP.newline()
     momentum1(image,network2,train,m,n-1)
@@ -106,11 +106,11 @@ defmodule Test do
 
   def adagrad1(_,network,_,_,0) do network end
   def adagrad1(image,network,train,m,n) do
-    {image1,train1} = DPB.random_select(image,train,[],[],m)
+    {image1,train1} = DPB.random_select(image,train,m,2000)
     network1 = DPP.gradient(image1,network,train1)
     network2 = DPB.learning(network,network1,:adagrad)
     y = DPB.forward(image1,network2)
-    loss = DPB.batch_error(y,train1,fn(x,y) -> DP.cross_entropy(x,y) end)
+    loss = DPB.loss(y,train1,:cross)
     DP.print(loss)
     DP.newline()
     adagrad1(image,network2,train,m,n-1)
@@ -132,11 +132,11 @@ defmodule Test do
 
   def adam1(_,network,_,_,0) do network end
   def adam1(image,network,train,m,n) do
-    {image1,train1} = DPB.random_select(image,train,[],[],m)
+    {image1,train1} = DPB.random_select(image,train,m,2000)
     network1 = DPP.gradient(image1,network,train1)
     network2 = DPB.learning(network,network1,:adam)
     y = DPB.forward(image1,network2)
-    loss = DPB.batch_error(y,train1,fn(x,y) -> DP.cross_entropy(x,y) end)
+    loss = DPB.loss(y,train1,:cross)
     DP.print(loss)
     DP.newline()
     adam1(image,network2,train,m,n-1)
@@ -162,7 +162,7 @@ defmodule Test do
     network1 = DPB.gradient(image,network,train)
     network2 = DPB.learning(network,network1)
     y = DPB.forward(image,network1)
-    loss = DPB.batch_error(y,train,fn(x,y) -> DP.mean_square(x,y) end)
+    loss = DPB.loss(y,train,:square)
     DP.print(loss)
     DP.newline()
     batch1(image,network2,train,n-1)
