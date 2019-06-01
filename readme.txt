@@ -61,7 +61,7 @@ tensor e.g. [[[1,2],[3,4]],[[5,6],[7,8]]]
 network e.g. [{:weight,w,lr,v},{:bias,b,lr},{:function,f,g}]
 weight {:weight,w,lr,v} w is matrix, lr is learning rate, v is for momentum,adagrad,adam
 bias   {:bias,b,lr,v} b is row vector
-filter {:filter,w,lr,st,v} st is strut for convolution
+filter {:filter,w,lr,st,v} st is stradd for convolution
 pad    {:pad,n} n is size of padding
 pool   {:pool,st} st is stradd
 function {:function,f,g} f is function, g is differential function
