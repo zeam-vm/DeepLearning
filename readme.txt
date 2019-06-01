@@ -63,9 +63,31 @@ weight {:weight,w,lr,v} w is matrix, lr is learning rate, v is for momentum,adag
 bias   {:bias,b,lr,v} b is row vector
 filter {:filter,w,lr,st,v} st is strut for convolution
 pad    {:pad,n} n is size of padding
-pool   {:pool,st} st is strut
+pool   {:pool,st} st is stradd
 function {:function,f,g} f is function, g is differential function
 softmax {:softmax,f,_} f is function, only output layer softmax is set with cross_entropy
+
+module macros
+defnetwork is macros to describe network
+argument must have under bar to avoid warning message
+
+w(m,n)  weight matrix size(m,n). elements are Gaussian distribution random float
+w(m,n,lr) lr is learning rate (default is 0.1)
+w(m,n,lr,z) z is multiple for Gaussian distribution random float. (default is 0.1)
+
+b(n) bias row_vector size(n). elements are all zero
+b(n,lr) lr is learning rate (default is 0.1)
+
+function sigmoid,relu,ident,softmax
+
+f(m,n) filter matrix size(m,n). elements are Gaussian distribution random float
+f(m,n,lr) lr is learning rate
+f(m,n,lr,z) z is multiple for Gaussian distribution random float.(default is 0.1)
+f(m,n,lr,z,st) st is stradd
+
+pad(n) padding n is size of padding
+
+pool(st) pooling stradd size is st
 
 module DP
 forward/2 forward calculation for single data
