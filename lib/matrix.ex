@@ -522,6 +522,12 @@ defmodule MNIST do
     |> Enum.map(fn(x) -> Dmatrix.structure(MNIST.normalize(x,255),28,28) end)
   end
 
+  def train_image(n,:flatten) do
+    train_image()
+    |> Enum.take(n)
+    |> Enum.map(fn(x) -> MNIST.normalize(x,255) end)
+  end
+
   def test_label(n) do
     Enum.take(test_label(),n)
   end
@@ -536,6 +542,11 @@ defmodule MNIST do
     |> Enum.map(fn(x) -> Dmatrix.structure(MNIST.normalize(x,255),28,28) end)
   end
 
+  def test_image(n,:flatten) do
+    test_image()
+    |> Enum.take(n)
+    |> Enum.map(fn(x) -> MNIST.normalize(x,255) end)
+  end
 
   def train_label() do
     {:ok,<<0,0,8,1,0,0,234,96,label::binary>>} = File.read("train-labels-idx1-ubyte")
