@@ -19,6 +19,7 @@ module Tensor is code for CNN data operation
 module Dmatrix is code for Matrix
 module Pmatrix is code for Matrix product in paralell
 module MNIST is code for MNIST data set
+module Time is time/1 for measure execution time
 
 I implemented backpropagation and numerical-gradient
 Now I'm testing small data set.
@@ -125,12 +126,14 @@ forward(x,network) x is data(row_vector) , network
 numerical_gradient/3 calculate gradient by numerical differentiation
 numerical_gradient(x,network,t) x is data, t is train data, loss function is mean_square
 numerical_gradient(x,network,t,:cross) loss function is cross_entropy
+numerical_gradient(x,network,t,:square) loss function is mean_square 
 
 gradient/3 caluculate gradient by backpropagation
 gradient(x,network,t)  x is data, t is train data
 
 learning/2, /3 update network with gradient
 learning(network,gradient)  update with sgd
+learning(network,gradient,:sgd)
 learning(network,gradient,:momentum) update with momentum method
 learning(network,gradient,:adagrad) update with adagrad method
 learning(network,gradient,:adam) update with adam method
@@ -154,3 +157,7 @@ train_label_onehot(n) get train label data aas onehot row_vector
 test_image(n)  get test image data size of n. Each data is 28*28 matrix
 test_image(n,:flatten) get test image data size of n. Each data is 784 row_vector
 test_label_onehot(n) get test label data aas onehot row_vector
+
+module time
+time/1
+time(func) e.g. time(1+2)
