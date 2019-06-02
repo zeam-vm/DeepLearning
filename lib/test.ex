@@ -1,9 +1,9 @@
 defmodule Test do
   import Network
   defnetwork init_network1(_x) do
-    _x |> w(784,50,0.5) |> b(50,0.5) |> relu
-    |> w(50,100,0.5) |> b(100,0.5) |> relu
-    |> w(100,10,0.5) |> b(10,0.5) |> softmax
+    _x |> w(784,50) |> b(50) |> relu
+    |> w(50,100) |> b(100) |> relu
+    |> w(100,10) |> b(10) |> softmax
   end
 
   # for sgd test
