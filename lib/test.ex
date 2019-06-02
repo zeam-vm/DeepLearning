@@ -1,9 +1,9 @@
 defmodule Test do
   import Network
   defnetwork init_network1(_x) do
-    _x |> w(784,50) |> b(50) |> relu
-    |> w(50,100) |> b(100) |> relu
-    |> w(100,10) |> b(10) |> softmax
+    _x |> w(784,50,0.01) |> b(50,0.01) |> sigmoid
+    |> w(50,100,0.01) |> b(100,0.01) |> sigmoid
+    |> w(100,10,0.01) |> b(10,0.01) |> softmax
   end
 
   # for sgd test
@@ -56,7 +56,7 @@ defmodule Test do
   def flat1(image,network,train,m,n) do
     {image1,train1} = DPB.random_select(image,train,m,n)
     network1 = DPP.gradient(image1,network,train1)
-    network2 = DPB.learning(network,network1)
+    network2 = DPB.learning(network,network1,:adagrad)
     y = DPB.forward(image1,network2)
     loss = DPB.loss(y,train1,:cross)
     DP.print(loss)

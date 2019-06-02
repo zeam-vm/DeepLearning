@@ -122,6 +122,11 @@ defmodule Dmatrix do
     :math.sqrt(-2.0 * :math.log(x)) * :math.cos(2.0 * :math.pi * y)
   end
 
+  # -0.1~0.1 uniform random number
+  def uniform_rand() do
+    :rand.uniform() - 0.5
+  end
+
   #generate initial weight matrix with box-muller
   def new(0,_,_) do [] end
   def new(r,c,rate) do
