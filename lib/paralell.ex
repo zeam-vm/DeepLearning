@@ -134,7 +134,7 @@ defmodule DPPworker do
     backpropagation(l,rest,us,[{:bias,b1,lr,v}|res])
   end
   def backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
-    w1 = Pmatrix.mult(Matrix.transpose(u),l)
+    w1 = Matrix.mult(Matrix.transpose(u),l)
     l1 = Dmatrix.mult(l,Matrix.transpose(w))
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end

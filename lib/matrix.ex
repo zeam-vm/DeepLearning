@@ -525,7 +525,7 @@ defmodule MNIST do
   def train_image(n,:flatten) do
     train_image()
     |> Enum.take(n)
-    |> Enum.map(fn(x) -> MNIST.normalize(x,255) end)
+    |> Enum.map(fn(x) -> hd(MNIST.normalize(x,255)) end)
   end
 
   def test_label(n) do
@@ -545,7 +545,7 @@ defmodule MNIST do
   def test_image(n,:flatten) do
     test_image()
     |> Enum.take(n)
-    |> Enum.map(fn(x) -> MNIST.normalize(x,255) end)
+    |> Enum.map(fn(x) -> hd(MNIST.normalize(x,255)) end)
   end
 
   def train_label() do
