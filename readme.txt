@@ -9,6 +9,12 @@ defnetwork init_network2(_x) do
   |> w(100,10) |> b(10) |> sigmoid
 end
 
+Install:
+  sudo apt install build-essential
+  sudo apt-get install build-essential erlang-dev libatlas-base-dev
+  mix deps.get
+
+
 Usage:
   iex -S mix
 
@@ -126,7 +132,7 @@ forward(x,network) x is data(row_vector) , network
 numerical_gradient/3 calculate gradient by numerical differentiation
 numerical_gradient(x,network,t) x is data, t is train data, loss function is mean_square
 numerical_gradient(x,network,t,:cross) loss function is cross_entropy
-numerical_gradient(x,network,t,:square) loss function is mean_square 
+numerical_gradient(x,network,t,:square) loss function is mean_square
 
 gradient/3 caluculate gradient by backpropagation
 gradient(x,network,t)  x is data, t is train data
