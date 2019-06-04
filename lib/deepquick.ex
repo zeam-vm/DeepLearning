@@ -13,26 +13,23 @@ defmodule DPBLAS do
   end
 
   defp batch_error(y,t,f) do
-    batch_error1(y,t,f,0) / length(y)
-  end
-
-  defp batch_error1([],[],_,res) do res end
-  defp batch_error1([y|ys],[t|ts],f,res) do
-    batch_error1(ys,ts,f,f.([y],[t])+res)
+    n = y[:row]
+    s = Matrex.apply(y,t,f) |> Matrex.sum()
+    s / n
   end
 
   # forward
   def is_tensor(x) do
-    is_list(x) and is_list(hd(hd(x)))
+    is_list(x)
   end
 
   def is_matrix(x) do
-    is_list(x) and is_number(hd(hd(x)))
+    !is_list(x)
   end
 
   def forward(x,[]) do x end
   def forward(x,[{:weight,w,_,_}|rest]) do
-    x1 = Pmatrix.mult(x,w)
+    x1 = Cmatrix.mult(x,w)
     forward(x1,rest)
   end
   def forward(x,[{:bias,b,_,_}|rest]) do
@@ -368,6 +365,19 @@ end
 #---------Matrix for DPBLAS ----------------
 
 defmodule Cmatrix do
+  def apply_function(m,f) do
+    Matrex.apply(m,f)
+  end
+
+  def mult(x,y) do
+    Matrex.dot(x,y)
+  end
+
+  # y is matrex or scalar
+  def emult(x,y) do
+    Matrex.multiply(x,y)
+  end
+
   def ediv(m,x) do
     Matrex.divide(m,x)
   end
@@ -387,19 +397,17 @@ defmodule Cmatrix do
     Matrex.zeros(r,c)
   end
 
-  #list -> matrex data
-  def to_matrex(l) do
-    {r,c} = Matrix.size(l)
-    m = Matrex.zeros(r,c)
-    to_matrex1(l,1,m)
+  def expand(x,n) do
+    Matrex.to_list(x) |> expand1(n) |> Matrex.new()
+  end
+  def expand1(x,1) do [x] end
+  def expand1(x,n) do
+    [x|expand1(x,n-1)]
   end
 
-  def to_matrex1([],_,m) do m end
-  def to_matrex1([l|ls],r,m) do
-    to_matrex1(ls,r+1,to_matrex2(l,r,1,m))
+  #list -> matrex data
+  def to_matrex(l) do
+    Matrex.new(l)
   end
-  def to_matrex2([],_,_,m) do m end
-  def to_matrex2([l|ls],r,c,m) do
-    to_matrex2(ls,r,c+1,Matrex.set(m,r,c,l))
-  end
+
 end
