@@ -362,6 +362,21 @@ defmodule DPBLAS do
 end
 
 
+#---------Tensor for DPBLAS ---------------
+defmodule Ctensor do
+  def average(x) do
+    n = length(x)
+    sum(x) |> Matrex.apply(fn(y) -> y/n end)
+  end
+
+  def sum([x]) do x end
+  def sum([x|xs]) do
+    Matrex.add(x,sum(xs))
+  end
+
+
+end
+
 #---------Matrix for DPBLAS ----------------
 
 defmodule Cmatrix do
@@ -397,12 +412,57 @@ defmodule Cmatrix do
     Matrex.zeros(r,c)
   end
 
+  def flatten(x) do
+    Matrex.to_list(x) |> flatten1() |> Matrex.new()
+  end
+  def flatten1(x) do
+    [flatten2(x)]
+  end
+  def flatten2([]) do [] end
+  def flatten2([x|xs]) do
+    x ++ flatten2(xs)
+  end
+
+  def structure(x,r,c) do
+    structure1(x,r,c) |> Matrex.new()
+  end
+
+  def structure1(_,0,_) do [] end
+  def structure1(x,r,c) do
+    [Enum.take(x,c)|structure1(Enum.drop(x,c),r-1,c)]
+  end
+
+
+  def reduce(x) do
+    Matrex.to_list(x) |> reduce1() |> Matrex.new()
+  end
+  def reduce1([x]) do [x] end
+  def reduce1([x|xs]) do
+    Matrix.add([x],reduce1(xs))
+  end
+
   def expand(x,n) do
     Matrex.to_list(x) |> expand1(n) |> Matrex.new()
   end
   def expand1(x,1) do [x] end
   def expand1(x,n) do
     [x|expand1(x,n-1)]
+  end
+
+  def diff(x,r,c,d) do
+    Matrex.set(x,r-1,c-1,x[r-1][c-1]+d)
+  end
+
+  def update(x,y,lr) do
+    Matrex.apply(x,y,fn(x,y) -> x - y*lr end)
+  end
+
+  def part(x,tr,tc,m,n) do
+    s1 = tr-1
+    e1 = tr+m-1
+    s2 = tc-1
+    e2 = tc+n-1
+    Matrex.submatrix(x,s1..e1,s2..e2)
   end
 
   #list -> matrex data
