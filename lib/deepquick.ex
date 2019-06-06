@@ -470,4 +470,84 @@ defmodule Cmatrix do
     Matrex.new(l)
   end
 
+  def convolute(x,y) do
+    {r1,c1} = x[:size]
+    {r2,c2} = y[:size]
+    convolute1(x,y,r1-r2+1,c1-c2+1,0,0,1)
+  end
+
+  def convolute(x,y,s) do
+    {r1,c1} = x[:size]
+    {r2,c2} = y[:size]
+    if rem(r1-r2,s) == 0 and  rem(c1-c2,s) == 0 do
+      convolute1(x,y,r1-r2+1,c1-c2+1,0,0,s)
+    else
+      :error
+    end
+  end
+
+
+  def convolute1(_,_,r,_,r,_,_) do [] end
+  def convolute1(x,y,r,c,m,n,s) do
+    [convolute2(x,y,r,c,m,n,s)|convolute1(x,y,r,c,m+s,n,s)]
+  end
+
+  def convolute2(_,_,_,c,_,c,_) do [] end
+  def convolute2(x,y,r,c,m,n,s) do
+    [convolute_mult_sum(x,y,m,n)|convolute2(x,y,r,c,m,n+s,s)]
+  end
+
+  def convolute_mult_sum(x,y,m,n) do
+    {r,c} = y[:size]
+    x1 = part(x,m,n,r,c)
+    emult(x1,y) |> Matrex.sum()
+  end
+
+  def pad(x,n) do
+    Matrex.to_list(x) |> pad1(n) |> Matrex.new()
+  end
+
+  def pad1(x,0) do x end
+  def pad1(x,n) do
+    {_,c} = Matrix.size(x)
+    zero1 = Matrix.zeros(n,c+n*2)
+    zero2 = Matrix.zeros(1,n)
+    x1 = Enum.map(x,fn(y) -> hd(zero2) ++ y ++ hd(zero2) end)
+    zero1 ++ x1 ++ zero1
+  end
+
+  #remove ,-> padding
+  def remove(x,n) do
+    Matrex.to_list(x) |> remove1(n) |> Matrex.new()
+  end
+
+  def remove1(x,0) do x end
+  def remove1(x,n) do
+    x1 = Enum.drop(Enum.reverse(Enum.drop(Enum.reverse(x),n)),n)
+    Enum.map(x1,fn(y) -> Enum.drop(Enum.reverse(Enum.drop(Enum.reverse(y),n)),n) end)
+  end
+
+  # poolong
+  def pool(x,s) do
+    {r,c} = x[:size]
+    if rem(r,s) != 0 or rem(c,s) != 0 do
+      IO.puts("Bad argment pooling")
+      :error
+    else
+      pool1(x,r,c,0,s)
+    end
+  end
+
+  def pool1(_,r,_,r,_) do [] end
+  def pool1(x,r,c,m,s) do
+    [pool2(x,r,c,m,0,s)|pool1(x,r,c,m+s,s)]
+  end
+
+  def pool2(_,_,c,_,c,_) do [] end
+  def pool2(x,r,c,m,n,s) do
+    x1 = part(x,m,n,s,s)
+    [Matrex.max(x1)|pool2(x,r,c,m,n+s,s)]
+  end
+
+
 end
