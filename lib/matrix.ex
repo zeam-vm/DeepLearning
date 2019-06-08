@@ -390,6 +390,7 @@ defmodule Dmatrix do
     |> sum
   end
 
+
   def momentum([],[],_) do [] end
   def momentum([v|vs],[g|gs],lr) do
     [momentum1(v,g,lr)|momentum(vs,gs,lr)]
