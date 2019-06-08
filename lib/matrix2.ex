@@ -192,9 +192,6 @@ defmodule Cmatrix do
     Matrex.set(x,r,c,x[r][c]+d)
   end
 
-  def update(x,y,lr) do
-    Matrex.apply(x,y,fn(x,y) -> x - y*lr end)
-  end
 
   # index is 1 base
   def part(x,tr,tc,m,n) do
@@ -374,6 +371,11 @@ defmodule Cmatrix do
     [x|increase3(x,st-1)]
   end
 
+  # for learning
+  # each element x-y*lr
+  def update(x,y,lr) do
+    Matrex.apply(x,y,fn(x,y) -> x - y*lr end)
+  end
 
   def momentum(v,g,lr) do
     Matrex.apply(v,g,fn(v,g) -> 0.5*v - lr*g end)
@@ -392,6 +394,7 @@ defmodule Cmatrix do
     end
   end
 
+  """
   def adam_init(w) do
     if !is_list(w) do
       {r,c} = w[:size]
@@ -403,7 +406,6 @@ defmodule Cmatrix do
 
   def adammv(mv,grad) do
     mv1 = adam_init(mv)
-    adammv1(mv1,grad)
   end
 
   def adammv1([],[]) do [] end
@@ -436,5 +438,5 @@ defmodule Cmatrix do
     v1 = v/(1-beta2)
     [w-lr/(:math.sqrt(v1)+epsilon)*m1|adam1(ws,mvs,lr)]
   end
-
+  """
 end
