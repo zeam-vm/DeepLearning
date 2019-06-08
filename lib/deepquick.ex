@@ -1,3 +1,23 @@
+defmodule Btest do
+  import BLASNetwork
+  defnetwork init_network1(_x) do
+    _x |> w(2,2) |> b(2) |> softmax
+  end
+
+  def test1() do
+    network = init_network1(0)
+    dt = Matrex.new([[1,2]])
+    BLASDP.forward(dt,network)
+  end
+
+  def test2() do
+    network = init_network1(0)
+    dt = Matrex.new([[1,2],[3,4]])
+    BLASDPB.forward(dt,network)
+  end
+end
+
+
 # Deep Pipe
 defmodule BLASDP do
   def stop() do
@@ -49,13 +69,8 @@ defmodule BLASDP do
     softmax(x)
   end
   def softmax(x) do
-    sum = listsum(x)
+    sum = Matrex.sum(x)
     Enum.map(x, fn(y) -> :math.exp(y)/sum end)
-  end
-
-  defp listsum([]) do 0 end
-  defp listsum([l|ls]) do
-    :math.exp(l) + listsum(ls)
   end
 
   # dummy
@@ -86,20 +101,19 @@ defmodule BLASDP do
     x*x
   end
 
-  # apply functin for matrix
-  def apply_function([],_) do [] end
-  def apply_function([x|xs],f) do
-    [Enum.map(x,fn(y) -> f.(y) end)|apply_function(xs,f)]
+  # apply functin for matrex
+  def apply_function(x,f) do
+    Matrex.apply(x,f)
   end
 
   # forward
   def forward(x,[]) do x end
   def forward(x,[{:weight,w,_,_}|rest]) do
-    x1 = Pmatrix.mult(x,w)
+    x1 = Cmatrix.mult(x,w)
     forward(x1,rest)
   end
   def forward(x,[{:bias,b,_,_}|rest]) do
-    x1 = Matrix.add(x,b)
+    x1 = Cmatrix.add(x,b)
     forward(x1,rest)
   end
   def forward(x,[{:function,f,_}|rest]) do
@@ -111,19 +125,19 @@ defmodule BLASDP do
     forward(x1,rest)
   end
   def forward(x,[{:filter,w,st,_,_}|rest]) do
-    x1 = Dmatrix.convolute(x,w,st)
+    x1 = Cmatrix.convolute(x,w,st)
     forward(x1,rest)
   end
   def forward(x,[{:padding,st}|rest]) do
-    x1 = Dmatrix.pad(x,st)
+    x1 = Cmatrix.pad(x,st)
     forward(x1,rest)
   end
   def forward(x,[{:pooling,st}|rest]) do
-    x1 = Dmatrix.pool(x,st)
+    x1 = Cmatrix.pool(x,st)
     forward(x1,rest)
   end
   def forward(x,[{:flatten}|rest]) do
-    x1 = Dmatrix.flatten(x)
+    x1 = Cmatrix.flatten(x)
     forward(x1,rest)
   end
 
@@ -131,11 +145,11 @@ defmodule BLASDP do
   # this store all middle data
   def forward_for_back(_,[],res) do res end
   def forward_for_back(x,[{:weight,w,_,_}|rest],res) do
-    x1 = Pmatrix.mult(x,w)
+    x1 = Cmatrix.mult(x,w)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:bias,b,_,_}|rest],res) do
-    x1 = Matrix.add(x,b)
+    x1 = Cmatrix.add(x,b)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:function,f,_}|rest],res) do
@@ -143,20 +157,20 @@ defmodule BLASDP do
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:filter,w,st,_,_}|rest],res) do
-    x1 = Dmatrix.convolute(x,w,st)
+    x1 = Cmatrix.convolute(x,w,st)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:padding,st}|rest],res) do
-    x1 = Dmatrix.pad(x,st)
+    x1 = Cmatrix.pad(x,st)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:pooling,st}|rest],[_|res]) do
-    x1 = Dmatrix.pool(x,st)
-    x2 = Dmatrix.sparse(x,st)
+    x1 = Cmatrix.pool(x,st)
+    x2 = Cmatrix.sparse(x,st)
     forward_for_back(x1,rest,[x1,x2|res])
   end
   def forward_for_back(x,[{:flatten}|rest],res) do
-    x1 = Dmatrix.flatten(x)
+    x1 = Cmatrix.flatten(x)
     forward_for_back(x1,rest,[x1|res])
   end
 
@@ -293,10 +307,6 @@ defmodule BLASDP do
 end
 
 #--------------
-
-
-
-
 # Deep Pipe for CBLAS Matrex
 # now constructing
 defmodule BLASDPB do
@@ -332,17 +342,17 @@ defmodule BLASDPB do
     forward(x1,rest)
   end
   def forward(x,[{:bias,b,_,_}|rest]) do
-    {r,_} = Matrix.size(x)
-    b1 = Dmatrix.expand(b,r)
-    x1 = Matrix.add(x,b1)
+    {r,_} = x[:size]
+    b1 = Cmatrix.expand(b,r)
+    x1 = Cmatrix.add(x,b1)
     forward(x1,rest)
   end
   def forward(x,[{:function,f,_}|rest]) do
     if is_tensor(x) do
-      x1 = Tensor.apply_function(x,f)
+      x1 = Ctensor.apply_function(x,f)
       forward(x1,rest)
     else
-      x1 = DP.apply_function(x,f)
+      x1 = BLASDP.apply_function(x,f)
       forward(x1,rest)
     end
   end
@@ -351,19 +361,19 @@ defmodule BLASDPB do
     forward(x1,rest)
   end
   def forward(x,[{:filter,w,st,_,_}|rest]) do
-    x1 = Tensor.convolute(x,w,st)
+    x1 = Ctensor.convolute(x,w,st)
     forward(x1,rest)
   end
   def forward(x,[{:padding,st}|rest]) do
-    x1 = Tensor.pad(x,st)
+    x1 = Ctensor.pad(x,st)
     forward(x1,rest)
   end
   def forward(x,[{:pooling,st}|rest]) do
-    x1 = Tensor.pool(x,st)
+    x1 = Ctensor.pool(x,st)
     forward(x1,rest)
   end
   def forward(x,[{:flatten}|rest]) do
-    x1 = Tensor.flatten(x)
+    x1 = Ctensor.flatten(x)
     forward(x1,rest)
   end
 
@@ -679,8 +689,23 @@ end
 #---------Matrix for DPBLAS ----------------
 
 defmodule Cmatrix do
+  #list -> matrex data
+  def to_matrex(l) do
+    Matrex.new(l)
+  end
+
+  #matrex -> list
+  def to_list(x) do
+    Matrex.to_list_of_lists(x)
+  end
+
+
   def apply_function(m,f) do
     Matrex.apply(m,f)
+  end
+
+  def add(x,y) do
+    Matrex.add(x,y)
   end
 
   def mult(x,y) do
@@ -709,6 +734,14 @@ defmodule Cmatrix do
 
   def zeros(r,c) do
     Matrex.zeros(r,c)
+  end
+
+  def max(x) do
+    Matrex.max(x)
+  end
+
+  def sum(x) do
+    Matrex.sum(x)
   end
 
   def flatten(x) do
@@ -748,38 +781,70 @@ defmodule Cmatrix do
     [x|expand1(x,n-1)]
   end
 
+  # r and c are 1 base
   def diff(x,r,c,d) do
-    Matrex.set(x,r-1,c-1,x[r-1][c-1]+d)
+    Matrex.set(x,r,c,x[r][c]+d)
   end
 
   def update(x,y,lr) do
     Matrex.apply(x,y,fn(x,y) -> x - y*lr end)
   end
 
+  # index is 1 base
   def part(x,tr,tc,m,n) do
-    s1 = tr-1
+    s1 = tr
     e1 = tr+m-1
-    s2 = tc-1
+    s2 = tc
     e2 = tc+n-1
     Matrex.submatrix(x,s1..e1,s2..e2)
   end
 
-  #list -> matrex data
-  def to_matrex(l) do
-    Matrex.new(l)
+  # sparse for matrix (use backpropagation)
+  def sparse(x,s) do
+    {r,c} = x[:size]
+    if rem(r,s) != 0 or rem(c,s) != 0 do
+      :error
+    else
+      sparse1(x,r,c,1,s)
+    end
   end
+
+  def sparse1(x,r,_,m,_) when m > r do x end
+  def sparse1(x,r,c,m,s) do
+    sparse2(x,r,c,m,1,s) |> sparse1(r,c,m+s,s)
+  end
+
+  def sparse2(x,_,c,_,n,_) when n > c do x end
+  def sparse2(x,r,c,m,n,s) do
+    x1 = part(x,m,n,s,s)
+    max_element = max(x1)
+    sparse3(x,m,n,m+s-1,n+s-1,max_element) |> sparse2(r,c,m,n+s,s)
+  end
+
+  def sparse3(x,i,_,e1,_,_) when i > e1 do x end
+  def sparse3(x,i,j,e1,e2,max_element) do
+    sparse4(x,i,j,e1,e2,max_element) |> sparse3(i+1,j,e1,e2,max_element)
+  end
+
+  def sparse4(x,_,j,_,e2,_) when j > e2 do x end
+  def sparse4(x,i,j,e1,e2,max_element) do
+    elt = x[i][j]
+    elt1 = if elt == max_element do elt else 0 end
+    Matrex.set(x,i,j,elt1) |> sparse4(i,j+1,e1,e2,max_element)
+  end
+
 
   def convolute(x,y) do
     {r1,c1} = x[:size]
     {r2,c2} = y[:size]
-    convolute1(x,y,r1-r2+1,c1-c2+1,0,0,1)
+    convolute1(x,y,r1-r2+2,c1-c2+2,1,1,1) |> Matrex.new()
   end
 
   def convolute(x,y,s) do
     {r1,c1} = x[:size]
     {r2,c2} = y[:size]
     if rem(r1-r2,s) == 0 and  rem(c1-c2,s) == 0 do
-      convolute1(x,y,r1-r2+1,c1-c2+1,0,0,s)
+      convolute1(x,y,r1-r2+1,c1-c2+1,1,1,s) |> Matrex.new()
     else
       :error
     end
@@ -803,7 +868,7 @@ defmodule Cmatrix do
   end
 
   def pad(x,n) do
-    Matrex.to_list(x) |> pad1(n) |> Matrex.new()
+    Matrex.to_list_of_lists(x) |> pad1(n) |> Matrex.new()
   end
 
   def pad1(x,0) do x end
@@ -833,19 +898,43 @@ defmodule Cmatrix do
       IO.puts("Bad argment pooling")
       :error
     else
-      pool1(x,r,c,0,s)
+      pool1(x,r,c,1,s) |> Matrex.new()
     end
   end
 
-  def pool1(_,r,_,r,_) do [] end
+  def pool1(_,r,_,m,_) when m > r do [] end
   def pool1(x,r,c,m,s) do
-    [pool2(x,r,c,m,0,s)|pool1(x,r,c,m+s,s)]
+    [pool2(x,r,c,m,1,s)|pool1(x,r,c,m+s,s)]
   end
 
-  def pool2(_,_,c,_,c,_) do [] end
+  def pool2(_,_,c,_,n,_) when n > c do [] end
   def pool2(x,r,c,m,n,s) do
     x1 = part(x,m,n,s,s)
     [Matrex.max(x1)|pool2(x,r,c,m,n+s,s)]
+  end
+
+  def rotate180(x) do
+    x1 = Matrex.to_list_of_lists(x)
+    Enum.reverse(Enum.map(x1,fn(y) -> Enum.reverse(y) end)) |>
+    Matrex.new()
+  end
+
+  def deconvolute(u,filter,loss,st) do
+    loss |> pad(1) |> convolute(rotate180(filter),st) |> emult(u)
+  end
+
+  def gradient_filter(u,filter,loss) do
+    {r,c} = filter[:size]
+    {m,n} = loss[:size]
+    Enum.map(1..r,
+      fn(x1) -> Enum.map(1..c,
+                  fn(y1) -> gradient_filter1(u,loss,x1,y1,m,n) end) end)
+  end
+
+  def gradient_filter1(u,error,x1,y1,m,n) do
+    p = part(u,x1,y1,m,n)
+    p |> Matrix.emult(error)
+    |> sum
   end
 
 

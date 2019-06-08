@@ -172,12 +172,12 @@ defmodule BLASNetwork do
   end
   def parse({:f,_,[x,y,lr,z]},_) do
     quote do
-      {:filter,Cmatrix.new(unquote(x),unquote(y),unquote(z)),1,unquote(lr),Catrix.new(unquote(x),unquote(y))}
+      {:filter,Cmatrix.new(unquote(x),unquote(y),unquote(z)),1,unquote(lr),Cmatrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,lr,z,st]},_) do
     quote do
-      {:filter,Cmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),unquote(lr),Catrix.new(unquote(x),unquote(y))}
+      {:filter,Cmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),unquote(lr),Cmatrix.new(unquote(x),unquote(y))}
     end
   end
   # pooling
@@ -195,7 +195,7 @@ defmodule BLASNetwork do
   # constant weight for test
   def parse({:cw,_,[x]},_) do
     quote do
-      {:weight,unquote(x),0.1,0}
+      {:weight,Matrex.new(unquote(x)),0.1,0}
     end
   end
   # constant filter for test
@@ -213,52 +213,52 @@ defmodule BLASNetwork do
   # weight
   def parse({:w,_,[x,y]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),0.1,Matrix.new(unquote(x),unquote(y))}
+      {:weight,Cmatrix.new(unquote(x),unquote(y),0.1),0.1,Cmatrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:w,_,[x,y,lr]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),0.1),unquote(lr),Matrix.new(unquote(x),unquote(y))}
+      {:weight,Cmatrix.new(unquote(x),unquote(y),0.1),unquote(lr),Cmatrix.new(unquote(x),unquote(y))}
     end
   end
   def parse({:w,_,[x,y,lr,z]},_) do
     quote do
-      {:weight,Dmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(lr),Matrix.new(unquote(x),unquote(y))}
+      {:weight,Cmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(lr),Cmatrix.new(unquote(x),unquote(y))}
     end
   end
   # bias
   def parse({:b,_,[x]},_) do
     quote do
-      {:bias,Matrix.new(1,unquote(x)),0.1,Matrix.new(1,unquote(x))}
+      {:bias,Cmatrix.new(1,unquote(x)),0.1,Cmatrix.new(1,unquote(x))}
     end
   end
   def parse({:b,_,[x,lr]},_) do
     quote do
-      {:bias,Matrix.new(1,unquote(x)),unquote(lr),Matrix.new(1,unquote(x))}
+      {:bias,Cmatrix.new(1,unquote(x)),unquote(lr),Cmatrix.new(1,unquote(x))}
     end
   end
   # sigmoid
   def parse({:sigmoid,_,nil},_) do
     quote do
-      {:function,fn(x) -> DP.sigmoid(x) end,fn(x) -> DP.dsigmoid(x) end}
+      {:function,fn(x) -> BLASDP.sigmoid(x) end,fn(x) -> BLASDP.dsigmoid(x) end}
     end
   end
   # identity
   def parse({:ident,_,nil},_) do
     quote do
-      {:function,fn(x) -> DP.ident(x) end,fn(x) -> DP.dident(x) end}
+      {:function,fn(x) -> BLASDP.ident(x) end,fn(x) -> BLASDP.dident(x) end}
     end
   end
   # relu
   def parse({:relu,_,nil},_) do
     quote do
-      {:function,fn(x) -> DP.relu(x) end,fn(x) -> DP.drelu(x) end}
+      {:function,fn(x) -> BLASDP.relu(x) end,fn(x) -> BLASDP.drelu(x) end}
     end
   end
   # softmax
   def parse({:softmax,_,nil},_) do
     quote do
-      {:softmax,fn(x) -> DP.softmax(x) end,fn(x) -> DP.dsoftmax(x) end}
+      {:softmax,fn(x) -> BLASDP.softmax(x) end,fn(x) -> BLASDP.dsoftmax(x) end}
     end
   end
   # flatten
