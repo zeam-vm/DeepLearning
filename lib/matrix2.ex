@@ -10,6 +10,11 @@ defmodule Ctensor do
     Matrex.add(x,sum(xs))
   end
 
+  def gradient_filter([],_,_) do [] end
+  def gradient_filter([u|us],w,[l|ls]) do
+    [Cmatrix.gradient_filter(u,w,l)|gradient_filter(us,w,ls)]
+  end
+
   def convolute([],_) do [] end
   def convolute([x|xs],y) do
     [Cmatrix.convolute(x,y)|convolute(xs,y)]
@@ -18,6 +23,12 @@ defmodule Ctensor do
   def convolute([x|xs],y,s) do
     [Cmatrix.convolute(x,y,s)|convolute(xs,y,s)]
   end
+
+  def deconvolute([],_,_,_) do [] end
+  def deconvolute([u|us],filter,[l|ls],st) do
+    [Cmatrix.deconvolute(u,filter,l,st)|deconvolute(us,filter,ls,st)]
+  end
+
 
   def apply_function([],_) do [] end
   def apply_function([x|xs],f)  do
@@ -38,6 +49,33 @@ defmodule Ctensor do
   def pool([x|xs],s) do
     [Cmatrix.pool(x,s)|pool(xs,s)]
   end
+
+  def sparse([],_) do [] end
+  def sparse([x|xs],s) do
+    [Cmatrix.sparse(x,s)|sparse(xs,s)]
+  end
+
+  # emult for tensor
+  def emult([],[]) do [] end
+  def emult([x|xs],[y|ys]) do
+    [Cmatrix.emult(x,y)|emult(xs,ys)]
+  end
+
+  def structure([],_,_) do [] end
+  def structure([l|ls],r,c) do
+    [Cmatrix.structure(l,r,c)|structure(ls,r,c)]
+  end
+
+  def restore([],_,_) do [] end
+  def restore([u|us],l,st) do
+    [Cmatrix.restore(u,l,st)|restore(us,l,st)]
+  end
+
+  def remove([],_) do [] end
+  def remove([l|ls],st) do
+    [Cmatrix.remove(l,st)|remove(ls,st)]
+  end
+
 
 end
 
@@ -67,6 +105,10 @@ defmodule Cmatrix do
     Matrex.add(x,y)
   end
 
+  def sub(x,y) do
+    Matrex.subtract(x,y)
+  end
+
   def mult(x,y) do
     Matrex.dot(x,y)
   end
@@ -91,8 +133,13 @@ defmodule Cmatrix do
     Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> x end)
   end
 
+
   def zeros(r,c) do
     Matrex.zeros(r,c)
+  end
+
+  def transpose(x) do
+    Matrex.transpose(x)
   end
 
   def max(x) do
@@ -296,5 +343,98 @@ defmodule Cmatrix do
     |> sum
   end
 
+  # restore <-> pool
+  def restore(u,los,st) do
+    los1 = Matrex.to_list_of_lists(los) |> increase(st) |> Matrex.new()
+    Cmatrix.emult(u,los1)
+  end
+
+  # e.g.  increase(x,2)   [[1,1,2,2,],
+  #        [[1,2],         [1,1,2,2],
+  #         [3,4]]     ->  [3,3,4,4],
+  #                        [3,3,4,4]]
+  def increase([],_) do [] end
+  def increase([x|xs],st) do
+    x1 = increase1(x,st) |> increase2(st)
+    x1 ++ increase(xs,st)
+  end
+
+  def increase1([],_) do [] end
+  def increase1([x|xs],st) do
+    increase3(x,st) ++ increase1(xs,st)
+  end
+
+  def increase2(_,0) do [] end
+  def increase2(x,st) do
+    [x|increase2(x,st-1)]
+  end
+
+  def increase3(x,1) do [x] end
+  def increase3(x,st) do
+    [x|increase3(x,st-1)]
+  end
+
+
+  def momentum(v,g,lr) do
+    Matrex.apply(v,g,fn(v,g) -> 0.5*v - lr*g end)
+  end
+
+  def adagrad(w,g,h,lr) do
+    Cmatrix.sub(w,Matrex.apply(g,h,fn(g,h) -> lr*(1 / adagrad_sqrt(h))*g end))
+  end
+
+
+  def adagrad_sqrt(x) do
+    if x != 0 do
+      :math.sqrt(x)
+    else
+      1
+    end
+  end
+
+  def adam_init(w) do
+    if !is_list(w) do
+      {r,c} = w[:size]
+      [Cmatrix.zeros(r,c),Cmatrix.zeros(r,c)]
+    else
+      w
+    end
+  end
+
+  def adammv(mv,grad) do
+    mv1 = adam_init(mv)
+    adammv1(mv1,grad)
+  end
+
+  def adammv1([],[]) do [] end
+  def adammv1([mv|mvs],[g|gs]) do
+    [adammv2(mv,g)|adammv1(mvs,gs)]
+  end
+
+  def adammv2([],[]) do [] end
+  def adammv2([mv|mvs],[g|gs]) do
+    beta1 = 0.9
+    beta2 = 0.999
+    [m,v] = mv
+    m1 = beta1*m+(1-beta2)*g
+    v1 = beta2*v+(1-beta2)*(g*g)
+    [[m1,v1]|adammv2(mvs,gs)]
+  end
+
+  def adam([],[],_) do [] end
+  def adam([w|ws],[mv|mvs],lr) do
+    [adam1(w,mv,lr)|adam(ws,mvs,lr)]
+  end
+
+  def adam1([],[],_) do [] end
+  def adam1([w|ws],[mv|mvs],lr) do
+    beta1 = 0.9
+    beta2 = 0.999
+    epsilon = 10.0e-8
+    [m,v] = mv
+    m1 = m/(1-beta1)
+    v1 = v/(1-beta2)
+    [w-lr/(:math.sqrt(v1)+epsilon)*m1|adam1(ws,mvs,lr)]
+  end
 
 end

@@ -73,43 +73,43 @@ defmodule BLASDPB do
   # this store all middle data
   def forward_for_back(_,[],res) do res end
   def forward_for_back(x,[{:weight,w,_,_}|rest],res) do
-    x1 = Pmatrix.mult(x,w)
+    x1 = Cmatrix.mult(x,w)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:bias,b,_,_}|rest],res) do
-    {r,_} = Matrix.size(x)
-    b1 = Dmatrix.expand(b,r)
-    x1 = Matrix.add(x,b1)
+    {r,_} = x[:size]
+    b1 = Cmatrix.expand(b,r)
+    x1 = Cmatrix.add(x,b1)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:function,f,_}|rest],res) do
     if is_tensor(x) do
-      x1 = Tensor.apply_function(x,f)
+      x1 = Ctensor.apply_function(x,f)
       forward_for_back(x1,rest,[x1|res])
     else
-      x1 = DP.apply_function(x,f)
+      x1 = Cmatrix.apply_function(x,f)
       forward_for_back(x1,rest,[x1|res])
     end
   end
   def forward_for_back(x,[{:softmax,f,_}|rest],res) do
-    x1 = Enum.map(x,f)
+    x1 = Cmatrix.apply_row(x,f)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:filter,w,st,_,_}|rest],res) do
-    x1 = Tensor.convolute(x,w,st)
+    x1 = Ctensor.convolute(x,w,st)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:padding,st}|rest],res) do
-    x1 = Tensor.pad(x,st)
+    x1 = Ctensor.pad(x,st)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:pooling,st}|rest],[_|res]) do
-    x1 = Tensor.pool(x,st)
-    x2 = Tensor.sparse(x,st)
+    x1 = Ctensor.pool(x,st)
+    x2 = Ctensor.sparse(x,st)
     forward_for_back(x1,rest,[x1,x2|res])
   end
   def forward_for_back(x,[{:flatten}|rest],res) do
-    x1 = Tensor.flatten(x)
+    x1 = Ctensor.flatten(x)
     forward_for_back(x1,rest,[x1|res])
   end
 
@@ -144,23 +144,23 @@ defmodule BLASDPB do
   end
   # calc numerical gradient of filter,weigth,bias matrix
   defp numerical_gradient_matrix(x,w,t,before,now,rest) do
-    {r,c} = Matrix.size(w)
-    Enum.map(0..r-1,
-      fn(x1) -> Enum.map(0..c-1,
+    {r,c} = w[:size]
+    Enum.map(1..r,
+      fn(x1) -> Enum.map(1..c,
                   fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest) end) end)
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest) do
     h = 0.0001
-    w1 = Dmatrix.diff(w,r,c,h)
+    w1 = Cmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,lr,v}] ++ rest
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (batch_error(y1,t,fn(x,y) -> DP.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> DP.mean_square(x,y) end)) / h
+    (batch_error(y1,t,fn(x,y) -> BLASDP.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> BLASDP.mean_square(x,y) end)) / h
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
-    w1 = Dmatrix.diff(w,r,c,h)
+    w1 = Cmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,st,lr,v}] ++ rest
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
@@ -188,28 +188,28 @@ defmodule BLASDPB do
   end
   # calc numerical gradient of filter,weigth,bias matrix
   defp numerical_gradient_matrix(x,w,t,before,now,rest,:cross) do
-    {r,c} = Matrix.size(w)
-    Enum.map(0..r-1,
-      fn(x1) -> Enum.map(0..c-1,
+    {r,c} = w[:size]
+    Enum.map(1..r,
+      fn(x1) -> Enum.map(1..c,
                   fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest,:cross) end) end)
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest,:cross) do
     h = 0.0001
-    w1 = Dmatrix.diff(w,r,c,h)
+    w1 = Cmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,lr,v}] ++ rest
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (batch_error(y1,t,fn(x,y) -> DP.cross_entropy(x,y) end) - batch_error(y0,t,fn(x,y) -> DP.cross_entropy(x,y) end)) / h
+    (batch_error(y1,t,fn(x,y) -> BLASDP.cross_entropy(x,y) end) - batch_error(y0,t,fn(x,y) -> BLASDP.cross_entropy(x,y) end)) / h
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest,:cross) do
     h = 0.0001
-    w1 = Dmatrix.diff(w,r,c,h)
+    w1 = Cmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,st,lr,v}] ++ rest
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (batch_error(y1,t,fn(x,y) -> DP.cross_entropy(x,y) end) - batch_error(y0,t,fn(x,y) -> DP.cross_entropy(x,y) end)) / h
+    (batch_error(y1,t,fn(x,y) -> BLASDP.cross_entropy(x,y) end) - batch_error(y0,t,fn(x,y) -> BLASDP.cross_entropy(x,y) end)) / h
   end
 
 
@@ -225,10 +225,10 @@ defmodule BLASDPB do
   defp backpropagation(_,[],_,res) do res end
   defp backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
     if is_tensor(u) do
-      l1 = Tensor.emult(l,Tensor.apply_function(u,g))
+      l1 = Ctensor.emult(l,Ctensor.apply_function(u,g))
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     else
-      l1 = Matrix.emult(l,DP.apply_function(u,g))
+      l1 = Cmatrix.emult(l,BLASDP.apply_function(u,g))
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     end
   end
@@ -236,32 +236,32 @@ defmodule BLASDPB do
     backpropagation(l,rest,us,[{:softmax,f,g}|res])
   end
   defp backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
-    {n,_} = Matrix.size(l)
-    b1 = Dmatrix.reduce(l) |> DP.apply_function(fn(x) -> x/n end)
+    {n,_} = l[:size]
+    b1 = Cmatrix.reduce(l) |> BLASDP.apply_function(fn(x) -> x/n end)
     backpropagation(l,rest,us,[{:bias,b1,lr,v}|res])
   end
   defp backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
-    {n,_} = Matrix.size(l)
-    w1 = Pmatrix.mult(Matrix.transpose(u),l) |> DP.apply_function(fn(x) -> x/n end)
-    l1 = Dmatrix.mult(l,Matrix.transpose(w))
+    {n,_} = l[:size]
+    w1 = Cmatrix.mult(Cmatrix.transpose(u),l) |> BLASDP.apply_function(fn(x) -> x/n end)
+    l1 = Cmatrix.mult(l,Cmatrix.transpose(w))
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end
   defp backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
-    w1 = Tensor.gradient_filter(u,w,l) |> Tensor.average
-    l1 = Tensor.deconvolute(u,w,l,st)
+    w1 = Ctensor.gradient_filter(u,w,l) |> Ctensor.average
+    l1 = Ctensor.deconvolute(u,w,l,st)
     backpropagation(l1,rest,us,[{:filter,w1,st,lr,v}|res])
   end
   defp backpropagation(l,[{:pooling,st}|rest],[u|us],res) do
-    l1 = Tensor.restore(u,l,st)
+    l1 = Ctensor.restore(u,l,st)
     backpropagation(l1,rest,us,[{:pooling,st}|res])
   end
   defp backpropagation(l,[{:padding,st}|rest],[_|us],res) do
-    l1 = Tensor.remove(l,st)
+    l1 = Ctensor.remove(l,st)
     backpropagation(l1,rest,us,[{:padding,st}|res])
   end
   defp backpropagation(l,[{:flatten}|rest],[u|us],res) do
-    {r,c} = Matrix.size(hd(u))
-    l1 = Tensor.structure(l,r,c)
+    {r,c} = hd(u)[:size]
+    l1 = Ctensor.structure(l,r,c)
     backpropagation(l1,rest,us,[{:flatten}|res])
   end
 

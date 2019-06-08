@@ -184,14 +184,14 @@ defmodule BLASDP do
   end
   # calc numerical gradient of filter,weigth,bias matrix
   defp numerical_gradient_matrix(x,w,t,before,now,rest) do
-    {r,c} = Matrix.size(w)
-    Enum.map(0..r-1,
-      fn(x1) -> Enum.map(0..c-1,
+    {r,c} = w[:size]
+    Enum.map(1..r,
+      fn(x1) -> Enum.map(1..c,
                   fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest) end) end)
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest) do
     h = 0.0001
-    w1 = Dmatrix.diff(w,r,c,h)
+    w1 = Cmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,lr,v}] ++ rest
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
@@ -200,7 +200,7 @@ defmodule BLASDP do
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
-    w1 = Dmatrix.diff(w,r,c,h)
+    w1 = Cmatrix.diff(w,r,c,h)
     network0 = Enum.reverse(before) ++ [{type,w,st,lr,v}] ++ rest
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
@@ -211,7 +211,7 @@ defmodule BLASDP do
   # gradient with backpropagation
   def gradient(x,network,t) do
     x1 = forward_for_back(x,network,[x])
-    loss = Matrix.sub(hd(x1),t)
+    loss = Cmatrix.sub(hd(x1),t)
     network1 = Enum.reverse(network)
     backpropagation(loss,network1,tl(x1),[])
   end
@@ -219,7 +219,7 @@ defmodule BLASDP do
   #backpropagation
   def backpropagation(_,[],_,res) do res end
   def backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
-    l1 = Matrix.emult(l,apply_function(u,g))
+    l1 = Cmatrix.emult(l,apply_function(u,g))
     backpropagation(l1,rest,us,[{:function,f,g}|res])
   end
   def backpropagation(l,[{:softmax,f,g}|rest],[_|us],res) do
@@ -229,26 +229,26 @@ defmodule BLASDP do
     backpropagation(l,rest,us,[{:bias,l,lr,v}|res])
   end
   def backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
-    w1 = Pmatrix.mult(Matrix.transpose(u),l)
-    l1 = Dmatrix.mult(l,Matrix.transpose(w))
+    w1 = Cmatrix.mult(Cmatrix.transpose(u),l)
+    l1 = Cmatrix.mult(l,Cmatrix.transpose(w))
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end
   def backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
-    w1 = Dmatrix.gradient_filter(u,w,l)
-    l1 = Dmatrix.deconvolute(u,w,l,st)
+    w1 = Cmatrix.gradient_filter(u,w,l)
+    l1 = Cmatrix.deconvolute(u,w,l,st)
     backpropagation(l1,rest,us,[{:filter,w1,st,lr,v}|res])
   end
   def backpropagation(l,[{:pooling,st}|rest],[u|us],res) do
-    l1 = Dmatrix.restore(u,l,st)
+    l1 = Cmatrix.restore(u,l,st)
     backpropagation(l1,rest,us,[{:pooling,st}|res])
   end
   def backpropagation(l,[{:padding,st}|rest],[_|us],res) do
-    l1 = Dmatrix.remove(l,st)
+    l1 = Cmatrix.remove(l,st)
     backpropagation(l1,rest,us,[{:padding,st}|res])
   end
   def backpropagation(l,[{:flatten}|rest],[u|us],res) do
-    {r,c} = Matrix.size(u)
-    l1 = Dmatrix.structure(l,r,c)
+    {r,c} = u[:size]
+    l1 = Cmatrix.structure(l,r,c)
     backpropagation(l1,rest,us,[{:flatten}|res])
   end
 
