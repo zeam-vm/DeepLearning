@@ -137,22 +137,18 @@ defmodule BLASDPB do
     Enum.reverse(res)
   end
   defp numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res) do
-    IO.puts("filter")
     w1 = numerical_gradient_matrix(x,w,t,before,{:filter,w,st,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:filter,w,st,lr,v}|before],[{:filter,w1,st,lr,v}|res])
   end
   defp numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res) do
-    IO.puts("weight")
     w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:weight,w1,lr,v}|before],[{:weight,w1,lr,v}|res])
   end
   defp numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res) do
-    IO.puts("bias")
     w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:bias,w,lr,v}|before],[{:bias,w1,lr,v}|res])
   end
   defp numerical_gradient1(x,[y|rest],t,before,res) do
-    IO.puts("etc")
     numerical_gradient1(x,rest,t,[y|before],[y|res])
   end
   # calc numerical gradient of filter,weigth,bias matrix
@@ -206,6 +202,7 @@ defmodule BLASDPB do
     Enum.map(1..r,
       fn(x1) -> Enum.map(1..c,
                   fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest,:cross) end) end)
+    |> Matrex.new()
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest,:cross) do
     h = 0.0001
