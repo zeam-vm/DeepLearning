@@ -1,5 +1,11 @@
 #---------Tensor for DPBLAS ---------------
 defmodule Ctensor do
+  def to_matrex([]) do [] end
+  def to_matrex([x|xs]) do
+    [Matrex.new(x)|to_matrex(xs)]
+  end
+
+
   def average(x) do
     n = length(x)
     sum(x) |> Matrex.apply(fn(y) -> y/n end)
@@ -35,9 +41,17 @@ defmodule Ctensor do
     [Cmatrix.apply_function(x,f)|apply_function(xs,f)]
   end
 
-  def flatten([]) do [] end
-  def flatten([x|xs]) do
-    [Cmatrix.flatten(x)|flatten(xs)]
+  def flatten(x) do
+    flatten1(x) |> Matrex.new()
+  end
+
+  def flatten1([]) do [] end
+  def flatten1([x|xs]) do
+    [flatten2(x)|flatten1(xs)]
+  end
+
+  def flatten2(x) do
+    Matrex.to_list_of_lists(x) |> Cmatrix.flatten2()
   end
 
   def pad([],_) do [] end
@@ -151,7 +165,7 @@ defmodule Cmatrix do
   end
 
   def flatten(x) do
-    Matrex.to_list(x) |> flatten1() |> Matrex.new()
+    Matrex.to_list_of_lists(x) |> flatten1() |> Matrex.new()
   end
   def flatten1(x) do
     [flatten2(x)]
@@ -254,12 +268,12 @@ defmodule Cmatrix do
   end
 
 
-  def convolute1(_,_,r,_,r,_,_) do [] end
+  def convolute1(_,_,r,_,m,_,_) when m > r do [] end
   def convolute1(x,y,r,c,m,n,s) do
     [convolute2(x,y,r,c,m,n,s)|convolute1(x,y,r,c,m+s,n,s)]
   end
 
-  def convolute2(_,_,_,c,_,c,_) do [] end
+  def convolute2(_,_,_,c,_,n,_) when n > c do [] end
   def convolute2(x,y,r,c,m,n,s) do
     [convolute_mult_sum(x,y,m,n)|convolute2(x,y,r,c,m,n+s,s)]
   end
