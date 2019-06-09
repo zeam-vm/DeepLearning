@@ -203,7 +203,7 @@ defmodule Cmatrix do
 
   # r and c are 1 base
   def diff(x,r,c,d) do
-    Matrex.set(x,r,c,x[r][c]+d)
+    Matrex.set(x,r,c,Matrex.at(x,r,c)+d)
   end
 
 

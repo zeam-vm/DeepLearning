@@ -229,12 +229,12 @@ defmodule BLASNetwork do
   # bias
   def parse({:b,_,[x]},_) do
     quote do
-      {:bias,Cmatrix.new(1,unquote(x)),0.1,Cmatrix.new(1,unquote(x))}
+      {:bias,Cmatrix.zeros(1,unquote(x)),0.1,Cmatrix.new(1,unquote(x))}
     end
   end
   def parse({:b,_,[x,lr]},_) do
     quote do
-      {:bias,Cmatrix.new(1,unquote(x)),unquote(lr),Cmatrix.new(1,unquote(x))}
+      {:bias,Cmatrix.zeros(1,unquote(x)),unquote(lr),Cmatrix.new(1,unquote(x))}
     end
   end
   # sigmoid
