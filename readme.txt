@@ -1,5 +1,8 @@
 Deep Learning with elixir
 This project is called Deep Pipe(DP)
+I am making a BLAS version now. 
+Simple matrix calculation can not provide practical speed.
+Please wait.
 
 Network example (See test.ex)
 
