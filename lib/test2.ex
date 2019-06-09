@@ -21,7 +21,8 @@ defmodule Btest do
   def test2() do
     IO.puts("preparing data")
     network = init_network2(0)
-    image = MNIST.train_image(100) |> Ctensor.to_matrex
-    BLASDPB.forward(image,network)
+    image = MNIST.train_image(10) |> Ctensor.to_matrex
+    train = MNIST.train_label_onehot(10) |> Cmatrix.to_matrex
+    BLASDPB.numerical_gradient(image,network,train)
   end
 end

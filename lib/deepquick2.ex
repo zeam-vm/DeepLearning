@@ -4,19 +4,28 @@
 defmodule BLASDPB do
   # y=result data t=train_data f=error function
   def loss(y,t,:cross) do
-    batch_error(y,t,fn(x,y) -> DP.cross_entropy(x,y) end)
+    y1 = Matrex.to_list_of_lists(y)
+    t1 = Matrex.to_list_of_lists(t)
+    batch_error(y1,t1,fn(x,y) -> DP.cross_entropy(x,y) end)
   end
   def loss(y,t,:square) do
-    batch_error(y,t,fn(x,y) -> DP.mean_square(x,y) end)
+    y1 = Matrex.to_list_of_lists(y)
+    t1 = Matrex.to_list_of_lists(t)
+    batch_error(y1,t1,fn(x,y) -> DP.mean_square(x,y) end)
   end
   def loss(y,t) do
-    batch_error(y,t,fn(x,y) -> DP.mean_square(x,y) end)
+    y1 = Matrex.to_list_of_lists(y)
+    t1 = Matrex.to_list_of_lists(t)
+    batch_error(y1,t1,fn(x,y) -> DP.mean_square(x,y) end)
   end
 
   defp batch_error(y,t,f) do
-    n = y[:row]
-    s = Matrex.apply(y,t,f) |> Matrex.sum()
-    s / n
+    batch_error1(y,t,f,0) / length(y)
+  end
+
+  defp batch_error1([],[],_,res) do res end
+  defp batch_error1([y|ys],[t|ts],f,res) do
+    batch_error1(ys,ts,f,f.([y],[t])+res)
   end
 
   # forward
@@ -128,18 +137,22 @@ defmodule BLASDPB do
     Enum.reverse(res)
   end
   defp numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res) do
+    IO.puts("filter")
     w1 = numerical_gradient_matrix(x,w,t,before,{:filter,w,st,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:filter,w,st,lr,v}|before],[{:filter,w1,st,lr,v}|res])
   end
   defp numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res) do
+    IO.puts("weight")
     w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:weight,w1,lr,v}|before],[{:weight,w1,lr,v}|res])
   end
   defp numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res) do
+    IO.puts("bias")
     w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:bias,w,lr,v}|before],[{:bias,w1,lr,v}|res])
   end
   defp numerical_gradient1(x,[y|rest],t,before,res) do
+    IO.puts("etc")
     numerical_gradient1(x,rest,t,[y|before],[y|res])
   end
   # calc numerical gradient of filter,weigth,bias matrix
@@ -148,6 +161,7 @@ defmodule BLASDPB do
     Enum.map(1..r,
       fn(x1) -> Enum.map(1..c,
                   fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest) end) end)
+    |> Matrex.new()
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest) do
     h = 0.0001
@@ -156,7 +170,7 @@ defmodule BLASDPB do
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (batch_error(y1,t,fn(x,y) -> BLASDP.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> BLASDP.mean_square(x,y) end)) / h
+    (loss(y1,t,:square) - loss(y0,t,:square)) / h
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
@@ -165,7 +179,7 @@ defmodule BLASDPB do
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (batch_error(y1,t,fn(x,y) -> DP.mean_square(x,y) end) - batch_error(y0,t,fn(x,y) -> DP.mean_square(x,y) end)) / h
+    (loss(y1,t,:square) - loss(y0,t,:square)) / h
   end
 
   defp numerical_gradient1(_,[],_,_,res,:cross) do
@@ -200,7 +214,7 @@ defmodule BLASDPB do
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (batch_error(y1,t,fn(x,y) -> BLASDP.cross_entropy(x,y) end) - batch_error(y0,t,fn(x,y) -> BLASDP.cross_entropy(x,y) end)) / h
+    (loss(y1,t,:cross) - loss(y0,t,:cross)) / h
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest,:cross) do
     h = 0.0001
@@ -209,7 +223,7 @@ defmodule BLASDPB do
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (batch_error(y1,t,fn(x,y) -> BLASDP.cross_entropy(x,y) end) - batch_error(y0,t,fn(x,y) -> BLASDP.cross_entropy(x,y) end)) / h
+    (loss(y1,t,:cross) - loss(y0,t,:cross)) / h
   end
 
 
@@ -359,5 +373,6 @@ defmodule BLASDPB do
     train1 = Enum.at(train,i)
     random_select1(image,train,[image1|res1],[train1|res2],m-1,n)
   end
+
 
 end
