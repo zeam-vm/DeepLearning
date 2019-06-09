@@ -254,28 +254,33 @@ defmodule Cmatrix do
   def convolute(x,y) do
     {r1,c1} = x[:size]
     {r2,c2} = y[:size]
-    convolute1(x,y,r1-r2+2,c1-c2+2,1,1,1) |> Matrex.new()
+    s = 1
+    if rem(r1-r2,s) == 0 and  rem(c1-c2,s) == 0 do
+      convolute1(x,y,r1,c1,r2,c2,1,1,s) |> Matrex.new()
+    else
+      :error
+    end
   end
 
   def convolute(x,y,s) do
     {r1,c1} = x[:size]
     {r2,c2} = y[:size]
     if rem(r1-r2,s) == 0 and  rem(c1-c2,s) == 0 do
-      convolute1(x,y,r1-r2+1,c1-c2+1,1,1,s) |> Matrex.new()
+      convolute1(x,y,r1,c1,r2,c2,1,1,s) |> Matrex.new()
     else
       :error
     end
   end
 
 
-  def convolute1(_,_,r,_,m,_,_) when m > r do [] end
-  def convolute1(x,y,r,c,m,n,s) do
-    [convolute2(x,y,r,c,m,n,s)|convolute1(x,y,r,c,m+s,n,s)]
+  def convolute1(_,_,r1,_,r2,_,m,_,_) when m+r2 > r1+1 do [] end
+  def convolute1(x,y,r1,c1,r2,c2,m,n,s) do
+    [convolute2(x,y,r1,c1,r2,c2,m,n,s)|convolute1(x,y,r1,c1,r2,c2,m+s,n,s)]
   end
 
-  def convolute2(_,_,_,c,_,n,_) when n > c do [] end
-  def convolute2(x,y,r,c,m,n,s) do
-    [convolute_mult_sum(x,y,m,n)|convolute2(x,y,r,c,m,n+s,s)]
+  def convolute2(_,_,_,c1,_,c2,_,n,_) when n+c2 > c1+1 do [] end
+  def convolute2(x,y,r1,c1,r2,c2,m,n,s) do
+    [convolute_mult_sum(x,y,m,n)|convolute2(x,y,r1,c1,r2,c2,m,n+s,s)]
   end
 
   def convolute_mult_sum(x,y,m,n) do
