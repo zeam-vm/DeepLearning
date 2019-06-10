@@ -1,7 +1,7 @@
 # Deep Pipe
 defmodule DP do
   def stop() do
-    :math.exp(800)
+    raise("stop")
   end
 
   def print(x) do

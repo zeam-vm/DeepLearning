@@ -186,7 +186,7 @@ defmodule Cmatrix do
 
 
   def reduce(x) do
-    Matrex.to_list(x) |> reduce1() |> Matrex.new()
+    Matrex.to_list_of_lists(x) |> reduce1() |> Matrex.new()
   end
   def reduce1([x]) do [x] end
   def reduce1([x|xs]) do
