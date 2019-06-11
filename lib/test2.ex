@@ -20,12 +20,12 @@ defmodule Btest do
 
   def test2() do
     IO.puts("preparing data")
-    network = init_network1(0)
-    image = Cmatrix.to_matrex([[1,2],[3,4]])
-    train = Cmatrix.to_matrex([[0,1],[1,2]])
-    #image = MNIST.train_image(1) |> Ctensor.to_matrex
-    #train = MNIST.train_label_onehot(1) |> Cmatrix.to_matrex
-    IO.inspect(BLASDPB.numerical_gradient(image,network,train))
+    network = init_network2(0)
+    #image = Cmatrix.to_matrex([[1,2],[3,4]])
+    #train = Cmatrix.to_matrex([[0,1],[1,2]])
+    image = MNIST.train_image(2) |> Ctensor.to_matrex
+    train = MNIST.train_label_onehot(2) |> Cmatrix.to_matrex
+    #IO.inspect(BLASDPB.numerical_gradient(image,network,train))
     IO.inspect(BLASDPB.gradient(image,network,train))
   end
 end

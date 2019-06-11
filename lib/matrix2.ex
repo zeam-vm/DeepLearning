@@ -75,9 +75,13 @@ defmodule Ctensor do
     [Cmatrix.emult(x,y)|emult(xs,ys)]
   end
 
-  def structure([],_,_) do [] end
-  def structure([l|ls],r,c) do
-    [Cmatrix.structure(l,r,c)|structure(ls,r,c)]
+  def structure(x,r,c) do
+    Matrex.to_list_of_lists(x) |> structure1(r,c)
+  end
+
+  def structure1([],_,_) do [] end
+  def structure1([l|ls],r,c) do
+    [Cmatrix.structure(l,r,c)|structure1(ls,r,c)]
   end
 
   def restore([],_,_) do [] end

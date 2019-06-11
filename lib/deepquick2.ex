@@ -263,6 +263,8 @@ defmodule BLASDPB do
   end
   defp backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
     IO.puts("filter")
+    IO.inspect(u)
+    IO.inspect(l)
     w1 = Ctensor.gradient_filter(u,w,l) |> Ctensor.average
     l1 = Ctensor.deconvolute(u,w,l,st)
     backpropagation(l1,rest,us,[{:filter,w1,st,lr,v}|res])
