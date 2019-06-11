@@ -162,22 +162,22 @@ defmodule BLASNetwork do
   # filter
   def parse({:f,_,[x,y]},_) do
     quote do
-      {:filter,Cmatrix.new(unquote(x),unquote(y),0.1),1,0.1,Cmatrix.new(unquote(x),unquote(y))}
+      {:filter,Cmatrix.new(unquote(x),unquote(y),0.1),1,0.1,Cmatrix.zeros(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,lr]},_) do
     quote do
-      {:filter,Cmatrix.new(unquote(x),unquote(y),0.1),1,unquote(lr),Cmatrix.new(unquote(x),unquote(y))}
+      {:filter,Cmatrix.new(unquote(x),unquote(y),0.1),1,unquote(lr),Cmatrix.zeros(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,lr,z]},_) do
     quote do
-      {:filter,Cmatrix.new(unquote(x),unquote(y),unquote(z)),1,unquote(lr),Cmatrix.new(unquote(x),unquote(y))}
+      {:filter,Cmatrix.new(unquote(x),unquote(y),unquote(z)),1,unquote(lr),Cmatrix.zeros(unquote(x),unquote(y))}
     end
   end
   def parse({:f,_,[x,y,lr,z,st]},_) do
     quote do
-      {:filter,Cmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),unquote(lr),Cmatrix.new(unquote(x),unquote(y))}
+      {:filter,Cmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(st),unquote(lr),Cmatrix.zeros(unquote(x),unquote(y))}
     end
   end
   # pooling
@@ -213,28 +213,28 @@ defmodule BLASNetwork do
   # weight
   def parse({:w,_,[x,y]},_) do
     quote do
-      {:weight,Cmatrix.new(unquote(x),unquote(y),0.1),0.1,Cmatrix.new(unquote(x),unquote(y))}
+      {:weight,Cmatrix.new(unquote(x),unquote(y),0.1),0.1,Cmatrix.zeros(unquote(x),unquote(y))}
     end
   end
   def parse({:w,_,[x,y,lr]},_) do
     quote do
-      {:weight,Cmatrix.new(unquote(x),unquote(y),0.1),unquote(lr),Cmatrix.new(unquote(x),unquote(y))}
+      {:weight,Cmatrix.new(unquote(x),unquote(y),0.1),unquote(lr),Cmatrix.zeros(unquote(x),unquote(y))}
     end
   end
   def parse({:w,_,[x,y,lr,z]},_) do
     quote do
-      {:weight,Cmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(lr),Cmatrix.new(unquote(x),unquote(y))}
+      {:weight,Cmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(lr),Cmatrix.zeros(unquote(x),unquote(y))}
     end
   end
   # bias
   def parse({:b,_,[x]},_) do
     quote do
-      {:bias,Cmatrix.zeros(1,unquote(x)),0.1,Cmatrix.new(1,unquote(x))}
+      {:bias,Cmatrix.zeros(1,unquote(x)),0.1,Cmatrix.zeros(1,unquote(x))}
     end
   end
   def parse({:b,_,[x,lr]},_) do
     quote do
-      {:bias,Cmatrix.zeros(1,unquote(x)),unquote(lr),Cmatrix.new(1,unquote(x))}
+      {:bias,Cmatrix.zeros(1,unquote(x)),unquote(lr),Cmatrix.zeros(1,unquote(x))}
     end
   end
   # sigmoid
