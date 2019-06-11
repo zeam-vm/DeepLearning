@@ -346,7 +346,8 @@ defmodule Cmatrix do
   end
 
   def deconvolute(u,filter,loss,st) do
-    loss |> pad(1) |> convolute(rotate180(filter),st) |> emult(u)
+    {r,_} = filter[:size]
+    loss |> pad(r-1) |> convolute(rotate180(filter),st) |> emult(u)
   end
 
   def gradient_filter(u,filter,loss) do
@@ -355,11 +356,12 @@ defmodule Cmatrix do
     Enum.map(1..r,
       fn(x1) -> Enum.map(1..c,
                   fn(y1) -> gradient_filter1(u,loss,x1,y1,m,n) end) end)
+    |> Matrex.new()
   end
 
   def gradient_filter1(u,error,x1,y1,m,n) do
     p = part(u,x1,y1,m,n)
-    p |> Matrix.emult(error)
+    p |> Cmatrix.emult(error)
     |> sum
   end
 
