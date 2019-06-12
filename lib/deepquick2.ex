@@ -235,7 +235,6 @@ defmodule BLASDPB do
   #backpropagation
   defp backpropagation(_,[],_,res) do res end
   defp backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
-    IO.puts("function")
     if is_tensor(u) do
       l1 = Ctensor.emult(l,Ctensor.apply_function(u,g))
       backpropagation(l1,rest,us,[{:function,f,g}|res])
@@ -245,40 +244,33 @@ defmodule BLASDPB do
     end
   end
   defp backpropagation(l,[{:softmax,f,g}|rest],[_|us],res) do
-    IO.puts("softmax")
     backpropagation(l,rest,us,[{:softmax,f,g}|res])
   end
   defp backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
-    IO.puts("bias")
     {n,_} = l[:size]
     b1 = Cmatrix.reduce(l) |> BLASDP.apply_function(fn(x) -> x/n end)
     backpropagation(l,rest,us,[{:bias,b1,lr,v}|res])
   end
   defp backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
-    IO.puts("weight")
     {n,_} = l[:size]
     w1 = Cmatrix.mult(Cmatrix.transpose(u),l) |> BLASDP.apply_function(fn(x) -> x/n end)
     l1 = Cmatrix.mult(l,Cmatrix.transpose(w))
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end
   defp backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
-    IO.puts("filter")
     w1 = Ctensor.gradient_filter(u,w,l) |> Ctensor.average
     l1 = Ctensor.deconvolute(u,w,l,st)
     backpropagation(l1,rest,us,[{:filter,w1,st,lr,v}|res])
   end
   defp backpropagation(l,[{:pooling,st}|rest],[u|us],res) do
-    IO.puts("pooling")
     l1 = Ctensor.restore(u,l,st)
     backpropagation(l1,rest,us,[{:pooling,st}|res])
   end
   defp backpropagation(l,[{:padding,st}|rest],[_|us],res) do
-    IO.puts("padding")
     l1 = Ctensor.remove(l,st)
     backpropagation(l1,rest,us,[{:padding,st}|res])
   end
   defp backpropagation(l,[{:flatten}|rest],[u|us],res) do
-    IO.puts("flatten")
     {r,c} = hd(u)[:size]
     l1 = Ctensor.structure(l,r,c)
     backpropagation(l1,rest,us,[{:flatten}|res])
@@ -353,7 +345,7 @@ defmodule BLASDPB do
 
   # print predict of test data
   def accuracy(image,network,label) do
-    forward(image,network) |> score(label,0)
+    forward(image,network) |> Cmatrix.to_list() |> score(label,0)
   end
 
   defp score([],[],correct) do correct end
@@ -371,7 +363,7 @@ defmodule BLASDPB do
     random_select1(image,train,[],[],m,n)
   end
 
-  defp random_select1(_,_,res1,res2,0,_) do {res1,res2} end
+  defp random_select1(_,_,res1,res2,0,_) do {res1,res2 |> Matrex.new()} end
   defp random_select1(image,train,res1,res2,m,n) do
     i = :rand.uniform(n)
     image1 = Enum.at(image,i)
