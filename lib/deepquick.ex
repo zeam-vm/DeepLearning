@@ -49,8 +49,10 @@ defmodule BLASDP do
     softmax(x)
   end
   def softmax(x) do
-    sum = listsum(x)
-    Enum.map(x, fn(y) -> :math.exp(y)/sum end)
+    c = Enum.max(x)
+    x1 = Enum.map(x,fn(y) -> y-c end)
+    sum = listsum(x1)
+    Enum.map(x1, fn(y) -> :math.exp(y)/sum end)
   end
 
   def listsum([]) do 0 end

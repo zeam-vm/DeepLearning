@@ -229,14 +229,20 @@ defmodule Test do
   end
 
   defnetwork check_network(_x) do
-    _x |> cw([[0.1,0.2],
+    _x |> cf([[0.1,0.2],[0.3,0.4]]) |> flatten
+    |> cw([[0.1,0.2],
               [0.3,0.2],
               [0.2,0.2],
               [0.4,0.2]]) |> cb([[0,0]])
     |> softmax
   end
   def check() do
-    dt = [[0.1,0.2,0.03,0.04],[0.2,0.03,0.04,0.05]]
+    dt = [[[0.1,0.2,0.03],
+                             [0.04,0.5,0.3],
+                             [0.2,0.03,0.04]],
+                            [[0.2,0.3,0.2],
+                             [0.1,0.2,0.1],
+                             [0.3,0.3,0.2]]]
     tt = [[0,1],[1,0]]
     network = check_network(0)
     #res = DPB.forward(dt,network)
@@ -247,6 +253,8 @@ defmodule Test do
     DP.print(network1)
     DP.newline()
     DP.print(network2)
+    true
   end
+
 
 end

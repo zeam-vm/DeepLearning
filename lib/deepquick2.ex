@@ -310,18 +310,22 @@ defmodule BLASDPB do
   #--------AdaGrad--------------
   def learning([],_,:adagrad) do [] end
   def learning([{:weight,w,lr,h}|rest],[{:weight,w1,_,_}|rest1],:adagrad) do
+    #IO.puts("weight")
     h1 = Cmatrix.add(h,Cmatrix.emult(w1,w1))
     [{:weight,Cmatrix.adagrad(w,w1,h1,lr),lr,h1}|learning(rest,rest1,:adagrad)]
   end
   def learning([{:bias,w,lr,h}|rest],[{:bias,w1,_,_}|rest1],:adagrad) do
-    h1 = Matrix.add(h,Matrix.emult(w1,w1))
+    #IO.puts("bias")
+    h1 = Cmatrix.add(h,Cmatrix.emult(w1,w1))
     [{:bias,Cmatrix.adagrad(w,w1,h1,lr),lr,h1}|learning(rest,rest1,:adagrad)]
   end
   def learning([{:filter,w,st,lr,h}|rest],[{:filter,w1,st,_,_}|rest1],:adagrad) do
+    #IO.puts("filter")
     h1 = Cmatrix.add(h,Cmatrix.emult(w1,w1))
     [{:filter,Cmatrix.adagrad(w,w1,h1,lr),st,lr,h1}|learning(rest,rest1,:adagrad)]
   end
   def learning([network|rest],[_|rest1],:adagrad) do
+    #IO.puts("etc")
     [network|learning(rest,rest1,:adagrad)]
   end
   #--------Adam--------------

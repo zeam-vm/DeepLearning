@@ -201,13 +201,13 @@ defmodule BLASNetwork do
   # constant filter for test
   def parse({:cf,_,[x]},_) do
     quote do
-      {:filter,unquote(x),1,0.1,0}
+      {:filter,Matrex.new(unquote(x)),1,0.1,0}
     end
   end
   # constant bias for test
   def parse({:cb,_,[x]},_) do
     quote do
-      {:bias,unquote(x),0.1,0}
+      {:bias,Matrex.new(unquote(x)),0.1,0}
     end
   end
   # weight
