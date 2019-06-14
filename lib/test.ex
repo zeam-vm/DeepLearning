@@ -24,10 +24,10 @@ defmodule Test do
 
   # for adagrad test
   defnetwork init_network4(_x) do
-    _x |> f(5,5,0.04) |> flatten
-    |> w(576,300,0.04) |> b(300,0.04) |> relu
-    |> w(300,100,0.04) |> b(100,0.04) |> relu
-    |> w(100,10,0.04) |> b(10,0.04) |> softmax
+    _x |> f(5,5,0.03) |> flatten
+    |> w(576,300,0.03) |> b(300,0.03) |> relu
+    |> w(300,100,0.03) |> b(100,0.03) |> relu
+    |> w(100,10,0.03) |> b(10,0.03) |> softmax
   end
 
   # for adam test
