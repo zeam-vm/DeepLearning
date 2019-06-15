@@ -128,7 +128,6 @@ defmodule Test do
     correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
     IO.puts(correct / 1000)
-    IO.inspect(network1)
   end
 
   def adagrad1(_,network,_,_,0) do network end

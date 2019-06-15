@@ -12,8 +12,9 @@ defmodule Btest do
 
   # for adagrad test
   defnetwork init_network4(_x) do
-    _x |> f(5,5) |> flatten
-    |> w(576,10) |> b(10) |> softmax
+    _x |> f(5,5,0.04) |> flatten
+    |> w(576,100,0.04) |> b(100,0.04) |> relu
+    |> w(100,10,0.01) |> b(10,0.01) |> softmax
   end
 
 
