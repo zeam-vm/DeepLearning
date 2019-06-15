@@ -244,6 +244,7 @@ defmodule BLASDPB do
     end
   end
   defp backpropagation(l,[{:softmax,f,g}|rest],[_|us],res) do
+    #l1 = Matrex.apply(l,fn(x) -> 10*x end)
     backpropagation(l,rest,us,[{:softmax,f,g}|res])
   end
   defp backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do

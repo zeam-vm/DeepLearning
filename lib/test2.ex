@@ -6,16 +6,14 @@ defmodule Btest do
 
   # for sgd
   defnetwork init_network2(_x) do
-    _x |> f(5,5,0.1) |> flatten
-    |> w(576,10,0.1) |> b(10,0.1) |> softmax
+    _x |> f(5,5) |> flatten
+    |> w(576,10) |> b(10) |> softmax
   end
 
   # for adagrad test
   defnetwork init_network4(_x) do
     _x |> f(5,5) |> flatten
-    |> w(576,300,0.04) |> b(300,0.04) |> relu
-    |> w(300,100,0.04) |> b(100,0.04) |> relu
-    |> w(100,10,0.04) |> b(10,0.04) |> softmax
+    |> w(576,10) |> b(10) |> softmax
   end
 
 
@@ -98,8 +96,8 @@ defmodule Btest do
     |> cw([[0.1,0.2],
               [0.3,0.2],
               [0.2,0.2],
-              [0.4,0.2]]) |> cb([[0,0]])
-    |> sigmoid
+              [0.4,0.2]]) |> cb([[0,0]]) |> sigmoid
+    |> cw([[0.1,0.2],[0.2,0.1]]) |> cb([[0,0]]) |> softmax
   end
   def check() do
     dt = Ctensor.to_matrex([[[0.1,0.2,0.03],
@@ -113,7 +111,7 @@ defmodule Btest do
                              [0.2,0.1,0.3]]])
     tt = Cmatrix.to_matrex([[0,1],[1,0],[1,0]])
     network = check_network(0)
-    #res = DPB.forward(dt,network)
+    #res = BLASDPB.forward(dt,network)
     #DP.print(res)
     #DPB.batch_error(res,tt,fn(x,y) -> DP.cross_entropy(x,y) end)
     network1 = BLASDPB.numerical_gradient(dt,network,tt,:cross)

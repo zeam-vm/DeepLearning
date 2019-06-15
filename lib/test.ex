@@ -128,6 +128,7 @@ defmodule Test do
     correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
     IO.puts(correct / 1000)
+    IO.inspect(network1)
   end
 
   def adagrad1(_,network,_,_,0) do network end
@@ -234,7 +235,7 @@ defmodule Test do
               [0.3,0.2],
               [0.2,0.2],
               [0.4,0.2]]) |> cb([[0,0]])
-    |> softmax
+    |> sigmoid
   end
   def check() do
     dt = [[[0.1,0.2,0.03],
@@ -242,13 +243,16 @@ defmodule Test do
                              [0.2,0.03,0.04]],
                             [[0.2,0.3,0.2],
                              [0.1,0.2,0.1],
-                             [0.3,0.3,0.2]]]
-    tt = [[0,1],[1,0]]
+                             [0.3,0.3,0.2]],
+                            [[0.2,0.1,0.1],
+                             [0.2,0.1,0.4],
+                            [0.2,0.1,0.3]]]
+    tt = [[0,1],[1,0],[1,0]]
     network = check_network(0)
     #res = DPB.forward(dt,network)
     #DP.print(res)
     #DPB.batch_error(res,tt,fn(x,y) -> DP.cross_entropy(x,y) end)
-    network1 = DPB.numerical_gradient(dt,network,tt,:cross)
+    network1 = DPB.numerical_gradient(dt,network,tt,:square)
     network2 = DPB.gradient(dt,network,tt)
     DP.print(network1)
     DP.newline()
