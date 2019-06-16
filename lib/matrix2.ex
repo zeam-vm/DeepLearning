@@ -6,6 +6,7 @@ defmodule Ctensor do
   end
 
 
+
   def average(x) do
     n = length(x)
     sum(x) |> Matrex.apply(fn(y) -> y/n end)
@@ -148,7 +149,7 @@ defmodule Cmatrix do
     Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> Dmatrix.box_muller() end)
   end
   def new(r,c,x) do
-    Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> x end)
+    Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> Dmatrix.box_muller()*x end)
   end
 
 
