@@ -43,20 +43,20 @@ defmodule Test do
     test_label = MNIST.test_label(1000)
     IO.puts("ready")
     network1 = sgd1(image,network,label,m,n)
-    correct = BLASDPB.accuracy(test_image,network1,test_label)
+    correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
     IO.puts(correct / 1000)
   end
 
   def sgd1(_,network,_,_,0) do network end
   def sgd1(image,network,train,m,n) do
-    {image1,train1} = BLASDPB.random_select(image,train,m,2000)
-    network1 = BLASDPB.gradient(image1,network,train1)
-    network2 = BLASDPB.learning(network,network1)
-    y = BLASDPB.forward(image1,network2)
-    loss = BLASDPB.loss(y,train1,:cross)
-    BLASDP.print(loss)
-    BLASDP.newline()
+    {image1,train1} = DPB.random_select(image,train,m,2000)
+    network1 = DPB.gradient(image1,network,train1)
+    network2 = DPB.learning(network,network1)
+    y = DPB.forward(image1,network2)
+    loss = DPB.loss(y,train1,:cross)
+    DP.print(loss)
+    DP.newline()
     sgd1(image,network2,train,m,n-1)
   end
 
@@ -69,20 +69,20 @@ defmodule Test do
     test_label = MNIST.test_label(1000)
     IO.puts("ready")
     network1 = momentum1(image,network,label,m,n)
-    correct = BLASDPB.accuracy(test_image,network1,test_label)
+    correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
     IO.puts(correct / 1000)
   end
 
   def momentum1(_,network,_,_,0) do network end
   def momentum1(image,network,train,m,n) do
-    {image1,train1} = BLASDPB.random_select(image,train,m,2000)
-    network1 = BLASDPB.gradient(image1,network,train1)
-    network2 = BLASDPB.learning(network,network1,:momentum)
-    y = BLASDPB.forward(image1,network2)
-    loss = BLASDPB.loss(y,train1,:cross)
-    BLASDP.print(loss)
-    BLASDP.newline()
+    {image1,train1} = DPB.random_select(image,train,m,2000)
+    network1 = DPB.gradient(image1,network,train1)
+    network2 = DPB.learning(network,network1,:momentum)
+    y = DPB.forward(image1,network2)
+    loss = DPB.loss(y,train1,:cross)
+    DP.print(loss)
+    DP.newline()
     momentum1(image,network2,train,m,n-1)
   end
 
@@ -95,20 +95,20 @@ defmodule Test do
     test_label = MNIST.test_label(1000)
     IO.puts("ready")
     network1 = adagrad1(image,network,label,m,n)
-    correct = BLASDPB.accuracy(test_image,network1,test_label)
+    correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
     IO.puts(correct / 1000)
   end
 
   def adagrad1(_,network,_,_,0) do network end
   def adagrad1(image,network,train,m,n) do
-    {image1,train1} = BLASDPB.random_select(image,train,m,2000)
-    network1 = BLASDPB.gradient(image1,network,train1)
-    network2 = BLASDPB.learning(network,network1,:adagrad)
-    y = BLASDPB.forward(image1,network2)
-    loss = BLASDPB.loss(y,train1,:cross)
-    BLASDP.print(loss)
-    BLASDP.newline()
+    {image1,train1} = DPB.random_select(image,train,m,2000)
+    network1 = DPB.gradient(image1,network,train1)
+    network2 = DPB.learning(network,network1,:adagrad)
+    y = DPB.forward(image1,network2)
+    loss = DPB.loss(y,train1,:cross)
+    DP.print(loss)
+    DP.newline()
     adagrad1(image,network2,train,m,n-1)
   end
 
@@ -121,20 +121,20 @@ defmodule Test do
     test_label = MNIST.test_label(1000)
     IO.puts("ready")
     network1 = adam1(image,network,label,m,n)
-    correct = BLASDPB.accuracy(test_image,network1,test_label)
+    correct = DPB.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
     IO.puts(correct / 1000)
   end
 
   def adam1(_,network,_,_,0) do network end
   def adam1(image,network,train,m,n) do
-    {image1,train1} = BLASDPB.random_select(image,train,m,2000)
-    network1 = BLASDPB.gradient(image1,network,train1)
-    network2 = BLASDPB.learning(network,network1,:adam)
-    y = BLASDPB.forward(image1,network2)
-    loss = BLASDPB.loss(y,train1,:cross)
-    BLASDP.print(loss)
-    BLASDP.newline()
+    {image1,train1} = DPB.random_select(image,train,m,2000)
+    network1 = DPB.gradient(image1,network,train1)
+    network2 = DPB.learning(network,network1,:adam)
+    y = DPB.forward(image1,network2)
+    loss = DPB.loss(y,train1,:cross)
+    DP.print(loss)
+    DP.newline()
     adam1(image,network2,train,m,n-1)
   end
 
@@ -158,8 +158,8 @@ defmodule Test do
                              [0.2,0.1,0.3]]])
     tt = Cmatrix.to_matrex([[0,1],[1,0],[1,0]])
     network = check_network(0)
-    network1 = BLASDPB.numerical_gradient(dt,network,tt,:cross)
-    network2 = BLASDPB.gradient(dt,network,tt)
+    network1 = DPB.numerical_gradient(dt,network,tt,:cross)
+    network2 = DPB.gradient(dt,network,tt)
     IO.inspect(network1)
     IO.inspect(network2)
     true

@@ -1,8 +1,5 @@
 Deep Learning with elixir
 This project is called Deep Pipe(DP)
-I am making a BLAS version now. 
-Simple matrix calculation can not provide practical speed.
-Please wait.
 
 Network example (See test.ex)
 
@@ -24,9 +21,8 @@ Usage:
 module DP is Deep Pipe(DP) module
 module DPB is DP for batch
 module DPP is DP for parallel
-module Tensor is code for CNN data operation
-module Dmatrix is code for Matrix
-module Pmatrix is code for Matrix product in paralell
+module CTensor is code for CNN data operation
+module Cmatrix is code for Matrix
 module MNIST is code for MNIST data set
 module Time is time/1 for measure execution time
 

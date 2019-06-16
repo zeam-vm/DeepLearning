@@ -1,22 +1,22 @@
 #--------------
 # Deep Pipe for CBLAS Matrex
 # now constructing
-defmodule BLASDPB do
+defmodule DPB do
   # y=result data t=train_data f=error function
   def loss(y,t,:cross) do
     y1 = Matrex.to_list_of_lists(y)
     t1 = Matrex.to_list_of_lists(t)
-    batch_error(y1,t1,fn(x,y) -> BLASDP.cross_entropy(x,y) end)
+    batch_error(y1,t1,fn(x,y) -> DP.cross_entropy(x,y) end)
   end
   def loss(y,t,:square) do
     y1 = Matrex.to_list_of_lists(y)
     t1 = Matrex.to_list_of_lists(t)
-    batch_error(y1,t1,fn(x,y) -> BLASDP.mean_square(x,y) end)
+    batch_error(y1,t1,fn(x,y) -> DP.mean_square(x,y) end)
   end
   def loss(y,t) do
     y1 = Matrex.to_list_of_lists(y)
     t1 = Matrex.to_list_of_lists(t)
-    batch_error(y1,t1,fn(x,y) -> BLASDP.mean_square(x,y) end)
+    batch_error(y1,t1,fn(x,y) -> DP.mean_square(x,y) end)
   end
 
   defp batch_error(y,t,f) do
@@ -53,7 +53,7 @@ defmodule BLASDPB do
       x1 = Ctensor.apply_function(x,f)
       forward(x1,rest)
     else
-      x1 = BLASDP.apply_function(x,f)
+      x1 = DP.apply_function(x,f)
       forward(x1,rest)
     end
   end
@@ -239,7 +239,7 @@ defmodule BLASDPB do
       l1 = Ctensor.emult(l,Ctensor.apply_function(u,g))
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     else
-      l1 = Cmatrix.emult(l,BLASDP.apply_function(u,g))
+      l1 = Cmatrix.emult(l,DP.apply_function(u,g))
       backpropagation(l1,rest,us,[{:function,f,g}|res])
     end
   end
@@ -249,12 +249,12 @@ defmodule BLASDPB do
   end
   defp backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
     {n,_} = l[:size]
-    b1 = Cmatrix.reduce(l) |> BLASDP.apply_function(fn(x) -> x/n end)
+    b1 = Cmatrix.reduce(l) |> DP.apply_function(fn(x) -> x/n end)
     backpropagation(l,rest,us,[{:bias,b1,lr,v}|res])
   end
   defp backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
     {n,_} = l[:size]
-    w1 = Cmatrix.mult(Cmatrix.transpose(u),l) |> BLASDP.apply_function(fn(x) -> x/n end)
+    w1 = Cmatrix.mult(Cmatrix.transpose(u),l) |> DP.apply_function(fn(x) -> x/n end)
     l1 = Cmatrix.mult(l,Cmatrix.transpose(w))
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end
@@ -328,16 +328,16 @@ defmodule BLASDPB do
   #--------Adam--------------
   def learning([],_,:adam) do [] end
   def learning([{:weight,w,lr,mv}|rest],[{:weight,w1,_,_}|rest1],:adam) do
-    mv1 = Dmatrix.adammv(mv,w1)
-    [{:weight,Dmatrix.adam(w,mv1,lr),lr,mv1}|learning(rest,rest1,:adam)]
+    mv1 = Cmatrix.adammv(mv,w1)
+    [{:weight,Cmatrix.adam(w,mv1,lr),lr,mv1}|learning(rest,rest1,:adam)]
   end
   def learning([{:bias,w,lr,mv}|rest],[{:bias,w1,_,_}|rest1],:adam) do
-    mv1 = Dmatrix.adammv(mv,w1)
-    [{:bias,Dmatrix.adam(w,mv1,lr),lr,mv1}|learning(rest,rest1,:adam)]
+    mv1 = Cmatrix.adammv(mv,w1)
+    [{:bias,Cmatrix.adam(w,mv1,lr),lr,mv1}|learning(rest,rest1,:adam)]
   end
   def learning([{:filter,w,st,lr,mv}|rest],[{:filter,w1,st,_,_}|rest1],:adam) do
-    mv1 = Dmatrix.adammv(mv,w1)
-    [{:filter,Dmatrix.adam(w,mv1,lr),st,lr,mv1}|learning(rest,rest1,:adam)]
+    mv1 = Cmatrix.adammv(mv,w1)
+    [{:filter,Cmatrix.adam(w,mv1,lr),st,lr,mv1}|learning(rest,rest1,:adam)]
   end
   def learning([network|rest],[_|rest1],:adam) do
     [network|learning(rest,rest1,:adam)]
