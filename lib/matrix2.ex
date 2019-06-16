@@ -420,7 +420,6 @@ defmodule Cmatrix do
     end
   end
 
-  """
   def adam_init(w) do
     if !is_list(w) do
       {r,c} = w[:size]
@@ -432,6 +431,7 @@ defmodule Cmatrix do
 
   def adammv(mv,grad) do
     mv1 = adam_init(mv)
+    adammv1(mv1,grad)
   end
 
   def adammv1([],[]) do [] end
@@ -464,5 +464,5 @@ defmodule Cmatrix do
     v1 = v/(1-beta2)
     [w-lr/(:math.sqrt(v1)+epsilon)*m1|adam1(ws,mvs,lr)]
   end
-  """
+
 end

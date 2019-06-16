@@ -6,17 +6,17 @@ defmodule BLASDPB do
   def loss(y,t,:cross) do
     y1 = Matrex.to_list_of_lists(y)
     t1 = Matrex.to_list_of_lists(t)
-    batch_error(y1,t1,fn(x,y) -> DP.cross_entropy(x,y) end)
+    batch_error(y1,t1,fn(x,y) -> BLASDP.cross_entropy(x,y) end)
   end
   def loss(y,t,:square) do
     y1 = Matrex.to_list_of_lists(y)
     t1 = Matrex.to_list_of_lists(t)
-    batch_error(y1,t1,fn(x,y) -> DP.mean_square(x,y) end)
+    batch_error(y1,t1,fn(x,y) -> BLASDP.mean_square(x,y) end)
   end
   def loss(y,t) do
     y1 = Matrex.to_list_of_lists(y)
     t1 = Matrex.to_list_of_lists(t)
-    batch_error(y1,t1,fn(x,y) -> DP.mean_square(x,y) end)
+    batch_error(y1,t1,fn(x,y) -> BLASDP.mean_square(x,y) end)
   end
 
   defp batch_error(y,t,f) do
