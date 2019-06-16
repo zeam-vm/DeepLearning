@@ -31,30 +31,22 @@ Now I'm testing small data set.
 expample:
 iex(1)> require Time
 
+iex(1)> require(Time)
 Time
-iex(2)> Time.time(Test.adagrad(100,50))
+iex(2)> Time.time(Test.adagrad(30,100))
 preparing data
 ready
-0.44383196477296905
-0.37511510344740406
-0.42960276053222174
-0.352539961358792
-0.2861907950783934
-0.21772105559847485
-0.1880808136708525
-0.14605224305760664
+2.866287227629866
+2.5600212240059506
 ...
-0.016682469588708566
-0.019254450344041836
-0.00594231528389093
-0.013773451908515
-0.019834342678945693
-accuracy rate = 0.88
-"time: 202819950 micro second"
+0.04318082027257467
+0.029026173275906994
+0.03131037967594155
+0.06550367669302301
+accuracy rate = 0.879
+"time: 55248299 micro second"
 "-------------"
 :ok
-
->
 
 specification:
 
@@ -110,7 +102,7 @@ learning(network,gradient)  update with sgd
 learning(network,gradient,:sgd)
 learning(network,gradient,:momentum) update with momentum method
 learning(network,gradient,:adagrad) update with adagrad method
-learning(network,gradient,:adam) update with adam method
+learning(network,gradient,:adam) update with adam method <- under constructing
 
 print/1 print data
 newline/0 print LF
