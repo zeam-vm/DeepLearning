@@ -1,4 +1,5 @@
-# Deep Pipe
+#--------------
+# Deep Pipe for CBLAS Matrex
 defmodule DP do
   def stop() do
     raise("stop")
@@ -93,38 +94,79 @@ defmodule DP do
     Matrex.apply(x,f)
   end
 
+  # y=result data t=train_data f=error function
+  def loss(y,t,:cross) do
+    y1 = Matrex.to_list_of_lists(y)
+    t1 = Matrex.to_list_of_lists(t)
+    batch_error(y1,t1,fn(x,y) -> cross_entropy(x,y) end)
+  end
+  def loss(y,t,:square) do
+    y1 = Matrex.to_list_of_lists(y)
+    t1 = Matrex.to_list_of_lists(t)
+    batch_error(y1,t1,fn(x,y) -> mean_square(x,y) end)
+  end
+  def loss(y,t) do
+    y1 = Matrex.to_list_of_lists(y)
+    t1 = Matrex.to_list_of_lists(t)
+    batch_error(y1,t1,fn(x,y) -> mean_square(x,y) end)
+  end
+
+  defp batch_error(y,t,f) do
+    batch_error1(y,t,f,0) / length(y)
+  end
+
+  defp batch_error1([],[],_,res) do res end
+  defp batch_error1([y|ys],[t|ts],f,res) do
+    batch_error1(ys,ts,f,f.([y],[t])+res)
+  end
+
   # forward
+  def is_tensor(x) do
+    is_list(x)
+  end
+
+  def is_matrix(x) do
+    !is_list(x)
+  end
+
   def forward(x,[]) do x end
   def forward(x,[{:weight,w,_,_}|rest]) do
     x1 = Cmatrix.mult(x,w)
     forward(x1,rest)
   end
   def forward(x,[{:bias,b,_,_}|rest]) do
-    x1 = Cmatrix.add(x,b)
+    {r,_} = x[:size]
+    b1 = Cmatrix.expand(b,r)
+    x1 = Cmatrix.add(x,b1)
     forward(x1,rest)
   end
   def forward(x,[{:function,f,_}|rest]) do
-    x1 = apply_function(x,f)
-    forward(x1,rest)
+    if is_tensor(x) do
+      x1 = Ctensor.apply_function(x,f)
+      forward(x1,rest)
+    else
+      x1 = apply_function(x,f)
+      forward(x1,rest)
+    end
   end
   def forward(x,[{:softmax,f,_}|rest]) do
-    x1 = f.(x)
+    x1 = Cmatrix.apply_row(x,f)
     forward(x1,rest)
   end
   def forward(x,[{:filter,w,st,_,_}|rest]) do
-    x1 = Cmatrix.convolute(x,w,st)
+    x1 = Ctensor.convolute(x,w,st)
     forward(x1,rest)
   end
   def forward(x,[{:padding,st}|rest]) do
-    x1 = Cmatrix.pad(x,st)
+    x1 = Ctensor.pad(x,st)
     forward(x1,rest)
   end
   def forward(x,[{:pooling,st}|rest]) do
-    x1 = Cmatrix.pool(x,st)
+    x1 = Ctensor.pool(x,st)
     forward(x1,rest)
   end
   def forward(x,[{:flatten}|rest]) do
-    x1 = Cmatrix.flatten(x)
+    x1 = Ctensor.flatten(x)
     forward(x1,rest)
   end
 
@@ -136,32 +178,49 @@ defmodule DP do
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:bias,b,_,_}|rest],res) do
-    x1 = Cmatrix.add(x,b)
+    {r,_} = x[:size]
+    b1 = Cmatrix.expand(b,r)
+    x1 = Cmatrix.add(x,b1)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:function,f,_}|rest],res) do
-    x1 = apply_function(x,f)
+    if is_tensor(x) do
+      x1 = Ctensor.apply_function(x,f)
+      forward_for_back(x1,rest,[x1|res])
+    else
+      x1 = Cmatrix.apply_function(x,f)
+      forward_for_back(x1,rest,[x1|res])
+    end
+  end
+  def forward_for_back(x,[{:softmax,f,_}|rest],res) do
+    x1 = Cmatrix.apply_row(x,f)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:filter,w,st,_,_}|rest],res) do
-    x1 = Cmatrix.convolute(x,w,st)
+    x1 = Ctensor.convolute(x,w,st)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:padding,st}|rest],res) do
-    x1 = Cmatrix.pad(x,st)
+    x1 = Ctensor.pad(x,st)
     forward_for_back(x1,rest,[x1|res])
   end
   def forward_for_back(x,[{:pooling,st}|rest],[_|res]) do
-    x1 = Cmatrix.pool(x,st)
-    x2 = Cmatrix.sparse(x,st)
+    x1 = Ctensor.pool(x,st)
+    x2 = Ctensor.sparse(x,st)
     forward_for_back(x1,rest,[x1,x2|res])
   end
   def forward_for_back(x,[{:flatten}|rest],res) do
-    x1 = Cmatrix.flatten(x)
+    x1 = Ctensor.flatten(x)
     forward_for_back(x1,rest,[x1|res])
   end
 
   # numerical gradient
+  def numerical_gradient(x,network,t,:square) do
+    numerical_gradient(x,network,t)
+  end
+  def numerical_gradient(x,network,t,:cross) do
+    numerical_gradient1(x,network,t,[],[],:cross)
+  end
   def numerical_gradient(x,network,t) do
     numerical_gradient1(x,network,t,[],[])
   end
@@ -177,9 +236,9 @@ defmodule DP do
     w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest)
     numerical_gradient1(x,rest,t,[{:weight,w1,lr,v}|before],[{:weight,w1,lr,v}|res])
   end
-  defp numerical_gradient1(x,[{:bias,w,lr}|rest],t,before,res) do
-    w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr},rest)
-    numerical_gradient1(x,rest,t,[{:bias,w,lr}|before],[:bias,w1,lr|res])
+  defp numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res) do
+    w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr,v},rest)
+    numerical_gradient1(x,rest,t,[{:bias,w,lr,v}|before],[{:bias,w1,lr,v}|res])
   end
   defp numerical_gradient1(x,[y|rest],t,before,res) do
     numerical_gradient1(x,rest,t,[y|before],[y|res])
@@ -190,6 +249,7 @@ defmodule DP do
     Enum.map(1..r,
       fn(x1) -> Enum.map(1..c,
                   fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest) end) end)
+    |> Matrex.new()
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest) do
     h = 0.0001
@@ -198,7 +258,7 @@ defmodule DP do
     network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (mean_square(y1,t) - mean_square(y0,t)) / h
+    (loss(y1,t,:square) - loss(y0,t,:square)) / h
   end
   defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest) do
     h = 0.0001
@@ -207,8 +267,54 @@ defmodule DP do
     network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
     y0 = forward(x,network0)
     y1 = forward(x,network1)
-    (mean_square(y1,t) - mean_square(y0,t)) / h
+    (loss(y1,t,:square) - loss(y0,t,:square)) / h
   end
+
+  defp numerical_gradient1(_,[],_,_,res,:cross) do
+    Enum.reverse(res)
+  end
+  defp numerical_gradient1(x,[{:filter,w,st,lr,v}|rest],t,before,res,:cross) do
+    w1 = numerical_gradient_matrix(x,w,t,before,{:filter,w,st,lr,v},rest)
+    numerical_gradient1(x,rest,t,[{:filter,w,st,lr,v}|before],[{:filter,w1,st,lr,v}|res],:cross)
+  end
+  defp numerical_gradient1(x,[{:weight,w,lr,v}|rest],t,before,res,:cross) do
+    w1 = numerical_gradient_matrix(x,w,t,before,{:weight,w,lr,v},rest,:cross)
+    numerical_gradient1(x,rest,t,[{:weight,w,lr,v}|before],[{:weight,w1,lr,v}|res],:cross)
+  end
+  defp numerical_gradient1(x,[{:bias,w,lr,v}|rest],t,before,res,:cross) do
+    w1 = numerical_gradient_matrix(x,w,t,before,{:bias,w,lr,v},rest,:cross)
+    numerical_gradient1(x,rest,t,[{:bias,w,lr,v}|before],[{:bias,w1,lr,v}|res],:cross)
+  end
+  defp numerical_gradient1(x,[y|rest],t,before,res,:cross) do
+    numerical_gradient1(x,rest,t,[y|before],[y|res],:cross)
+  end
+  # calc numerical gradient of filter,weigth,bias matrix
+  defp numerical_gradient_matrix(x,w,t,before,now,rest,:cross) do
+    {r,c} = w[:size]
+    Enum.map(1..r,
+      fn(x1) -> Enum.map(1..c,
+                  fn(y1) -> numerical_gradient_matrix1(x,t,x1,y1,before,now,rest,:cross) end) end)
+    |> Matrex.new()
+  end
+  defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,lr,v},rest,:cross) do
+    h = 0.0001
+    w1 = Cmatrix.diff(w,r,c,h)
+    network0 = Enum.reverse(before) ++ [{type,w,lr,v}] ++ rest
+    network1 = Enum.reverse(before) ++ [{type,w1,lr,v}] ++ rest
+    y0 = forward(x,network0)
+    y1 = forward(x,network1)
+    (loss(y1,t,:cross) - loss(y0,t,:cross)) / h
+  end
+  defp numerical_gradient_matrix1(x,t,r,c,before,{type,w,st,lr,v},rest,:cross) do
+    h = 0.0001
+    w1 = Cmatrix.diff(w,r,c,h)
+    network0 = Enum.reverse(before) ++ [{type,w,st,lr,v}] ++ rest
+    network1 = Enum.reverse(before) ++ [{type,w1,st,lr,v}] ++ rest
+    y0 = forward(x,network0)
+    y1 = forward(x,network1)
+    (loss(y1,t,:cross) - loss(y0,t,:cross)) / h
+  end
+
 
   # gradient with backpropagation
   def gradient(x,network,t) do
@@ -219,68 +325,143 @@ defmodule DP do
   end
 
   #backpropagation
-  def backpropagation(_,[],_,res) do res end
-  def backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
-    l1 = Cmatrix.emult(l,apply_function(u,g))
-    backpropagation(l1,rest,us,[{:function,f,g}|res])
+  defp backpropagation(_,[],_,res) do res end
+  defp backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
+    if is_tensor(u) do
+      l1 = Ctensor.emult(l,Ctensor.apply_function(u,g))
+      backpropagation(l1,rest,us,[{:function,f,g}|res])
+    else
+      l1 = Cmatrix.emult(l,apply_function(u,g))
+      backpropagation(l1,rest,us,[{:function,f,g}|res])
+    end
   end
-  def backpropagation(l,[{:softmax,f,g}|rest],[_|us],res) do
+  defp backpropagation(l,[{:softmax,f,g}|rest],[_|us],res) do
+    #l1 = Matrex.apply(l,fn(x) -> 10*x end)
     backpropagation(l,rest,us,[{:softmax,f,g}|res])
   end
-  def backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
-    backpropagation(l,rest,us,[{:bias,l,lr,v}|res])
+  defp backpropagation(l,[{:bias,_,lr,v}|rest],[_|us],res) do
+    {n,_} = l[:size]
+    b1 = Cmatrix.reduce(l) |> apply_function(fn(x) -> x/n end)
+    backpropagation(l,rest,us,[{:bias,b1,lr,v}|res])
   end
-  def backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
-    w1 = Cmatrix.mult(Cmatrix.transpose(u),l)
+  defp backpropagation(l,[{:weight,w,lr,v}|rest],[u|us],res) do
+    {n,_} = l[:size]
+    w1 = Cmatrix.mult(Cmatrix.transpose(u),l) |> apply_function(fn(x) -> x/n end)
     l1 = Cmatrix.mult(l,Cmatrix.transpose(w))
     backpropagation(l1,rest,us,[{:weight,w1,lr,v}|res])
   end
-  def backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
-    w1 = Cmatrix.gradient_filter(u,w,l)
-    l1 = Cmatrix.deconvolute(u,w,l,st)
+  defp backpropagation(l,[{:filter,w,st,lr,v}|rest],[u|us],res) do
+    w1 = Ctensor.gradient_filter(u,w,l) |> Ctensor.average
+    l1 = Ctensor.deconvolute(u,w,l,st)
     backpropagation(l1,rest,us,[{:filter,w1,st,lr,v}|res])
   end
-  def backpropagation(l,[{:pooling,st}|rest],[u|us],res) do
-    l1 = Cmatrix.restore(u,l,st)
+  defp backpropagation(l,[{:pooling,st}|rest],[u|us],res) do
+    l1 = Ctensor.restore(u,l,st)
     backpropagation(l1,rest,us,[{:pooling,st}|res])
   end
-  def backpropagation(l,[{:padding,st}|rest],[_|us],res) do
-    l1 = Cmatrix.remove(l,st)
+  defp backpropagation(l,[{:padding,st}|rest],[_|us],res) do
+    l1 = Ctensor.remove(l,st)
     backpropagation(l1,rest,us,[{:padding,st}|res])
   end
-  def backpropagation(l,[{:flatten}|rest],[u|us],res) do
-    {r,c} = u[:size]
-    l1 = Cmatrix.structure(l,r,c)
+  defp backpropagation(l,[{:flatten}|rest],[u|us],res) do
+    {r,c} = hd(u)[:size]
+    l1 = Ctensor.structure(l,r,c)
     backpropagation(l1,rest,us,[{:flatten}|res])
   end
 
-  # update wight and bias
-  # learning(network,gradient) -> updated network
+  #--------sgd----------
   def learning([],_) do [] end
-  def learning([{:weight,w,_,_}|rest],[{:weight,w1,lr1,v}|rest1]) do
-    [{:weight,Cmatrix.update(w,w1,lr1),lr1,v}|learning(rest,rest1)]
+  def learning([{:weight,w,lr,v}|rest],[{:weight,w1,_,_}|rest1]) do
+    [{:weight,Cmatrix.update(w,w1,lr),lr,v}|learning(rest,rest1)]
   end
-  def learning([{:bias,w,_,_}|rest],[{:bias,w1,lr1,v}|rest1]) do
-    [{:bias,Cmatrix.update(w,w1,lr1),lr1,v}|learning(rest,rest1)]
+  def learning([{:bias,w,lr,v}|rest],[{:bias,w1,_,_}|rest1]) do
+    [{:bias,Cmatrix.update(w,w1,lr),lr,v}|learning(rest,rest1)]
   end
-  def learning([{:filter,w,st,_,_}|rest],[{:filter,w1,st,lr1,v}|rest1]) do
-    [{:filter,Cmatrix.update(w,w1,lr1),st,lr1,v}|learning(rest,rest1)]
+  def learning([{:filter,w,st,lr,v}|rest],[{:filter,w1,st,_,_}|rest1]) do
+    [{:filter,Cmatrix.update(w,w1,lr),st,lr,v}|learning(rest,rest1)]
   end
   def learning([network|rest],[_|rest1]) do
     [network|learning(rest,rest1)]
   end
+  #--------momentum-------------
+  def learning([],_,:momentum) do [] end
+  def learning([{:weight,w,lr,v}|rest],[{:weight,w1,_,_}|rest1],:momentum) do
+    v1 = Cmatrix.momentum(v,w1,lr)
+    [{:weight,Cmatrix.add(w,v1),lr,v1}|learning(rest,rest1,:momentum)]
+  end
+  def learning([{:bias,w,lr,v}|rest],[{:bias,w1,_,_}|rest1],:momentum) do
+    v1 = Cmatrix.momentum(v,w1,lr)
+    [{:bias,Cmatrix.add(w,v1),lr,v1}|learning(rest,rest1,:momentum)]
+  end
+  def learning([{:filter,w,st,lr,v}|rest],[{:filter,w1,st,_,_}|rest1],:momentum) do
+    v1 = Cmatrix.momentum(v,w1,lr)
+    [{:filter,Cmatrix.add(w,v1),st,lr,v1}|learning(rest,rest1,:momentum)]
+  end
+  def learning([network|rest],[_|rest1],:momentum) do
+    [network|learning(rest,rest1,:momentum)]
+  end
+  #--------AdaGrad--------------
+  def learning([],_,:adagrad) do [] end
+  def learning([{:weight,w,lr,h}|rest],[{:weight,w1,_,_}|rest1],:adagrad) do
+    h1 = Cmatrix.add(h,Cmatrix.emult(w1,w1))
+    [{:weight,Cmatrix.adagrad(w,w1,h1,lr),lr,h1}|learning(rest,rest1,:adagrad)]
+  end
+  def learning([{:bias,w,lr,h}|rest],[{:bias,w1,_,_}|rest1],:adagrad) do
+    h1 = Cmatrix.add(h,Cmatrix.emult(w1,w1))
+    [{:bias,Cmatrix.adagrad(w,w1,h1,lr),lr,h1}|learning(rest,rest1,:adagrad)]
+  end
+  def learning([{:filter,w,st,lr,h}|rest],[{:filter,w1,st,_,_}|rest1],:adagrad) do
+    h1 = Cmatrix.add(h,Cmatrix.emult(w1,w1))
+    [{:filter,Cmatrix.adagrad(w,w1,h1,lr),st,lr,h1}|learning(rest,rest1,:adagrad)]
+  end
+  def learning([network|rest],[_|rest1],:adagrad) do
+    [network|learning(rest,rest1,:adagrad)]
+  end
+  #--------Adam--------------
+  def learning([],_,:adam) do [] end
+  def learning([{:weight,w,lr,mv}|rest],[{:weight,w1,_,_}|rest1],:adam) do
+    mv1 = Cmatrix.adammv(mv,w1)
+    [{:weight,Cmatrix.adam(w,mv1,lr),lr,mv1}|learning(rest,rest1,:adam)]
+  end
+  def learning([{:bias,w,lr,mv}|rest],[{:bias,w1,_,_}|rest1],:adam) do
+    mv1 = Cmatrix.adammv(mv,w1)
+    [{:bias,Cmatrix.adam(w,mv1,lr),lr,mv1}|learning(rest,rest1,:adam)]
+  end
+  def learning([{:filter,w,st,lr,mv}|rest],[{:filter,w1,st,_,_}|rest1],:adam) do
+    mv1 = Cmatrix.adammv(mv,w1)
+    [{:filter,Cmatrix.adam(w,mv1,lr),st,lr,mv1}|learning(rest,rest1,:adam)]
+  end
+  def learning([network|rest],[_|rest1],:adam) do
+    [network|learning(rest,rest1,:adam)]
+  end
+
 
   # print predict of test data
-  def accuracy(_,_,_,0,correct) do
-    correct
+  def accuracy(image,network,label) do
+    forward(image,network) |> Cmatrix.to_list() |> score(label,0)
   end
-  def accuracy([image|irest],network,[label|lrest],n,correct) do
-    dt = MNIST.onehot_to_num(forward(image,network))
-    if dt != label do
-      accuracy(irest,network,lrest,n-1,correct)
+
+  defp score([],[],correct) do correct end
+  defp score([x|xs],[l|ls],correct) do
+    if MNIST.onehot_to_num(x) == l do
+      score(xs,ls,correct+1)
     else
-      accuracy(irest,network,lrest,n-1,correct+1)
+      score(xs,ls,correct)
     end
+  end
+
+
+  # select randome data size of m , range from 0 to n
+  def random_select(image,train,m,n) do
+    random_select1(image,train,[],[],m,n)
+  end
+
+  defp random_select1(_,_,res1,res2,0,_) do {res1,res2 |> Matrex.new()} end
+  defp random_select1(image,train,res1,res2,m,n) do
+    i = :rand.uniform(n)
+    image1 = Enum.at(image,i)
+    train1 = Enum.at(train,i)
+    random_select1(image,train,[image1|res1],[train1|res2],m-1,n)
   end
 
   def save(file,network) do
