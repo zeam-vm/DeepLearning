@@ -106,9 +106,9 @@ learning(network,gradient,:adam) update with adam method <- under constructing
 
 print/1 print data
 newline/0 print LF
-save/2 save network data to file
+save/2 save network data to file <- under constructing
 save(filename,network)
-load/1 load network data from file
+load/1 load network data from file <- under constructing
 load(filename)
 
 mean_square/2 loss function
