@@ -4,8 +4,8 @@ defmodule Test do
   # for sgd test
   defnetwork init_network2(_x) do
     _x |> f(5,5) |> flatten
-    |> w(576,300) |> b(300) |> sigmoid
-    |> w(300,100) |> b(100) |> sigmoid
+    |> w(576,300) |> b(300) |> relu
+    |> w(300,100) |> b(100) |> relu
     |> w(100,10) |> b(10) |> softmax
   end
 
@@ -19,10 +19,10 @@ defmodule Test do
 
   # for adagrad test
   defnetwork init_network4(_x) do
-    _x |> f(5,5,0.03) |> flatten
-    |> w(576,300,0.03) |> b(300,0.03) |> relu
-    |> w(300,100,0.01) |> b(100,0.01) |> relu
-    |> w(100,10,0.005) |> b(10,0.005) |> softmax
+    _x |> f(10,10,0.4) |> flatten
+    |> w(361,300,0.04) |> b(300,0.04) |> relu
+    |> w(300,100,0.02) |> b(100,0.02) |> relu
+    |> w(100,10,0.01) |> b(10,0.01) |> softmax
   end
 
   # for adam test
