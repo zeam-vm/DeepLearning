@@ -33,7 +33,7 @@ iex(1)> require Time
 
 iex(1)> require(Time)
 Time
-iex(2)> Time.time(Test.adagrad(30,100))
+iex(2)> Time.time(Test.momentum(30,100))
 preparing data
 ready
 2.866287227629866

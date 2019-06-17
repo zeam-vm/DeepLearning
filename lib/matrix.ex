@@ -167,6 +167,13 @@ defmodule Cmatrix do
   def new(r,c) do
     Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> Cmatrix.box_muller() end)
   end
+
+  """
+  def new(r,c,x) do
+    Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> :rand.uniform()*x end)
+  end
+  """
+
   def new(r,c,x) do
     Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> Cmatrix.box_muller()*x end)
   end
