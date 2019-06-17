@@ -65,13 +65,13 @@ defmodule Test do
     image = MNIST.train_image(3000) |> Ctensor.to_matrex
     label = MNIST.train_label_onehot(3000)
     network = init_network3(0)
-    test_image = MNIST.test_image(1000) |> Ctensor.to_matrex
-    test_label = MNIST.test_label(1000)
+    test_image = MNIST.test_image(10000) |> Ctensor.to_matrex
+    test_label = MNIST.test_label(10000)
     IO.puts("ready")
     network1 = momentum1(image,network,label,m,n)
     correct = DP.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
-    IO.puts(correct / 1000)
+    IO.puts(correct / 10000)
   end
 
   def momentum1(_,network,_,_,0) do network end
@@ -88,8 +88,8 @@ defmodule Test do
 
   def adagrad(m,n) do
     IO.puts("preparing data")
-    image = MNIST.train_image(60000) |> Ctensor.to_matrex
-    label = MNIST.train_label_onehot(60000)
+    image = MNIST.train_image(3000) |> Ctensor.to_matrex
+    label = MNIST.train_label_onehot(3000)
     network = init_network4(0)
     test_image = MNIST.test_image(1000) |> Ctensor.to_matrex
     test_label = MNIST.test_label(1000)
@@ -113,7 +113,7 @@ defmodule Test do
   end
 
   def adagrad2(image,network,train,size) do
-    if length(image) < size do
+    if length(image) <= size do
       train1 = train |> Cmatrix.to_matrex
       network1 = DP.gradient(image,network,train1)
       network2 = DP.learning(network,network1,:adagrad)
