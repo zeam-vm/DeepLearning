@@ -148,15 +148,15 @@ defmodule Test do
     test_image = MNIST.test_image(10000) |> Ctensor.to_matrex
     test_label = MNIST.test_label(10000)
     IO.puts("ready")
-    network1 = all1(image,network,label,m,n)
+    network1 = all1(image,network,label,m,n,test_image,test_label)
     correct = DP.accuracy(test_image,network1,test_label)
     IO.write("accuracy rate = ")
     IO.puts(correct / 10000)
   end
 
 
-  def all1(_,network,_,_,0) do network end
-  def all1(image,network,train,m,n) do
+  def all1(_,network,_,_,0,_,_) do network end
+  def all1(image,network,train,m,n,test_image,test_label) do
     network1 = all2(image,network,train,m)
     image1 = Enum.take(image,100)
     train1 = Enum.take(train,100) |> Cmatrix.to_matrex
@@ -164,7 +164,10 @@ defmodule Test do
     loss = DP.loss(y,train1,:cross)
     DP.print(loss)
     DP.newline()
-    all1(image,network1,train,m,n-1)
+    correct = DP.accuracy(test_image,network1,test_label)
+    IO.write("accuracy rate = ")
+    IO.puts(correct / 10000)
+    all1(image,network1,train,m,n-1,test_image,test_label)
   end
 
   def all2(image,network,train,size) do
