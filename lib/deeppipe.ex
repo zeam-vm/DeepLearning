@@ -469,7 +469,7 @@ defmodule DP do
     random_select1(image,train,[],[],m,n,:flatten)
   end
 
-  defp random_select1(_,_,res1,res2,0,_,:flatten) do {res1 |> Matrex.new() ,res2 |> Matrex.new()} end
+  defp random_select1(_,_,res1,res2,0,_,:flatten) do {res1 |> Matrex.new(),res2 |> Matrex.new()} end
   defp random_select1(image,train,res1,res2,m,n,:flatten) do
     i = :rand.uniform(n)
     image1 = Enum.at(image,i)
