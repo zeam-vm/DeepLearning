@@ -87,7 +87,7 @@ pool(st) pooling stradd size is st
 
 module DP
 forward/2 forward calculation for batch data
-forward(x,network) x is data(row_vector) , network
+forward(x,network) x is data(matrix or tensor) , network
 
 numerical_gradient/3 calculate gradient by numerical differentiation
 numerical_gradient(x,network,t) x is data, t is train data, loss function is mean_square

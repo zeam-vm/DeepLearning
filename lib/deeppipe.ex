@@ -464,6 +464,19 @@ defmodule DP do
     random_select1(image,train,[image1|res1],[train1|res2],m-1,n)
   end
 
+  # for DNN
+  def random_select(image,train,m,n,:flatten) do
+    random_select1(image,train,[],[],m,n,:flatten)
+  end
+
+  defp random_select1(_,_,res1,res2,0,_,:flatten) do {res1 |> Matrex.new() ,res2 |> Matrex.new()} end
+  defp random_select1(image,train,res1,res2,m,n,:flatten) do
+    i = :rand.uniform(n)
+    image1 = Enum.at(image,i)
+    train1 = Enum.at(train,i)
+    random_select1(image,train,[image1|res1],[train1|res2],m-1,n,:flatten)
+  end
+
   def save(file,network) do
     File.write(file,inspect(network))
   end

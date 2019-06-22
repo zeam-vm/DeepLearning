@@ -1,6 +1,13 @@
 defmodule Test do
   import Network
 
+  # for DNN test
+  defnetwork init_network1(_x) do
+    _x |> w(784,300,0.01,1) |> b(300) |> relu
+    |> w(300,100,0.01,1) |> b(100) |> relu
+    |> w(100,10,0.01,1) |> b(10) |> softmax
+  end
+
   # for sgd test
   defnetwork init_network2(_x) do
     _x |> f(5,5,0.01,1) |> flatten
@@ -31,6 +38,32 @@ defmodule Test do
     |> w(576,300) |> b(300) |> relu
     |> w(300,100) |> b(100) |> relu
     |> w(100,10) |> b(10) |> softmax
+  end
+
+  def dnn(m,n) do
+    IO.puts("preparing data")
+    image = MNIST.train_image(3000,:flatten)
+    label = MNIST.train_label_onehot(3000)
+    network = init_network1(0)
+    test_image = MNIST.test_image(1000,:flatten) |> Cmatrix.to_matrex
+    test_label = MNIST.test_label(1000)
+    IO.puts("ready")
+    network1 = dnn1(image,network,label,m,n)
+    correct = DP.accuracy(test_image,network1,test_label)
+    IO.write("accuracy rate = ")
+    IO.puts(correct / 1000)
+  end
+
+  def dnn1(_,network,_,_,0) do network end
+  def dnn1(image,network,train,m,n) do
+    {image1,train1} = DP.random_select(image,train,m,2000,:flatten)
+    network1 = DP.gradient(image1,network,train1)
+    network2 = DP.learning(network,network1)
+    y = DP.forward(image1,network2)
+    loss = DP.loss(y,train1,:cross)
+    DP.print(loss)
+    DP.newline()
+    dnn1(image,network2,train,m,n-1)
   end
 
 
