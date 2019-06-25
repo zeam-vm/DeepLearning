@@ -464,7 +464,7 @@ defmodule Cmatrix do
     beta2 = 0.999
     epsilon = 10.0e-8
     [m,v] = mv
-    delta = Matrex.apply(m,v,fn(x,y) -> (x/(1-beta1))/(:math.sqrt(y/1-beta2) + epsilon) end)
+    delta = Matrex.apply(m,v,fn(x,y) -> (x/(1-beta1))/(:math.sqrt(y/(1-beta2)) + epsilon) end)
     Matrex.apply(w,delta,fn(x,y) -> x - lr*y end)
   end
 
