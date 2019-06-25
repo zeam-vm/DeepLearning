@@ -168,12 +168,6 @@ defmodule Cmatrix do
     Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> Cmatrix.box_muller() end)
   end
 
-  """
-  def new(r,c,x) do
-    Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> :rand.uniform()*x end)
-  end
-  """
-
   def new(r,c,x) do
     Matrex.zeros(r,c) |> Matrex.apply(fn(_) -> Cmatrix.box_muller()*x end)
   end
@@ -457,38 +451,21 @@ defmodule Cmatrix do
 
   def adammv(mv,grad) do
     mv1 = adam_init(mv)
-    adammv1(mv1,grad)
-  end
-
-  def adammv1([],[]) do [] end
-  def adammv1([mv|mvs],[g|gs]) do
-    [adammv2(mv,g)|adammv1(mvs,gs)]
-  end
-
-  def adammv2([],[]) do [] end
-  def adammv2([mv|mvs],[g|gs]) do
     beta1 = 0.9
     beta2 = 0.999
-    [m,v] = mv
-    m1 = beta1*m+(1-beta2)*g
-    v1 = beta2*v+(1-beta2)*(g*g)
-    [[m1,v1]|adammv2(mvs,gs)]
+    [m,v] = mv1
+    m1 = Matrex.apply(m,grad,fn(x,y) -> beta1*x + (1-beta1)*y end)
+    v1 = Matrex.apply(v,grad,fn(x,y) -> beta2*x + (1-beta2)*(y*y) end)
+    [m1,v1]
   end
 
-  def adam([],[],_) do [] end
-  def adam([w|ws],[mv|mvs],lr) do
-    [adam1(w,mv,lr)|adam(ws,mvs,lr)]
-  end
-
-  def adam1([],[],_) do [] end
-  def adam1([w|ws],[mv|mvs],lr) do
+  def adam(w,mv,lr) do
     beta1 = 0.9
     beta2 = 0.999
     epsilon = 10.0e-8
     [m,v] = mv
-    m1 = m/(1-beta1)
-    v1 = v/(1-beta2)
-    [w-lr/(:math.sqrt(v1)+epsilon)*m1|adam1(ws,mvs,lr)]
+    delta = Matrex.apply(m,v,fn(x,y) -> (x/(1-beta1))/(:math.sqrt(y/1-beta2) + epsilon) end)
+    Matrex.apply(w,delta,fn(x,y) -> x - lr*y end)
   end
 
 end
