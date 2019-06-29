@@ -140,7 +140,7 @@ defmodule DP do
     x1 = Cmatrix.add(x,b1)
     forward(x1,rest)
   end
-  def forward(x,[{:function,f,_}|rest]) do
+  def forward(x,[{:function,f,_,_}|rest]) do
     if is_tensor(x) do
       x1 = Ctensor.apply_function(x,f)
       forward(x1,rest)
@@ -183,7 +183,7 @@ defmodule DP do
     x1 = Cmatrix.add(x,b1)
     forward_for_back(x1,rest,[x1|res])
   end
-  def forward_for_back(x,[{:function,f,_}|rest],res) do
+  def forward_for_back(x,[{:function,f,_,_}|rest],res) do
     if is_tensor(x) do
       x1 = Ctensor.apply_function(x,f)
       forward_for_back(x1,rest,[x1|res])
@@ -326,13 +326,13 @@ defmodule DP do
 
   #backpropagation
   defp backpropagation(_,[],_,res) do res end
-  defp backpropagation(l,[{:function,f,g}|rest],[u|us],res) do
+  defp backpropagation(l,[{:function,f,g,h}|rest],[u|us],res) do
     if is_tensor(u) do
       l1 = Ctensor.emult(l,Ctensor.apply_function(u,g))
-      backpropagation(l1,rest,us,[{:function,f,g}|res])
+      backpropagation(l1,rest,us,[{:function,f,g,h}|res])
     else
       l1 = Cmatrix.emult(l,apply_function(u,g))
-      backpropagation(l1,rest,us,[{:function,f,g}|res])
+      backpropagation(l1,rest,us,[{:function,f,g,h}|res])
     end
   end
   defp backpropagation(l,[{:softmax,f,g}|rest],[_|us],res) do
@@ -479,7 +479,7 @@ defmodule DP do
 
   def save(file,network) do
     network1 = save1(network)
-    File.write(file,inspect(network1))
+    File.write(file,inspect(network1,limit: :infinity))
   end
 
   def save1([]) do [] end
@@ -491,6 +491,15 @@ defmodule DP do
   end
   def save1([{:filter,w,st,lr,v}|rest]) do
     [{:filter,Cmatrix.to_list(w),st,lr,Cmatrix.to_list(v)}|save1(rest)]
+  end
+  def save1([{:function,_,_,:sigmoid}|rest]) do
+    [{:sigmoid}|save1(rest)]
+  end
+  def save1([{:function,_,_,:relu}|rest]) do
+    [{:relu}|save1(rest)]
+  end
+  def save1([{:softmax,_,_}|rest]) do
+    [{:softmax}|save1(rest)]
   end
   def save1([network|rest]) do
     [network|save1(rest)]
@@ -510,6 +519,15 @@ defmodule DP do
   end
   def load1([{:filter,w,st,lr,v}|rest]) do
     [{:filter,Cmatrix.to_matrex(w),st,lr,Cmatrix.to_matrex(v)}|load1(rest)]
+  end
+  def load1([{:sigmoid}|rest]) do
+    [{:sigmoid,fn(x) -> DP.sigmoid(x) end,fn(x) -> DP.dsigmoid(x) end}|load1(rest)]
+  end
+  def load1([{:relu}|rest]) do
+    [{:relu,fn(x) -> DP.relu(x) end,fn(x) -> DP.relu(x) end}|load1(rest)]
+  end
+  def load1([{:softmax}|rest]) do
+    [{:softmax,fn(x) -> DP.softmax(x) end,fn(x) -> DP.dsoftmax(x) end}|load1(rest)]
   end
   def load1([network|rest]) do
     [network|load1(rest)]
