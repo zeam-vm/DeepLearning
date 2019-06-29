@@ -34,10 +34,10 @@ defmodule Test do
 
   # for adam test
   defnetwork init_network5(_x) do
-    _x |> f(5,5) |> flatten
-    |> w(576,300) |> b(300) |> relu
-    |> w(300,100) |> b(100) |> relu
-    |> w(100,10) |> b(10) |> softmax
+    _x |> f(5,5,0.005) |> flatten
+    |> w(576,300,0.005) |> b(300,0.005) |> relu
+    |> w(300,100,0.005) |> b(100,0.005) |> relu
+    |> w(100,10,0.005) |> b(10,0.005) |> softmax
   end
 
   def dnn(m,n) do
@@ -250,6 +250,17 @@ defmodule Test do
     IO.inspect(network1)
     IO.inspect(network2)
     true
+  end
+
+  defnetwork check_network1(_x) do
+    _x |> f(2,2) |> flatten
+    |> w(2,2) |> b(2) |> softmax
+  end
+  def check_io() do
+    network = check_network1(0)
+    DP.save("test.dp",network)
+    network1 = DP.load("test.dp")
+    network1
   end
 
 end

@@ -478,11 +478,43 @@ defmodule DP do
   end
 
   def save(file,network) do
-    File.write(file,inspect(network))
+    network1 = save1(network)
+    File.write(file,inspect(network1))
   end
 
-  def load(file) do
-    Code.eval_file(file) |> elem(0)
+  def save1([]) do [] end
+  def save1([{:weight,w,lr,v}|rest]) do
+    [{:weight,Cmatrix.to_list(w),lr,Cmatrix.to_list(v)}|save1(rest)]
   end
+  def save1([{:bias,w,lr,v}|rest]) do
+    [{:bias,Cmatrix.to_list(w),lr,Cmatrix.to_list(v)}|save1(rest)]
+  end
+  def save1([{:filter,w,st,lr,v}|rest]) do
+    [{:filter,Cmatrix.to_list(w),st,lr,Cmatrix.to_list(v)}|save1(rest)]
+  end
+  def save1([network|rest]) do
+    [network|save1(rest)]
+  end
+
+
+  def load(file) do
+    Code.eval_file(file) |> elem(0) |> load1
+  end
+
+  def load1([]) do [] end
+  def load1([{:weight,w,lr,v}|rest]) do
+    [{:weight,Cmatrix.to_matrex(w),lr,Cmatrix.to_matrex(v)}|load1(rest)]
+  end
+  def load1([{:bias,w,lr,v}|rest]) do
+    [{:bias,Cmatrix.to_matrex(w),lr,Cmatrix.to_matrex(v)}|load1(rest)]
+  end
+  def load1([{:filter,w,st,lr,v}|rest]) do
+    [{:filter,Cmatrix.to_matrex(w),st,lr,Cmatrix.to_matrex(v)}|load1(rest)]
+  end
+  def load1([network|rest]) do
+    [network|load1(rest)]
+  end
+
+
 
 end
