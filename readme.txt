@@ -60,7 +60,7 @@ bias   {:bias,b,lr,v} b is row vector
 filter {:filter,w,lr,st,v} st is stradd for convolution
 pad    {:pad,n} n is size of padding
 pool   {:pool,st} st is stradd
-function {:function,f,g} f is function, g is differential function
+function {:function,f,g,h} f is function, g is differential function, h is function name
 softmax {:softmax,f,_} f is function, only output layer softmax is set with cross_entropy
 
 module macros
@@ -102,13 +102,13 @@ learning(network,gradient)  update with sgd
 learning(network,gradient,:sgd)
 learning(network,gradient,:momentum) update with momentum method
 learning(network,gradient,:adagrad) update with adagrad method
-learning(network,gradient,:adam) update with adam method <- under constructing
+learning(network,gradient,:adam) update with adam method
 
 print/1 print data
 newline/0 print LF
-save/2 save network data to file <- under constructing
+save/2 save network data to file
 save(filename,network)
-load/1 load network data from file <- under constructing
+load/1 load network data from file
 load(filename)
 
 mean_square/2 loss function
