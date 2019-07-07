@@ -89,6 +89,12 @@ defmodule Network do
       {:weight,Cmatrix.new(unquote(x),unquote(y),unquote(z)),unquote(lr),Cmatrix.zeros(unquote(x),unquote(y))}
     end
   end
+  # rnn
+  def parse({:rnn,_,[x,y,r]},_) do
+    quote do
+      {:rnn,unquote(gen_rnn(x,y,r))}
+    end
+  end
   # bias
   def parse({:b,_,[x]},_) do
     quote do
@@ -130,6 +136,7 @@ defmodule Network do
       {:flatten}
     end
   end
+
   def parse({x,_,nil},_) do x end
   def parse({:|>,_,exp},arg) do
     parse(exp,arg)
@@ -143,6 +150,13 @@ defmodule Network do
   def parse(x,_) do
     :io.write(x)
     IO.puts("Syntax error in defnetwork")
+  end
+
+  def gen_rnn(_,_,0) do [] end
+  def gen_rnn(x,y,r) do
+    quote do
+      [{Cmatrix.new(unquote(x),unquote(y)),Cmatrix.new(1,unquote(y))}|unquote(gen_rnn(x,y,r-1))]
+    end
   end
 
 end

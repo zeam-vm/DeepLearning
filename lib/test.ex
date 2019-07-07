@@ -263,4 +263,8 @@ defmodule Test do
     network1
   end
 
+  defnetwork rnntest(_x) do
+    _x |> rnn(5,4,3) |> softmax
+  end
+
 end
