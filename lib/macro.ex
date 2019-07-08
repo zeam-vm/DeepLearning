@@ -95,6 +95,16 @@ defmodule Network do
       {:rnn,unquote(gen_rnn(x,y,r))}
     end
   end
+  def parse({:rnn,_,[x,y,r,lr]},_) do
+    quote do
+      {:rnn,unquote(gen_rnn(x,y,r)),unquote(lr)}
+    end
+  end
+  def parse({:rnn,_,[x,y,r,lr,z]},_) do
+    quote do
+      {:rnn,unquote(gen_rnn(x,y,z,r)),unquote(lr)}
+    end
+  end
   # bias
   def parse({:b,_,[x]},_) do
     quote do
@@ -155,8 +165,14 @@ defmodule Network do
   def gen_rnn(_,_,0) do [] end
   def gen_rnn(x,y,r) do
     quote do
-      [{Cmatrix.new(unquote(x),unquote(y)),Cmatrix.new(1,unquote(y))}|unquote(gen_rnn(x,y,r-1))]
+      [{Cmatrix.new(unquote(x),unquote(y)),Cmatrix.zeros(1,unquote(y))}|unquote(gen_rnn(x,y,r-1))]
     end
   end
 
+  def gen_rnn(_,_,_,0) do [] end
+  def gen_rnn(x,y,z,r) do
+    quote do
+      [{Cmatrix.new(unquote(x),unquote(y),unquote(z)),Cmatrix.zeros(1,unquote(y))}|unquote(gen_rnn(x,y,z,r-1))]
+    end
+  end
 end
