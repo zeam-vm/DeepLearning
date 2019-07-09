@@ -3,6 +3,12 @@ defmodule Nat do
     str |> String.replace("."," .") |> String.split(" ")
   end
 
+  def wordvec(x) do
+    x
+    |> String.to_charlist
+    |> Enum.map(fn(x) -> (x-96)/26 end)
+  end
+
 end
 
 defmodule RNN do
