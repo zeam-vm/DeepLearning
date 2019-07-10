@@ -182,28 +182,42 @@ defmodule Network do
   def gen_rnn(_,_,0) do [] end
   def gen_rnn(x,y,r) do
     quote do
-      [{Cmatrix.new(unquote(x),unquote(y)),Cmatrix.zeros(1,unquote(y))}|unquote(gen_rnn(x,y,r-1))]
+      [{Cmatrix.new(unquote(x),unquote(y)),
+        Cmatrix.new(unquote(x),unquote(y)),
+        Cmatrix.zeros(1,unquote(y))}|
+      unquote(gen_rnn(x,y,r-1))]
     end
   end
 
+  # [{wx1,wh1,b1},..{wxr,whr,br}]
   def gen_rnn(_,_,_,0) do [] end
   def gen_rnn(x,y,z,r) do
     quote do
-      [{Cmatrix.new(unquote(x),unquote(y),unquote(z)),Cmatrix.zeros(1,unquote(y))}|unquote(gen_rnn(x,y,z,r-1))]
+      [{Cmatrix.new(unquote(x),unquote(y),unquote(z)),
+        Cmatrix.new(unquote(x),unquote(y),unquote(z)),
+        Cmatrix.zeros(1,unquote(y))}|
+      unquote(gen_rnn(x,y,z,r-1))]
     end
   end
 
   def gen_lstm(_,_,0) do [] end
   def gen_lstm(x,y,r) do
     quote do
-      [{Cmatrix.new(unquote(x),unquote(y)),Cmatrix.new(unquote(x),unquote(y)),Cmatrix.new(unquote(x),unquote(y)),Cmatrix.zeros(1,unquote(y))}|unquote(gen_rnn(x,y,r-1))]
+      [{Cmatrix.new(unquote(x),unquote(y*4)),
+        Cmatrix.new(unquote(x),unquote(y*4)),
+        Cmatrix.zeros(unquote(x),unquote(y*4))}|unquote(gen_rnn(x,y,r-1))]
     end
   end
 
+  # wx = wx(f),wx(g),wx(i),wx(o)
+  # wh = wh(f),wh(g),wh(i),wh(o)
+  # [{wx1,wh1,b1},...,{wxr,whr,br}]
   def gen_lstm(_,_,_,0) do [] end
   def gen_lstm(x,y,z,r) do
     quote do
-      [{Cmatrix.new(unquote(x),unquote(y),unquote(z)),Cmatrix.new(unquote(x),unquote(y),unquote(z)),Cmatrix.new(unquote(x),unquote(y),unquote(z)),Cmatrix.zeros(1,unquote(y))}|unquote(gen_rnn(x,y,r-1))]
+      [{Cmatrix.new(unquote(x),unquote(y*4),unquote(z)),
+        Cmatrix.new(unquote(x),unquote(y*4),unquote(z)),
+        Cmatrix.zeros(unquote(x),unquote(y*4))}|unquote(gen_rnn(x,y,r-1))]
     end
   end
 end
