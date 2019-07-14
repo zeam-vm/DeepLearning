@@ -92,33 +92,39 @@ defmodule Network do
   # rnn
   def parse({:rnn,_,[x,y,r]},_) do
     quote do
-      {:rnn,unquote(gen_rnn(x,y,r))}
+      {:rnn,Cmatrix.zeros(unquote(x),unquote(y)),unquote(gen_rnn(x,y,r))}
     end
   end
   def parse({:rnn,_,[x,y,r,lr]},_) do
     quote do
-      {:rnn,unquote(gen_rnn(x,y,r)),unquote(lr)}
+      {:rnn,Cmatrix.zeros(unquote(x),unquote(y)),unquote(gen_rnn(x,y,r)),unquote(lr)}
     end
   end
   def parse({:rnn,_,[x,y,r,lr,z]},_) do
     quote do
-      {:rnn,unquote(gen_rnn(x,y,z,r)),unquote(lr)}
+      {:rnn,Cmatrix.zeros(unquote(x),unquote(y)),unquote(gen_rnn(x,y,z,r)),unquote(lr)}
     end
   end
   #LSTM {:lstm, c_init,[]}
   def parse({:lstm,_,[x,y,r]},_) do
     quote do
-      {:lstm,Cmatrix.new(unquote(x),unquote(y)),unquote(gen_lstm(x,y,r))}
+      {:lstm,Cmatrix.new(unquote(x),unquote(y)),
+             Cmatrix.zeros(unquote(x),unquote(y)),
+             unquote(gen_lstm(x,y,r)),0.1}
     end
   end
   def parse({:lstm,_,[x,y,r,lr]},_) do
     quote do
-      {:lstm,Cmatrix.new(unquote(x),unquote(y)),unquote(gen_lstm(x,y,r)),unquote(lr)}
+      {:lstm,Cmatrix.new(unquote(x),unquote(y)),
+             Cmatrix.zeros(unquote(x),unquote(y)),
+             unquote(gen_lstm(x,y,r)),unquote(lr)}
     end
   end
   def parse({:lstm,_,[x,y,r,lr,z]},_) do
     quote do
-      {:lstm,Cmatrix.new(unquote(x),unquote(y)),unquote(gen_lstm(x,y,z,r)),unquote(lr)}
+      {:lstm,Cmatrix.new(unquote(x),unquote(y)),
+             Cmatrix.zeros(unquote(x),unquote(y)),
+             unquote(gen_lstm(x,y,z,r)),unquote(lr)}
     end
   end
 

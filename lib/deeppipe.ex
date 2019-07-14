@@ -177,6 +177,16 @@ defmodule DP do
     x1 = Ctensor.flatten(x)
     forward(x1,rest)
   end
+  def forward(x,[{:rnn,h,e,_}|rest]) do
+    x1 = Rnn.forward(x,h,e,[])
+    forward(x1,rest)
+  end
+  def forward(x,[{:lstm,c,e,_}|rest]) do
+    {r,c} = c[:size]
+    h = Cmatrix.zeros(r,c)
+    x1 = Lstm.forward(x,h,c,e,[])
+    forward(x1,rest)
+  end
 
   # forward for backpropagation
   # this store all middle data
@@ -219,6 +229,14 @@ defmodule DP do
   end
   def forward_for_back(x,[{:flatten}|rest],res) do
     x1 = Ctensor.flatten(x)
+    forward_for_back(x1,rest,[x1|res])
+  end
+  def forward_for_back(x,[{:rnn,h,e,_}|rest],res) do
+    x1 = Rnn.forward_for_back(x,h,e,[])
+    forward_for_back(x1,rest,[x1|res])
+  end
+  def forward_for_back(x,[{:lstm,c,h,e,_}|rest],res) do
+    x1 = Lstm.forward_for_back(x,c,h,e,[])
     forward_for_back(x1,rest,[x1|res])
   end
 
@@ -375,6 +393,11 @@ defmodule DP do
     {r,c} = hd(u)[:size]
     l1 = Ctensor.structure(l,r,c)
     backpropagation(l1,rest,us,[{:flatten}|res])
+  end
+  # c=c(t), e=axpand data of lstm
+  defp backpropagation(l,[{:lstm,c,e,lr}|rest],[u|us],res) do
+    l1 = Lstm.backpropagation(l,e,u,[])
+    backpropagation(l1,rest,us,[{:lstm,c,e,lr}|res])
   end
 
   #--------sgd----------
