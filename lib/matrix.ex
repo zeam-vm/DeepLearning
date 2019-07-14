@@ -241,6 +241,20 @@ defmodule Cmatrix do
     Matrex.submatrix(x,s1..e1,s2..e2)
   end
 
+  # stick 4 matrix to 1 matrix
+  def stick(f,g,i,o) do
+    f1 = Cmatrix.to_list(f)
+    g1 = Cmatrix.to_list(g)
+    i1 = Cmatrix.to_list(i)
+    o1 = Cmatrix.to_list(o)
+    stick1(f1,g1,i1,o1) |> Cmatrix.to_matrex
+  end
+
+  def stick1([],[],[],[]) do [] end
+  def stick1([f|fs],[g|gs],[i|is],[o|os]) do
+    [f ++ g ++ i ++ o|stick1(fs,gs,is,os)]
+  end
+
   # sparse for matrix (use backpropagation)
   def sparse(x,s) do
     {r,c} = x[:size]

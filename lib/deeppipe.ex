@@ -46,6 +46,14 @@ defmodule DP do
     1
   end
 
+  def tanh(x) do
+    :math.tanh(x)
+  end
+
+  def dtanh(x) do
+    1 / (:math.cosh(x) * :math.cosh(x))
+  end
+
   def softmax([x]) do
     softmax(x)
   end
