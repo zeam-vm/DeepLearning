@@ -1,4 +1,3 @@
 defmodule LSTM do
-  #p244
-  
+  # p244
 end
